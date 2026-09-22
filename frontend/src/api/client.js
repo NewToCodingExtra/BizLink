@@ -83,6 +83,7 @@ export const opportunitiesApi = {
     if (params.type) qs.set("type", params.type);
     if (params.q) qs.set("q", params.q);
     if (params.category) qs.set("category", params.category);
+    if (params.mediaType) qs.set("mediaType", params.mediaType);
     if (params.page) qs.set("page", String(params.page));
     if (params.per_page) qs.set("per_page", String(params.per_page));
     const suffix = qs.toString() ? `?${qs.toString()}` : "";
