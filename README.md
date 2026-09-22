@@ -11,11 +11,13 @@
 [![Vite](https://img.shields.io/badge/Vite-8-646CFF?style=flat-square&logo=vite&logoColor=white)](https://vitejs.dev)
 [![Tailwind CSS](https://img.shields.io/badge/Tailwind-4-06B6D4?style=flat-square&logo=tailwindcss&logoColor=white)](https://tailwindcss.com)
 [![React Router](https://img.shields.io/badge/Router-7-CA4245?style=flat-square&logo=reactrouter&logoColor=white)](https://reactrouter.com)
+[![Laravel](https://img.shields.io/badge/Laravel-12-FF2D20?style=flat-square&logo=laravel&logoColor=white)](https://laravel.com)
+[![MySQL](https://img.shields.io/badge/MySQL-8.0-4479A1?style=flat-square&logo=mysql&logoColor=white)](https://www.mysql.com)
+[![Sanctum](https://img.shields.io/badge/Sanctum-Token_Auth-0B1F3A?style=flat-square)](#auth)
 [![License: MIT](https://img.shields.io/badge/License-MIT-C9A24B?style=flat-square)](#license)
-[![Frontend Only](https://img.shields.io/badge/Frontend_Only-Static_Mock-0B1F3A?style=flat-square)](#)
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-2563EB?style=flat-square)](#contributing)
 
-[Live Demo](#quick-start) · [Features](#features) · [Design System](#design-system) · [Activity 4 Rubric](#activity-4--rubric-mapping)
+[Quick Start](#quick-start) · [Features](#features) · [API](#api-endpoints) · [Auth](#auth) · [Design System](#design-system) · [Activity 4 Rubric](#activity-4--rubric-mapping)
 
 </div>
 
@@ -26,11 +28,13 @@
 > Most franchise discovery in PH happens on scattered Facebook pages and untrusted posters.  
 > **BuseLink centralizes it** — a single trusted feed where brands publish opportunities and entrepreneurs discover, compare, and launch.
 
-**Dual-role model:** Brands publish verified opportunities → Entrepreneurs discover, inquire, and open private consultation threads — all without a backend, fully static-mock but production-feeling.
+**Dual-role model:** Brands publish verified opportunities → Entrepreneurs discover, inquire, and open private consultation threads — now backed by Laravel + MySQL instead of static mocks.
 
 ```
 Brand posts Franchise/Wholesale/Resell → Feed + Reels + Stories → Buyer likes/comments/inquires → Private consultation → Saved
 ```
+
+**Guest landing:** the Bridging Brands hero (`BusinessOverview`) lives on `/` for logged-out visitors, with demo credentials and calls to action. Logged-in users land on the live `/feed`.
 
 ---
 
@@ -51,20 +55,21 @@ Brand posts Franchise/Wholesale/Resell → Feed + Reels + Stories → Buyer like
 
 | Area | What ships | Detail |
 |------|------------|--------|
-| **Business Profile** | `BusinessOverview.jsx` on `/` hero | Tagline, dual-role explainer, search, “Explore Franchises” CTA, stats |
+| **Business Profile** | `BusinessOverview.jsx` on `/` landing | Tagline, dual-role explainer, search, “Explore Franchises” CTA, stats |
 | **Mission & Vision** | `MissionVision.jsx` `/about` | Verbatim statements, clearly labeled |
 | **Objectives** | `BusinessObjectives.jsx` `/about` | 3 numbered objectives, bento grid |
-| **Products/Services** | `OpportunityFeed.jsx` + `OpportunityCard.jsx` | 8 mock opportunities, `.map()` with `key`, type badges: Franchise amber / Wholesale slate / Resell blue |
-| **Why Choose Us** | `BusinessFeatures.jsx` `/about` | 4 cards: Verified Brands, Direct Matchmaking, Transparent ROI, Nationwide Reach |
-| **Contact** | `ContactForm.jsx` `/contact` + modal | Also pre-filled from any **Inquire** button → creates consultation thread (simulated email toast) |
-| **Feed Interactions** | Like, comment (Quora-style, Seller badge), save, inquire | All state in `App.jsx`, instant UI updates |
-| **Stories** | `StoriesBar.jsx` → `/stories/:id` | Gradient ring if unseen, auto-advances 5s, filters expired |
-| **Search** | `/search` | Debounced 300ms, filters brand/headline/desc/category |
-| **Reels** | `/reels` | `snap-y` vertical, same `opportunities` source, video vs image |
-| **Messenger** | `/messages` & `/messages/:id` | Inbox + thread, distinct from public comments |
-| **Notifications** | Bell + `/notifications` | Simulated triggers, unread badge, mark-read |
-| **Saved** | `/saved` | Bookmarks |
-| **Profile / Preferences** | `/profile/:id`, `/settings/preferences` | Follow, category/budget auto-sort layer |
+| **Products/Services** | `OpportunityFeed.jsx` + `OpportunityCard.jsx` | Live from `GET /api/opportunities`, `.map()` with `key`, type badges: Franchise amber / Wholesale slate / Resell blue |
+| **Why Choose Us** | `BusinessFeatures.jsx` `/` + `/about` | 4 cards: Verified Brands, Direct Matchmaking, Transparent ROI, Nationwide Reach |
+| **Contact** | `ContactForm.jsx` `/contact` + modal | Standalone `POST /api/contact` + pre-filled **Inquire** modal → `POST /api/inquiries` opens a consultation thread |
+| **Feed Interactions** | Like, comment (Seller badge), save, inquire | `POST /opportunities/:id/like|save`, `POST /opportunities/:id/comments` — persisted in MySQL |
+| **Stories** | `StoriesBar.jsx` → `/stories/:id` | `GET /api/stories`, gradient ring if unseen, auto-advances, `POST /stories/:id/seen` |
+| **Search** | `/search` | Debounced 300ms, server-side `?q=` on brand/headline/desc/category |
+| **Reels** | `/reels` | `snap-y` vertical, video opportunities from the same API source |
+| **Messenger** | `/messages` & `/messages/:id` | `GET /api/conversations`, `POST /api/conversations/:id/messages` |
+| **Notifications** | Bell + `/notifications` | `GET /api/notifications` with unread badge, mark-read + mark-all-read |
+| **Saved** | `/saved` | `GET /api/saved` bookmarks |
+| **Profile / Preferences** | `/profile/:id`, `/settings/preferences` | `POST /api/follows/toggle`, `GET+PUT /api/preferences` with category/budget auto-sort |
+| **Auth** | `/login`, `/register`, `/auth/google/callback` | Sanctum tokens, session-aware navbar, protected `/create`, `/messages`, `/saved` |
 
 ---
 
@@ -93,10 +98,10 @@ Locked via CSS variables + Tailwind — no hardcoded hex in components.
 
 ## Tech Stack
 
-- **Framework:** React 19 + Vite 8
-- **Styling:** Tailwind CSS v4 (`@tailwindcss/vite`, no `tailwind.config.js`)
-- **Routing:** React Router 7 (SPA, 13 routes)
-- **State:** Top-level `useState` in `App.jsx` — no backend, all mock (`src/data/`)
+- **Frontend:** React 19 + Vite 8 + Tailwind CSS v4 + React Router 7 (20 routes)
+- **Backend:** Laravel 12 + Sanctum (token auth) + Socialite (Google OAuth)
+- **Database:** MySQL 8.0 (`buselink` on `127.0.0.1:3307`), seeded from the old frontend mocks
+- **State:** Per-page API fetching via `src/api/client.js` + `AuthContext` — no more lifted mock seeds
 - **Lint:** Oxlint
 - **Icons:** Inline SVG + Unsplash/Pravatar placeholders
 
@@ -106,20 +111,38 @@ Locked via CSS variables + Tailwind — no hardcoded hex in components.
 
 ```
 BuseLink/
-└── frontend/
-    ├── src/
-    │   ├── components/  Navbar, Footer, BusinessOverview, MissionVision,
-    │   │                BusinessObjectives, BusinessFeatures, ContactForm,
-    │   │                OpportunityFeed, OpportunityCard, FilterBar,
-    │   │                CommentThread, StoriesBar, ReelCard, NotificationBell, SearchBar
-    │   ├── pages/       HomeFeed, About, Reels, StoryViewer, Search,
-    │   │                OpportunityDetail, CreateOpportunity, MessagesInbox,
-    │   │                MessageThread, Notifications, Saved, Profile, Preferences, Contact
-    │   ├── data/        opportunities.js, comments.js, stories.js, conversations.js
-    │   ├── App.jsx      All state + routing + inquiry modal
-    │   ├── main.jsx
-    │   └── index.css    Design tokens + Tailwind import + Inter
-    └── vite.config.js
+├── backend/
+│   ├── app/
+│   │   ├── Http/Controllers/  Auth, GoogleAuth, Opportunity, Comment, Story,
+│   │   │                       Conversation, Notification, Preference, Follow, Contact
+│   │   └── Models/            User, Opportunity, Comment, Story, Conversation,
+│   │                           Message, AppNotification, Preference
+│   ├── database/
+│   │   ├── migrations/        users, opportunities, comments, stories,
+│   │   │                       conversations, messages, notifications, likes/saves/follows/preferences
+│   │   └── seeders/           DatabaseSeeder (8 opps, 5 comments, 5 stories, inbox + notes)
+│   ├── routes/api.php         auth, opportunities, stories, inbox, notifications, preferences, follows, contact
+│   ├── config/cors.php        allows http://localhost:5173 with credentials
+│   └── .env.example           MySQL 3307 + Google OAuth placeholders
+├── frontend/
+│   ├── src/
+│   │   ├── api/           client.js (Bearer tokens, VITE_API_URL)
+│   │   ├── context/       AuthContext.jsx (login/register/logout/Google)
+│   │   ├── components/    Navbar, Footer, BusinessOverview, MissionVision,
+│   │   │                  BusinessObjectives, BusinessFeatures, ContactForm,
+│   │   │                  OpportunityFeed, OpportunityCard, FilterBar,
+│   │   │                  CommentThread, StoriesBar, ReelCard, NotificationBell,
+│   │   │                  SearchBar, RequireAuth
+│   │   ├── pages/         Landing, Login, Register, GoogleCallback, HomeFeed, About,
+│   │   │                  Reels, StoryViewer, Search, OpportunityDetail, CreateOpportunity,
+│   │   │                  MessagesInbox, MessageThread, Notifications, Saved,
+│   │   │                  Profile, Preferences, Contact
+│   │   ├── App.jsx        AuthProvider + routing (guest landing vs feed)
+│   │   ├── main.jsx
+│   │   └── index.css      Design tokens + Tailwind import + Inter
+│   ├── .env.example       VITE_API_URL=http://localhost:8000/api
+│   └── vite.config.js     /api proxy to :8000
+└── start-buselink.ps1     starts MySQL:3307 + API:8000
 ```
 
 **Activity 4 → Rubric Mapping**
@@ -127,11 +150,11 @@ BuseLink/
 | Rubric line | Component | Route | Verifiable? |
 |-------------|-----------|-------|-------------|
 | Company/Business Name | `Navbar.jsx` + `<title>` | Every page | Logo + browser tab |
-| Business Profile | `BusinessOverview.jsx` | `/` hero | Tagline + dual-role + search |
+| Business Profile | `BusinessOverview.jsx` | `/` landing | Tagline + dual-role + search |
 | Mission & Vision | `MissionVision.jsx` | `/about` | Labeled verbatim |
 | Business Objectives | `BusinessObjectives.jsx` | `/about` | 3 numbered cards |
-| Products/Services | `OpportunityFeed` `.map()` | `/` feed | 8 cards with keys |
-| Features / Why Choose Us | `BusinessFeatures.jsx` | `/about` | 4 benefit cards |
+| Products/Services | `OpportunityFeed` `.map()` | `/feed` | Live cards with keys |
+| Features / Why Choose Us | `BusinessFeatures.jsx` | `/` + `/about` | 4 benefit cards |
 | Contact | `ContactForm.jsx` | `/contact` + modal | Standalone + pre-filled |
 | Footer | `Footer.jsx` | Every page | Links + social + email |
 
@@ -139,48 +162,116 @@ BuseLink/
 
 ## Quick Start
 
-**Prereqs:** Node 18+ / npm 10+ (tested Node 24)
+**Prereqs:** Node 18+ / npm 10+, PHP 8.2+ (XAMPP PHP works), Composer, MySQL 8.0
+
+**0) Database (isolated instance on :3307 so existing MySQL installs are untouched):**
+
+```powershell
+# data dir already initialized at C:\temp\buselink-mysql\data
+# start it (or run .\start-buselink.ps1 which does steps 0-2):
+& "C:\Program Files\MySQL\MySQL Server 8.0\bin\mysqld.exe" --datadir=C:\temp\buselink-mysql\data --port=3307 --mysqlx-port=33070 --bind-address=127.0.0.1 --server-id=99
+```
+
+Database `buselink`, user `buselink` / `Buselink123!` must exist (created once via `CREATE DATABASE buselink ...; CREATE USER ...; GRANT ALL ...`).
+
+**1) Backend (`http://localhost:8000`):**
+
+```powershell
+cd backend
+copy .env.example .env   # set DB_* and APP_KEY
+C:\xampp\php\php.exe C:\Users\Joshua\.config\herd\bin\composer.phar install
+C:\xampp\php\php.exe artisan key:generate
+C:\xampp\php\php.exe artisan migrate:fresh --seed
+C:\xampp\php\php.exe artisan serve --host=127.0.0.1 --port=8000
+```
+
+Or one shot: `.\start-buselink.ps1` from the repo root.
+
+**2) Frontend (`http://localhost:5173`):**
 
 ```powershell
 cd frontend
+copy .env.example .env   # VITE_API_URL=http://localhost:8000/api
 npm install
 npm run dev      # http://localhost:5173
 npm run build    # production → frontend/dist
-npm run preview  # preview build
 npm run lint     # oxlint
 ```
 
-No `.env`, no backend, no database. Fully static.
+**Demo accounts (seeded):**
 
-**Deploy to GitHub Pages / Vercel:** `npm run build` → upload `frontend/dist` (Vite SPA, `history` fallback needed for nested routes).
+| Role | Email | Password |
+|------|-------|----------|
+| Entrepreneur | `demo@buselink.ph` | `password123` |
+| Brand owner | `brand@buselink.ph` | `password123` |
 
 ---
 
-## How It Works (No Backend)
+## Auth
 
-- **Posting:** `/create` type (Franchise/Wholesale/Resell) + headline + capital + ROI + description (280 char) + media URL (object URL mocked) → `setOpportunities(prev => [newPost, ...prev])` prepends, flagged `isNew: true` (<24h).
-- **Filtering:** `FilterBar` chips (`activeFilter` useState) is the guaranteed visible interaction; `userPreferences` scoring is layered as bonus auto-sort.
-- **Inquiry:** Any `Inquire` opens modal → on submit creates/updates `conversations` + `messages` + simulated `notifications` toast.
+- Email: `POST /api/auth/register`, `POST /api/auth/login` → Sanctum Bearer token stored in `localStorage`, `GET /api/auth/me`, `POST /api/auth/logout` revokes the current token.
+- Google: `GET /api/auth/google/redirect` → `GET /api/auth/google/callback` → redirects to `/auth/google/callback?token=...` which the frontend exchanges via `/auth/me`. Requires `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, `GOOGLE_REDIRECT_URI=http://localhost:8000/api/auth/google/callback` in `backend/.env` (get credentials at Google Cloud Console → APIs & Services → Credentials).
+- Guards: `/create`, `/messages*`, `/notifications`, `/saved`, `/settings/preferences` require auth (`RequireAuth` → `/login`); feed/search/reels stay readable for guests with login prompts on actions.
+
+---
+
+## API Endpoints
+
+| Method | Path | Auth | Description |
+|--------|------|------|-------------|
+| GET | `/api/health` | – | Liveness probe |
+| POST | `/api/auth/register` | – | Create account + token |
+| POST | `/api/auth/login` | – | Login + token |
+| POST | `/api/auth/logout` | token | Revoke current token |
+| GET | `/api/auth/me` | token | Current user |
+| GET | `/api/auth/google/redirect` | – | Google OAuth (503 if unconfigured) |
+| GET | `/api/auth/google/callback` | – | Google callback → frontend token |
+| GET | `/api/opportunities` | – | List with `?type=&q=&category=&page=&per_page=` |
+| POST | `/api/opportunities` | token | Publish opportunity |
+| GET | `/api/opportunities/:id` | – | Detail with comments |
+| POST | `/api/opportunities/:id/like` | token | Toggle like |
+| POST | `/api/opportunities/:id/save` | token | Toggle save |
+| GET | `/api/saved` | token | Saved list |
+| GET/POST | `/api/opportunities/:id/comments` | GET –, POST token | List / add comment |
+| GET/POST | `/api/stories`, `/api/stories/:id/seen` | GET –, POST token | List / mark seen |
+| GET | `/api/conversations`, `/api/conversations/:id` | token | Inbox + thread |
+| POST | `/api/inquiries` | token | Inquire → conversation + notification |
+| POST | `/api/conversations/:id/messages` | token | Send message |
+| GET/POST | `/api/notifications`, `/api/notifications/:id/read`, `/api/notifications/read-all` | token | List / mark read |
+| GET/PUT | `/api/preferences` | token | Get / save categories + budget |
+| GET/POST | `/api/follows`, `/api/follows/toggle` | token | List / follow brand |
+| POST | `/api/contact` | – | Contact form (logged, notification if authed) |
+
+---
+
+## How It Works (With Backend)
+
+- **Posting:** `/create` → `POST /api/opportunities` (type, headline, capital, ROI, category, description, image/video) → row in MySQL with `is_new: true`, plus a `new_post` notification.
+- **Filtering:** `FilterBar` chips filter client-side; `preferences.categories` fetched from `GET /api/preferences` layers an auto-sort bonus on top.
+- **Inquiry:** Any `Inquire` → modal → `POST /api/inquiries { opportunity_id, message }` → creates/finds the brand conversation, appends a `me` message and an `inquiry` notification.
+- **Seeding:** `backend/database/seeders/DatabaseSeeder.php` ports the old `src/data/*.js` mocks (BrewCraft, Glow Skin, FitForge, ParcelGo, TastyBox, EduSpark, UrbanThread, AquaPure + comments/stories/inbox) into MySQL.
 
 ---
 
 ## Roadmap
 
-- [ ] Persist to `localStorage`
-- [ ] GitHub Pages auto-deploy workflow
-- [ ] Light/dark theme token
+- [x] Laravel backend + MySQL + Sanctum + Google OAuth
+- [x] Guest landing vs authenticated feed split
 - [ ] `vitest` + Testing Library for feed interactions
+- [ ] GitHub Actions: backend `php artisan test` + frontend build
+- [ ] Light/dark theme token
+- [ ] Image uploads (S3/local disk) replacing URL-only media
 
 ---
 
 ## Contributing
 
-PRs welcome — keep design tokens in `index.css`, never hardcode hex. Follow existing component patterns (flat cards, `border-slate-100` + `shadow-sm`).
+PRs welcome — keep design tokens in `index.css`, never hardcode hex. Follow existing component patterns (flat cards, `border-slate-100` + `shadow-sm`). Use XAMPP PHP first in `PATH` when running Composer (`$env:PATH = "C:\xampp\php;" + $env:PATH`) so `openssl` is available.
 
 ```powershell
 git clone https://github.com/NewToCodingExtra/BuseLink.git
-cd BuseLink/frontend
-npm install
+cd BuseLink
+# backend in one terminal, frontend in another (see Quick Start)
 git checkout -b feat/your-feature
 # ... work, then PR
 ```
