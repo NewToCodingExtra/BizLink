@@ -43,13 +43,27 @@ class AuthController extends Controller
             'password' => 'required|string',
         ]);
 
+        $ip = $request->ip();
+        $rateLimitKey = 'login.attempts.' . $ip;
+        $maxAttempts = (int) \App\Models\Setting::get('login_rate_limit', 5);
+
+        if (\Illuminate\Support\Facades\RateLimiter::tooManyAttempts($rateLimitKey, $maxAttempts)) {
+            $seconds = \Illuminate\Support\Facades\RateLimiter::availableIn($rateLimitKey);
+            throw ValidationException::withMessages([
+                'email' => ['Too many login attempts. Please try again in ' . $seconds . ' seconds.'],
+            ]);
+        }
+
         $user = User::where('email', $data['email'])->first();
 
         if (!$user || !$user->password || !Hash::check($data['password'], $user->password)) {
+            \Illuminate\Support\Facades\RateLimiter::hit($rateLimitKey, 60);
             throw ValidationException::withMessages([
                 'email' => ['The provided credentials are incorrect.'],
             ]);
         }
+
+        \Illuminate\Support\Facades\RateLimiter::clear($rateLimitKey);
 
         $token = $user->createToken('web')->plainTextToken;
 
