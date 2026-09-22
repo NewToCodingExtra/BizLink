@@ -1,4 +1,4 @@
-export default function NotificationBell({ notifications = [], onToggle, onMarkRead }) {
+export default function NotificationBell({ notifications = [], onToggle }) {
   const unread = notifications.filter(n => !n.read).length;
   return (
     <button onClick={onToggle} className="relative w-9 h-9 grid place-items-center rounded-full bg-white/10 hover:bg-white/15 text-white transition-colors duration-150 focus-visible:ring-2 focus-visible:ring-blue-300">
