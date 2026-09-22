@@ -5,11 +5,13 @@ use App\Http\Controllers\CommentController;
 use App\Http\Controllers\ContactController;
 use App\Http\Controllers\ConversationController;
 use App\Http\Controllers\FollowController;
-use App\Http\Controllers\GoogleAuthController;
+use App\Http\Controllers\PasswordResetController;
+use App\Http\Controllers\SocialAuthController;
 use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\OpportunityController;
 use App\Http\Controllers\PreferenceController;
 use App\Http\Controllers\StoryController;
+use App\Http\Controllers\UploadController;
 use App\Http\Controllers\UserController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
@@ -19,12 +21,16 @@ Route::get('/health', fn() => response()->json(['ok' => true, 'app' => 'BizLink'
 Route::prefix('auth')->group(function () {
     Route::post('/register', [AuthController::class, 'register']);
     Route::post('/login', [AuthController::class, 'login']);
-    Route::get('/google/redirect', [GoogleAuthController::class, 'redirect']);
-    Route::get('/google/callback', [GoogleAuthController::class, 'callback']);
+    Route::post('/forgot-password', [PasswordResetController::class, 'requestLink']);
+    Route::post('/reset-password', [PasswordResetController::class, 'reset']);
+    Route::get('/{provider}/status', [SocialAuthController::class, 'status'])->where('provider', 'google|facebook');
+    Route::get('/{provider}/redirect', [SocialAuthController::class, 'redirect'])->where('provider', 'google|facebook');
+    Route::get('/{provider}/callback', [SocialAuthController::class, 'callback'])->where('provider', 'google|facebook');
+    Route::post('/uploads', [UploadController::class, 'store'])->middleware('auth:sanctum');
     Route::middleware('auth:sanctum')->group(function () {
         Route::post('/logout', [AuthController::class, 'logout']);
         Route::get('/me', [AuthController::class, 'me']);
-        Route::get('/token', [GoogleAuthController::class, 'tokenFromSession']);
+        Route::get('/token', [SocialAuthController::class, 'tokenFromSession']);
     });
 });
 
