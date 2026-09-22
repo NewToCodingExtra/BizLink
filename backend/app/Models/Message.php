@@ -14,6 +14,8 @@ class Message extends Model
         'sender_id',
         'from_side',
         'text',
+        'attachment_id',
+        'attachment_type',
     ];
 
     public function conversation()
@@ -24,5 +26,10 @@ class Message extends Model
     public function sender()
     {
         return $this->belongsTo(User::class, 'sender_id');
+    }
+
+    public function attachment()
+    {
+        return $this->morphTo();
     }
 }
