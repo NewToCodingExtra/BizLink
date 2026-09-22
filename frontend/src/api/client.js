@@ -105,6 +105,10 @@ export const followsApi = {
   toggle: (brand_id) => api.post("/follows/toggle", { brand_id }),
 };
 
+export const usersApi = {
+  get: (id) => api.get(`/users/${id}`),
+};
+
 export const contactApi = {
   submit: (payload) => api.post("/contact", payload),
 };
