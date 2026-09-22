@@ -148,11 +148,15 @@ export default function Profile() {
             {profileUser.role === "brand" && <span className="text-xs bg-green-50 text-[#16A34A] border border-green-100 rounded-full px-2 py-0.5 font-bold">✓ Brand</span>}
             {isOwn && <span className="text-xs bg-slate-100 text-slate-600 border border-slate-200 rounded-full px-2 py-0.5">You</span>}
           </div>
+          {profileUser.bio && <p className="text-sm text-slate-600 mt-2 leading-relaxed">{profileUser.bio}</p>}
           <div className="mt-3 flex gap-5 text-sm">
             <span><strong className="text-slate-900">{stats.posts}</strong> <span className="text-slate-500">posts</span></span>
             <span><strong className="text-slate-900">{stats.stories}</strong> <span className="text-slate-500">stories</span></span>
             <span className="text-slate-500 capitalize">{profileUser.role}</span>
           </div>
+          {isOwn && (
+            <Link to="/profile/edit" className="inline-block mt-4 px-5 py-1.5 rounded-full text-sm font-medium border bg-white text-slate-700 border-slate-200 hover:bg-slate-50 transition-colors">Edit profile</Link>
+          )}
           {!isOwn && viewer && (
             <button onClick={toggleFollow} className={`mt-4 px-5 py-1.5 rounded-full text-sm font-medium border transition-colors ${following ? "bg-[#0B1F3A] text-white border-[#0B1F3A]" : "bg-white text-slate-700 border-slate-200 hover:bg-slate-50"}`}>
               {following ? "Following" : "Follow"}
@@ -201,6 +205,9 @@ export default function Profile() {
             saved={savedIds.map(String).includes(String(o.id))}
           />
         ))}
+        {opps.length > 0 && (
+          <p className="text-center text-xs text-slate-400 py-2">End of {profileUser.name}&rsquo;s posts.</p>
+        )}
       </div>
 
       {isModalOpen && (

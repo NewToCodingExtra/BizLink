@@ -17,6 +17,7 @@ import MessageThread from "./pages/MessageThread";
 import NotificationsPage from "./pages/Notifications";
 import Saved from "./pages/Saved";
 import Profile from "./pages/Profile";
+import EditProfile from "./pages/EditProfile";
 import Preferences from "./pages/Preferences";
 import Contact from "./pages/Contact";
 import Login from "./pages/Login";
@@ -83,6 +84,7 @@ export default function App() {
               <Route path="/messages/:conversationId" element={<RequireAuth><MessageThread /></RequireAuth>} />
               <Route path="/notifications" element={<RequireAuth><NotificationsPage /></RequireAuth>} />
               <Route path="/saved" element={<RequireAuth><Saved /></RequireAuth>} />
+              <Route path="/profile/edit" element={<RequireAuth><EditProfile /></RequireAuth>} />
               <Route path="/profile/:id" element={<Profile />} />
               <Route path="/settings/preferences" element={<RequireAuth><Preferences /></RequireAuth>} />
               <Route path="/contact" element={<Contact />} />
