@@ -69,7 +69,7 @@ Brand posts Franchise/Wholesale/Resell → Feed + Reels + Stories → Buyer like
 | **Notifications** | Bell + `/notifications` | `GET /api/notifications` with unread badge, mark-read + mark-all-read |
 | **Saved** | `/saved` | `GET /api/saved` bookmarks |
 | **Profile / Preferences** | `/profile/:id`, `/settings/preferences` | `POST /api/follows/toggle`, `GET+PUT /api/preferences` with category/budget auto-sort |
-| **Auth** | `/login`, `/register`, `/auth/google/callback` | Sanctum tokens, session-aware navbar, protected `/create`, `/messages`, `/saved` |
+| **Auth** | `/login`, `/register`, `/auth/social/callback`, `/forgot-password`, `/reset-password` | Sanctum tokens, Google/Facebook buttons, show/hide passwords, session-aware navbar, protected `/create`, `/messages`, `/saved` |
 
 ---
 
@@ -113,7 +113,7 @@ Locked via CSS variables + Tailwind — no hardcoded hex in components.
 ## Tech Stack
 
 - **Frontend:** React 19 + Vite 8 + Tailwind CSS v4 + React Router 7 (20 routes)
-- **Backend:** Laravel 12 + Sanctum (token auth) + Socialite (Google OAuth)
+- **Backend:** Laravel 12 + Sanctum (token auth) + Socialite (Google + Facebook OAuth) + GCS uploads
 - **Database:** MySQL 8.0 (`bizlink` on `127.0.0.1:3307`), seeded from the old frontend mocks
 - **State:** Per-page API fetching via `src/api/client.js` + `AuthContext` — no more lifted mock seeds
 - **Lint:** Oxlint
@@ -127,30 +127,32 @@ Locked via CSS variables + Tailwind — no hardcoded hex in components.
 BizLink/
 ├── backend/
 │   ├── app/
-│   │   ├── Http/Controllers/  Auth, GoogleAuth, Opportunity, Comment, Story,
-│   │   │                       Conversation, Notification, Preference, Follow, Contact
+│   │   ├── Http/Controllers/  Auth, SocialAuth, PasswordReset, Upload, Opportunity,
+│   │   │                       Comment, Story, Conversation, Notification, Preference,
+│   │   │                       Follow, Contact, User
 │   │   └── Models/            User, Opportunity, Comment, Story, Conversation,
 │   │                           Message, AppNotification, Preference
 │   ├── database/
 │   │   ├── migrations/        users, opportunities, comments, stories,
 │   │   │                       conversations, messages, notifications, likes/saves/follows/preferences
-│   │   └── seeders/           DatabaseSeeder (8 opps, 5 comments, 5 stories, inbox + notes)
-│   ├── routes/api.php         auth, opportunities, stories, inbox, notifications, preferences, follows, contact
+│   │   └── seeders/           DatabaseSeeder (16 opps, 10 comments, 8 stories, inbox + notes)
+│   ├── routes/api.php         auth, social, uploads, opportunities, users, stories, inbox, notifications, preferences, follows, contact
 │   ├── config/cors.php        allows http://localhost:5173 with credentials
-│   └── .env.example           MySQL 3307 + Google OAuth placeholders
+│   └── .env.example           MySQL 3307 + Google/Facebook OAuth + GCS placeholders
 ├── frontend/
 │   ├── src/
 │   │   ├── api/           client.js (Bearer tokens, VITE_API_URL)
-│   │   ├── context/       AuthContext.jsx (login/register/logout/Google)
+│   │   ├── context/       AuthContext.jsx (login/register/logout/social)
+│   │   │   ├── hooks/         useInfiniteFeed.js (sentinel pagination)
 │   │   ├── components/    Navbar, Footer, BusinessOverview, MissionVision,
 │   │   │                  BusinessObjectives, BusinessFeatures, ContactForm,
 │   │   │                  OpportunityFeed, OpportunityCard, FilterBar,
 │   │   │                  CommentThread, StoriesBar, ReelCard, NotificationBell,
-│   │   │                  SearchBar, RequireAuth
-│   │   ├── pages/         Landing, Login, Register, GoogleCallback, HomeFeed, About,
-│   │   │                  Reels, StoryViewer, Search, OpportunityDetail, CreateOpportunity,
-│   │   │                  MessagesInbox, MessageThread, Notifications, Saved,
-│   │   │                  Profile, Preferences, Contact
+│   │   │                  SearchBar, RequireAuth, PasswordInput, Skeleton
+│   │   ├── pages/         Landing, Login, Register, SocialCallback, ForgotPassword,
+│   │   │                  ResetPassword, HomeFeed, About, Reels, StoryViewer, Search,
+│   │   │                  OpportunityDetail, CreateOpportunity, MessagesInbox,
+│   │   │                  MessageThread, Notifications, Saved, Profile, Preferences, Contact
 │   │   ├── App.jsx        AuthProvider + routing (guest landing vs feed)
 │   │   ├── main.jsx
 │   │   └── index.css      Design tokens + Tailwind import + Inter
@@ -223,8 +225,11 @@ npm run lint     # oxlint
 
 ## Auth
 
-- Email: `POST /api/auth/register`, `POST /api/auth/login` → Sanctum Bearer token stored in `localStorage`, `GET /api/auth/me`, `POST /api/auth/logout` revokes the current token.
-- Google: `GET /api/auth/google/redirect` → `GET /api/auth/google/callback` → redirects to `/auth/google/callback?token=...` which the frontend exchanges via `/auth/me`. Requires `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, `GOOGLE_REDIRECT_URI=http://localhost:8000/api/auth/google/callback` in `backend/.env` (get credentials at Google Cloud Console → APIs & Services → Credentials).
+- Email: `POST /api/auth/register`, `POST /api/auth/login` → Sanctum Bearer token stored in `localStorage`, `GET /api/auth/me`, `POST /api/auth/logout` revokes the current token. Password fields have show/hide toggles.
+- Google + Facebook: buttons on both `/login` and `/register`. `GET /api/auth/{google|facebook}/redirect` → `GET /api/auth/{google|facebook}/callback` → redirects to `/auth/social/callback?provider=...&token=...` which the frontend exchanges via `/auth/me`. Check `GET /api/auth/{provider}/status` first — the frontend does this so a missing setup shows a message instead of a failed fetch. Callback failures redirect with specific codes (`*_not_configured`, `*_denied`, `*_failed`) explained on the callback page.
+  - Google: `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, `GOOGLE_REDIRECT_URI=http://localhost:8000/api/auth/google/callback` in `backend/.env` (Cloud Console → APIs & Services → Credentials; whitelist the exact redirect URI; add testers under Audience while in Testing mode).
+  - Facebook: `FACEBOOK_CLIENT_ID`, `FACEBOOK_CLIENT_SECRET`, `FACEBOOK_REDIRECT_URI=http://localhost:8000/api/auth/facebook/callback` (developers.facebook.com → your app → Facebook Login → Valid OAuth Redirect URIs; add testers under App Roles while in Development mode).
+- Forgot password (email accounts only; social accounts are told to use their provider button): `POST /api/auth/forgot-password` emails a 60-minute link (log mailer in dev) → `/reset-password?email=...&token=...` → `POST /api/auth/reset-password`.
 - Guards: `/create`, `/messages*`, `/notifications`, `/saved`, `/settings/preferences` require auth (`RequireAuth` → `/login`); feed/search/reels stay readable for guests with login prompts on actions.
 
 ---
@@ -238,9 +243,14 @@ npm run lint     # oxlint
 | POST | `/api/auth/login` | – | Login + token |
 | POST | `/api/auth/logout` | token | Revoke current token |
 | GET | `/api/auth/me` | token | Current user |
-| GET | `/api/auth/google/redirect` | – | Google OAuth (503 if unconfigured) |
-| GET | `/api/auth/google/callback` | – | Google callback → frontend token |
-| GET | `/api/opportunities` | – | List with `?type=&q=&category=&page=&per_page=` |
+| GET | `/api/auth/{provider}/status` | – | Social setup check the frontend calls before redirecting |
+| GET | `/api/auth/{provider}/redirect` | – | Social OAuth (503 if unconfigured) |
+| GET | `/api/auth/{provider}/callback` | – | Social callback → frontend token |
+| POST | `/api/auth/forgot-password` | – | Email a 60-minute reset link (email accounts only) |
+| POST | `/api/auth/reset-password` | – | Set new password with token |
+| POST | `/api/auth/uploads` | token | Photo/video upload → GCS when configured, else local |
+| GET | `/api/users/:id` | – | Public profile (numeric id, `brand-N` or `me`) with posts + stories |
+| GET | `/api/opportunities` | – | Paginated list with `?type=&q=&category=&user_id=&brand_id=&following=&page=&per_page=` |
 | POST | `/api/opportunities` | token | Publish opportunity |
 | GET | `/api/opportunities/:id` | – | Detail with comments |
 | POST | `/api/opportunities/:id/like` | token | Toggle like |
@@ -260,21 +270,22 @@ npm run lint     # oxlint
 
 ## How It Works (With Backend)
 
-- **Posting:** `/create` → `POST /api/opportunities` (type, headline, capital, ROI, category, description, image/video) → row in MySQL with `is_new: true`, plus a `new_post` notification.
+- **Posting:** `/create` → upload photo/video via `POST /api/auth/uploads` (Google Cloud Storage bucket when `GOOGLE_CLOUD_STORAGE_BUCKET` + credentials are set, otherwise `storage/app/public` served from `/storage`) → `POST /api/opportunities` → row in MySQL with `is_new: true`, plus a `new_post` notification.
+- **Feed loading:** feed and search paginate (`per_page=6`) with an IntersectionObserver sentinel 600px before the end — more cards stream in with skeleton placeholders, Facebook-style, instead of loading everything at once.
 - **Filtering:** `FilterBar` chips filter client-side; `preferences.categories` fetched from `GET /api/preferences` layers an auto-sort bonus on top.
 - **Inquiry:** Any `Inquire` → modal → `POST /api/inquiries { opportunity_id, message }` → creates/finds the brand conversation, appends a `me` message and an `inquiry` notification.
-- **Seeding:** `backend/database/seeders/DatabaseSeeder.php` ports the old `src/data/*.js` mocks (BrewCraft, Glow Skin, FitForge, ParcelGo, TastyBox, EduSpark, UrbanThread, AquaPure + comments/stories/inbox) into MySQL.
+- **Seeding:** `backend/database/seeders/DatabaseSeeder.php` ports the old `src/data/*.js` mocks (16 brands from BrewCraft to PrintFast + comments/stories/inbox) into MySQL. Each brand gets its own user account bound to its posts.
 
 ---
 
 ## Roadmap
 
-- [x] Laravel backend + MySQL + Sanctum + Google OAuth
+- [x] Laravel backend + MySQL + Sanctum + Google/Facebook OAuth + password reset
 - [x] Guest landing vs authenticated feed split
+- [x] Infinite-scroll feed/search with skeletons + GCS uploads with local fallback
 - [ ] `vitest` + Testing Library for feed interactions
 - [ ] GitHub Actions: backend `php artisan test` + frontend build
 - [ ] Light/dark theme token
-- [ ] Image uploads (S3/local disk) replacing URL-only media
 
 ---
 
