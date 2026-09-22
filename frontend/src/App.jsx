@@ -20,7 +20,9 @@ import Preferences from "./pages/Preferences";
 import Contact from "./pages/Contact";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
-import GoogleCallback from "./pages/GoogleCallback";
+import SocialCallback from "./pages/SocialCallback";
+import ForgotPassword from "./pages/ForgotPassword";
+import ResetPassword from "./pages/ResetPassword";
 
 function HomeOrLanding() {
   const { user, loading } = useAuth();
@@ -65,7 +67,10 @@ export default function App() {
               <Route path="/feed" element={<HomeFeed />} />
               <Route path="/login" element={<GuestOnly><Login /></GuestOnly>} />
               <Route path="/register" element={<GuestOnly><Register /></GuestOnly>} />
-              <Route path="/auth/google/callback" element={<GoogleCallback />} />
+              <Route path="/auth/google/callback" element={<SocialCallback />} />
+              <Route path="/auth/social/callback" element={<SocialCallback />} />
+              <Route path="/forgot-password" element={<GuestOnly><ForgotPassword /></GuestOnly>} />
+              <Route path="/reset-password" element={<GuestOnly><ResetPassword /></GuestOnly>} />
               <Route path="/about" element={<About />} />
               <Route path="/reels" element={<Reels />} />
               <Route path="/stories/:id" element={<StoryViewer />} />

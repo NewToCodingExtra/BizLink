@@ -52,10 +52,29 @@ export const authApi = {
   login: (payload) => api.post("/auth/login", payload),
   logout: () => api.post("/auth/logout", {}),
   me: () => api.get("/auth/me"),
+  forgotPassword: (email) => api.post("/auth/forgot-password", { email }),
+  resetPassword: (payload) => api.post("/auth/reset-password", payload),
   googleRedirect: () => {
     window.location.href = `${API_BASE}/auth/google/redirect`;
   },
+  socialRedirect: (provider) => {
+    window.location.href = `${API_BASE}/auth/${provider}/redirect`;
+  },
 };
+
+export async function checkSocialConfigured(provider) {
+  let res;
+  try {
+    res = await fetch(`${API_BASE}/auth/${provider}/status`, { headers: { Accept: "application/json" } });
+  } catch {
+    throw new Error("Cannot reach the API server. Make sure the Laravel backend is running on :8000.");
+  }
+  const data = await res.json().catch(() => null);
+  if (!res.ok || !data?.configured) {
+    throw new Error(data?.message || `${provider} OAuth is not configured`);
+  }
+  return true;
+}
 
 export const opportunitiesApi = {
   list: (params = {}) => {
@@ -112,5 +131,33 @@ export const usersApi = {
 export const contactApi = {
   submit: (payload) => api.post("/contact", payload),
 };
+
+export function uploadFile(file, onProgress) {
+  return new Promise((resolve, reject) => {
+    const xhr = new XMLHttpRequest();
+    xhr.open("POST", `${API_BASE}/auth/uploads`);
+    const token = getToken();
+    if (token) xhr.setRequestHeader("Authorization", `Bearer ${token}`);
+    xhr.setRequestHeader("Accept", "application/json");
+    xhr.upload.onprogress = (e) => {
+      if (e.lengthComputable && onProgress) onProgress(Math.round((e.loaded / e.total) * 100));
+    };
+    xhr.onload = () => {
+      let data = null;
+      try {
+        data = JSON.parse(xhr.responseText);
+      } catch {
+        reject(new Error("Upload failed. Try again."));
+        return;
+      }
+      if (xhr.status >= 200 && xhr.status < 300) resolve(data);
+      else reject(new Error(data?.message || "Upload failed. Try again."));
+    };
+    xhr.onerror = () => reject(new Error("Upload failed. Check your connection."));
+    const form = new FormData();
+    form.append("file", file);
+    xhr.send(form);
+  });
+}
 
 export default api;

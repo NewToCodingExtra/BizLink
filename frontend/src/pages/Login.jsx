@@ -1,7 +1,9 @@
 import { useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
-import { authApi } from "../api/client";
+import { authApi, checkSocialConfigured } from "../api/client";
+import PasswordInput from "../components/PasswordInput";
+import { FacebookIcon, GoogleIcon } from "../components/SocialIcons";
 
 export default function Login() {
   const navigate = useNavigate();
@@ -11,7 +13,7 @@ export default function Login() {
   const [password, setPassword] = useState("password123");
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
-  const [googleBusy, setGoogleBusy] = useState(false);
+  const [socialBusy, setSocialBusy] = useState(null);
 
   const from = location.state?.from || "/feed";
 
@@ -29,23 +31,16 @@ export default function Login() {
     }
   };
 
-  const google = async () => {
+  const social = async (provider) => {
     setError("");
-    setGoogleBusy(true);
+    setSocialBusy(provider);
     try {
-      const res = await fetch(`${import.meta.env.VITE_API_URL || "http://localhost:8000/api"}/auth/google/redirect`, {
-        headers: { Accept: "application/json" },
-      });
-      if (res.status === 503) {
-        const data = await res.json();
-        setError(data.message || "Google OAuth is not configured");
-        return;
-      }
-      authApi.googleRedirect();
+      await checkSocialConfigured(provider);
+      authApi.socialRedirect(provider);
     } catch (err) {
-      setError(err.message || "Google redirect failed");
+      setError(err.message || `${provider} redirect failed`);
     } finally {
-      setGoogleBusy(false);
+      setSocialBusy(null);
     }
   };
 
@@ -64,8 +59,13 @@ export default function Login() {
             <input value={email} onChange={(e) => setEmail(e.target.value)} type="email" required placeholder="you@email.com" className="mt-1 w-full border border-slate-200 focus:border-[#2563EB] focus:ring-2 focus:ring-blue-100 outline-none rounded-lg px-3 py-2.5 text-sm" />
           </div>
           <div>
-            <label className="text-sm font-medium text-slate-700">Password</label>
-            <input value={password} onChange={(e) => setPassword(e.target.value)} type="password" required placeholder="••••••••" className="mt-1 w-full border border-slate-200 focus:border-[#2563EB] focus:ring-2 focus:ring-blue-100 outline-none rounded-lg px-3 py-2.5 text-sm" />
+            <div className="flex items-center justify-between">
+              <label className="text-sm font-medium text-slate-700">Password</label>
+              <Link to="/forgot-password" className="text-xs font-medium text-[#2563EB] hover:text-[#1D4ED8]">Forgot password?</Link>
+            </div>
+            <div className="mt-1">
+              <PasswordInput value={password} onChange={(e) => setPassword(e.target.value)} />
+            </div>
           </div>
           <button type="submit" disabled={busy} className="w-full bg-[#2563EB] hover:bg-[#1D4ED8] disabled:bg-blue-300 text-white text-sm font-medium py-2.5 rounded-lg transition-colors">
             {busy ? "Logging in..." : "Log in"}
@@ -74,14 +74,20 @@ export default function Login() {
 
         <div className="flex items-center gap-3 my-5">
           <div className="flex-1 h-px bg-slate-200" />
-          <span className="text-xs text-slate-400">or</span>
+          <span className="text-xs text-slate-400">or continue with</span>
           <div className="flex-1 h-px bg-slate-200" />
         </div>
 
-        <button onClick={google} disabled={googleBusy} className="w-full bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 text-sm font-medium py-2.5 rounded-lg transition-colors flex items-center justify-center gap-2">
-          <span className="w-5 h-5 rounded-full bg-[#2563EB] text-white grid place-items-center text-xs font-bold">G</span>
-          {googleBusy ? "Redirecting..." : "Continue with Google"}
-        </button>
+        <div className="grid grid-cols-2 gap-3">
+          <button onClick={() => social("google")} disabled={socialBusy !== null} className="bg-white border border-slate-200 hover:bg-slate-50 disabled:opacity-60 text-slate-700 text-sm font-medium py-2.5 rounded-lg transition-colors flex items-center justify-center gap-2">
+            <GoogleIcon size={20} />
+            {socialBusy === "google" ? "..." : "Google"}
+          </button>
+          <button onClick={() => social("facebook")} disabled={socialBusy !== null} className="bg-[#1877F2] hover:bg-[#1464CC] disabled:opacity-60 text-white text-sm font-medium py-2.5 rounded-lg transition-colors flex items-center justify-center gap-2">
+            <FacebookIcon size={20} />
+            {socialBusy === "facebook" ? "..." : "Facebook"}
+          </button>
+        </div>
 
         <p className="text-sm text-slate-500 mt-5 text-center">
           No account? <Link to="/register" className="text-[#2563EB] font-medium hover:text-[#1D4ED8]">Register</Link>
