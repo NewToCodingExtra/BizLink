@@ -84,6 +84,9 @@ export default function Saved() {
               saved={true}
             />
           ))}
+          {opps.length > 0 && (
+            <p className="text-center text-xs text-slate-400 py-2">{opps.length} saved · End of your shortlist.</p>
+          )}
         </div>
       )}
 
