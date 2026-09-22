@@ -22,6 +22,7 @@ class DatabaseSeeder extends Seeder
                 'name' => 'Demo Entrepreneur',
                 'password' => Hash::make('password123'),
                 'avatar' => 'https://i.pravatar.cc/100?img=12',
+                'bio' => 'Aspiring franchise owner exploring food and service concepts across Luzon.',
                 'role' => 'entrepreneur',
                 'email_verified_at' => now(),
             ]
@@ -33,6 +34,7 @@ class DatabaseSeeder extends Seeder
                 'name' => 'BrewCraft Coffee',
                 'password' => Hash::make('password123'),
                 'avatar' => 'https://i.pravatar.cc/100?img=11',
+                'bio' => 'Specialty coffee franchise roasting single-origin Benguet beans since 2019.',
                 'role' => 'brand',
                 'email_verified_at' => now(),
             ]
@@ -57,6 +59,24 @@ class DatabaseSeeder extends Seeder
             'brand-16' => ['PrintFast Hub', 'printfast@bizlink.ph', 'https://i.pravatar.cc/100?img=59'],
         ];
 
+        $brandBios = [
+            'brand-2' => 'Direct K-beauty importer serving 2,000+ online sellers nationwide.',
+            'brand-3' => 'Boutique fitness chain with 12 branches and a 90% retention rate.',
+            'brand-4' => 'Nationwide last-mile network built for SME e-commerce.',
+            'brand-5' => 'HACCP-certified cloud kitchen feeding Metro Manila offices daily.',
+            'brand-6' => 'STEM and literacy programs trusted by 5,000+ parents.',
+            'brand-7' => 'Manila streetwear label dropping limited runs monthly.',
+            'brand-8' => 'Purified water stations serving 40 barangays and counting.',
+            'brand-9' => 'Coinless laundromats beside dorms and condos across the metro.',
+            'brand-10' => 'Premium lash and nail studios with certified artists.',
+            'brand-11' => 'Milk tea kiosks pouring 10,000 cups a day nationwide.',
+            'brand-12' => 'Contractor-priced hardware depot for provincial builders.',
+            'brand-13' => 'Community drugstores with licensed pharmacists on every shift.',
+            'brand-14' => 'Water-efficient car wash bays with fleet contracts.',
+            'brand-15' => 'Overnight bakery commissary supplying cafes before sunrise.',
+            'brand-16' => 'Rush printing hub for schools and business districts.',
+        ];
+
         foreach ($brandAccounts as $brandId => [$name, $email, $avatar]) {
             $brandUsers[$brandId] = User::firstOrCreate(
                 ['email' => $email],
@@ -64,6 +84,7 @@ class DatabaseSeeder extends Seeder
                     'name' => $name,
                     'password' => Hash::make('password123'),
                     'avatar' => $avatar,
+                    'bio' => $brandBios[$brandId] ?? null,
                     'role' => 'brand',
                     'email_verified_at' => now(),
                 ]

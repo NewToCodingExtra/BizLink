@@ -82,6 +82,24 @@ class AuthController extends Controller
         return response()->json(['user' => $this->userPayload($user)]);
     }
 
+    public function updateProfile(Request $request)
+    {
+        $data = $request->validate([
+            'name' => 'required|string|max:255',
+            'avatar' => 'nullable|string|max:2048',
+            'bio' => 'nullable|string|max:500',
+        ]);
+
+        $user = $request->user();
+        $user->forceFill([
+            'name' => $data['name'],
+            'avatar' => $data['avatar'] ?? $user->avatar,
+            'bio' => $data['bio'] ?? null,
+        ])->save();
+
+        return response()->json(['user' => $this->userPayload($user->fresh())]);
+    }
+
     private function userPayload(User $user): array
     {
         return [
@@ -89,6 +107,7 @@ class AuthController extends Controller
             'name' => $user->name,
             'email' => $user->email,
             'avatar' => $user->avatar,
+            'bio' => $user->bio,
             'role' => $user->role,
             'google_id' => $user->google_id,
             'created_at' => $user->created_at,
