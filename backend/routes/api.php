@@ -10,6 +10,7 @@ use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\OpportunityController;
 use App\Http\Controllers\PreferenceController;
 use App\Http\Controllers\StoryController;
+use App\Http\Controllers\UserController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
@@ -36,6 +37,8 @@ Route::get('/opportunities/{opportunity}', [OpportunityController::class, 'show'
 Route::get('/opportunities/{opportunity}/comments', [CommentController::class, 'index']);
 
 Route::get('/stories', [StoryController::class, 'index']);
+
+Route::get('/users/{id}', [UserController::class, 'show']);
 
 Route::post('/contact', [ContactController::class, 'submit']);
 
