@@ -283,8 +283,8 @@ npm run lint     # oxlint
 PRs welcome — keep design tokens in `index.css`, never hardcode hex. Follow existing component patterns (flat cards, `border-slate-100` + `shadow-sm`). Use XAMPP PHP first in `PATH` when running Composer (`$env:PATH = "C:\xampp\php;" + $env:PATH`) so `openssl` is available.
 
 ```powershell
-git clone https://github.com/NewToCodingExtra/BuseLink.git
-cd BuseLink
+git clone https://github.com/NewToCodingExtra/BizLink.git
+cd BizLink
 # backend in one terminal, frontend in another (see Quick Start)
 git checkout -b feat/your-feature
 # ... work, then PR
