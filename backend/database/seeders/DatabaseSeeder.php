@@ -17,7 +17,7 @@ class DatabaseSeeder extends Seeder
     public function run(): void
     {
         $entrepreneur = User::firstOrCreate(
-            ['email' => 'demo@buselink.ph'],
+            ['email' => 'demo@bizlink.ph'],
             [
                 'name' => 'Demo Entrepreneur',
                 'password' => Hash::make('password123'),
@@ -28,7 +28,7 @@ class DatabaseSeeder extends Seeder
         );
 
         $brandOwner = User::firstOrCreate(
-            ['email' => 'brand@buselink.ph'],
+            ['email' => 'brand@bizlink.ph'],
             [
                 'name' => 'BrewCraft Coffee',
                 'password' => Hash::make('password123'),
@@ -37,6 +37,31 @@ class DatabaseSeeder extends Seeder
                 'email_verified_at' => now(),
             ]
         );
+
+        $brandUsers = ['brand@bizlink.ph' => $brandOwner];
+        $brandAccounts = [
+            'brand-2' => ['Glow Skin Wholesale', 'glow@bizlink.ph', 'https://i.pravatar.cc/100?img=32'],
+            'brand-3' => ['FitForge Gym', 'fitforge@bizlink.ph', 'https://i.pravatar.cc/100?img=15'],
+            'brand-4' => ['ParcelGo Logistics', 'parcelgo@bizlink.ph', 'https://i.pravatar.cc/100?img=67'],
+            'brand-5' => ['TastyBox Meals', 'tastybox@bizlink.ph', 'https://i.pravatar.cc/100?img=23'],
+            'brand-6' => ['EduSpark Learning', 'eduspark@bizlink.ph', 'https://i.pravatar.cc/100?img=48'],
+            'brand-7' => ['UrbanThread', 'urbanthread@bizlink.ph', 'https://i.pravatar.cc/100?img=19'],
+            'brand-8' => ['AquaPure Water', 'aquapure@bizlink.ph', 'https://i.pravatar.cc/100?img=68'],
+        ];
+
+        foreach ($brandAccounts as $brandId => [$name, $email, $avatar]) {
+            $brandUsers[$brandId] = User::firstOrCreate(
+                ['email' => $email],
+                [
+                    'name' => $name,
+                    'password' => Hash::make('password123'),
+                    'avatar' => $avatar,
+                    'role' => 'brand',
+                    'email_verified_at' => now(),
+                ]
+            );
+        }
+        $brandUsers['brand-1'] = $brandOwner;
 
         $opportunities = [
             [
@@ -195,10 +220,15 @@ class DatabaseSeeder extends Seeder
 
         $oppModels = [];
         foreach ($opportunities as $attrs) {
-            $oppModels[] = Opportunity::firstOrCreate(
+            $owner = $brandUsers[$attrs['brand_id']] ?? $brandOwner;
+            $opp = Opportunity::firstOrCreate(
                 ['headline' => $attrs['headline']],
-                array_merge($attrs, ['user_id' => $brandOwner->id])
+                array_merge($attrs, ['user_id' => $owner->id])
             );
+            if ($opp->user_id !== $owner->id) {
+                $opp->update(['user_id' => $owner->id, 'brand_avatar' => $owner->avatar]);
+            }
+            $oppModels[] = $opp->fresh();
         }
 
         $byHeadline = [];
@@ -207,11 +237,11 @@ class DatabaseSeeder extends Seeder
         }
 
         $comments = [
-            ['headline' => 'Premium Coffee Franchise — High Foot Traffic Locations', 'author' => 'Mara Reyes', 'avatar' => 'https://i.pravatar.cc/100?img=5', 'text' => 'What is the typical payback period for the ₱850K?', 'seller' => false, 'user' => $entrepreneur],
-            ['headline' => 'Premium Coffee Franchise — High Foot Traffic Locations', 'author' => 'BrewCraft Coffee', 'avatar' => 'https://i.pravatar.cc/100?img=11', 'text' => 'Hi Mara — average payback is 18–22 months based on our Makati & QC branches. Happy to share P&L on inquiry.', 'seller' => true, 'user' => $brandOwner],
-            ['headline' => 'K-Beauty Wholesale Hub — 60% Margin Direct from Korea', 'author' => 'Jae Park', 'avatar' => 'https://i.pravatar.cc/100?img=8', 'text' => 'Is COD available for Visayas?', 'seller' => false, 'user' => $entrepreneur],
-            ['headline' => 'Boutique Fitness Franchise with Recurring Membership Model', 'author' => 'FitForge Gym', 'avatar' => 'https://i.pravatar.cc/100?img=15', 'text' => 'Launch promo: waived franchise fee for first 5 Mindanao partners this quarter.', 'seller' => true, 'user' => $brandOwner],
-            ['headline' => 'Cloud Kitchen Wholesale — Ready-to-Heat Meal Packs', 'author' => 'Carlo Tan', 'avatar' => 'https://i.pravatar.cc/100?img=33', 'text' => 'Do meals have Halal certification?', 'seller' => false, 'user' => $entrepreneur],
+            ['headline' => 'Premium Coffee Franchise — High Foot Traffic Locations', 'author' => 'Mara Reyes', 'avatar' => 'https://i.pravatar.cc/100?img=5', 'text' => 'What is the typical payback period for the ₱850K?', 'seller' => false, 'brand' => null],
+            ['headline' => 'Premium Coffee Franchise — High Foot Traffic Locations', 'author' => 'BrewCraft Coffee', 'avatar' => 'https://i.pravatar.cc/100?img=11', 'text' => 'Hi Mara — average payback is 18–22 months based on our Makati & QC branches. Happy to share P&L on inquiry.', 'seller' => true, 'brand' => 'brand-1'],
+            ['headline' => 'K-Beauty Wholesale Hub — 60% Margin Direct from Korea', 'author' => 'Jae Park', 'avatar' => 'https://i.pravatar.cc/100?img=8', 'text' => 'Is COD available for Visayas?', 'seller' => false, 'brand' => null],
+            ['headline' => 'Boutique Fitness Franchise with Recurring Membership Model', 'author' => 'FitForge Gym', 'avatar' => 'https://i.pravatar.cc/100?img=15', 'text' => 'Launch promo: waived franchise fee for first 5 Mindanao partners this quarter.', 'seller' => true, 'brand' => 'brand-3'],
+            ['headline' => 'Cloud Kitchen Wholesale — Ready-to-Heat Meal Packs', 'author' => 'Carlo Tan', 'avatar' => 'https://i.pravatar.cc/100?img=33', 'text' => 'Do meals have Halal certification?', 'seller' => false, 'brand' => null],
         ];
 
         foreach ($comments as $c) {
@@ -219,10 +249,11 @@ class DatabaseSeeder extends Seeder
             if (!$opp) {
                 continue;
             }
+            $commentUser = $c['brand'] ? ($brandUsers[$c['brand']] ?? $entrepreneur) : $entrepreneur;
             Comment::firstOrCreate(
                 ['opportunity_id' => $opp->id, 'author' => $c['author'], 'text' => $c['text']],
                 [
-                    'user_id' => $c['user']->id,
+                    'user_id' => $commentUser->id,
                     'avatar' => $c['avatar'],
                     'is_seller_reply' => $c['seller'],
                 ]
@@ -238,10 +269,11 @@ class DatabaseSeeder extends Seeder
         ];
 
         foreach ($stories as $s) {
+            $storyOwner = $brandUsers[$s['brand_id']] ?? $brandOwner;
             Story::firstOrCreate(
                 ['brand_name' => $s['brand_name'], 'caption' => $s['caption']],
                 [
-                    'user_id' => $brandOwner->id,
+                    'user_id' => $storyOwner->id,
                     'brand_id' => $s['brand_id'],
                     'avatar' => $s['avatar'],
                     'media_url' => $s['media_url'],
