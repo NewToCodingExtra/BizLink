@@ -2,6 +2,7 @@ import { useSearchParams } from "react-router-dom";
 import { useEffect, useState } from "react";
 import OpportunityCard from "../components/OpportunityCard";
 import ContactForm from "../components/ContactForm";
+import { FeedSkeleton } from "../components/Skeleton";
 import { inboxApi, opportunitiesApi } from "../api/client";
 import { useAuth } from "../context/AuthContext";
 
@@ -113,7 +114,7 @@ export default function Search() {
       {!q ? (
         <p className="text-sm text-slate-500 mt-6">Type to search franchises, wholesale and resell opportunities.</p>
       ) : loading ? (
-        <p className="text-sm text-slate-500 mt-6">Searching backend...</p>
+        <div className="mt-6"><FeedSkeleton count={2} /></div>
       ) : results.length === 0 ? (
         <div className="bg-white rounded-xl border border-slate-100 p-8 text-center mt-6">
           <p className="text-sm text-slate-600">No opportunities match “{q}” — try a broader term.</p>

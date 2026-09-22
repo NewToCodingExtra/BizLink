@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import OpportunityCard from "../components/OpportunityCard";
 import ContactForm from "../components/ContactForm";
+import { FeedSkeleton } from "../components/Skeleton";
 import { inboxApi, opportunitiesApi } from "../api/client";
 
 export default function Saved() {
@@ -64,7 +65,7 @@ export default function Saved() {
       <p className="text-sm text-slate-500 mt-1">Bookmarked posts from MySQL — quick access to your shortlist.</p>
       {error && <p className="mt-4 text-sm text-[#DC2626] bg-red-50 border border-red-100 rounded-lg px-3 py-2">{error}</p>}
       {loading ? (
-        <p className="text-sm text-slate-500 mt-6">Loading saved...</p>
+        <div className="mt-6"><FeedSkeleton count={2} /></div>
       ) : (
         <div className="mt-6 space-y-4">
           {opps.length === 0 && <div className="bg-white rounded-xl border border-slate-100 p-8 text-center"><p className="text-sm text-slate-500">No saves yet. Tap ☆ Save on any card.</p></div>}

@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { inboxApi } from "../api/client";
+import { ListCardSkeleton } from "../components/Skeleton";
 
 export default function MessagesInbox() {
   const [conversations, setConversations] = useState([]);
@@ -31,7 +32,7 @@ export default function MessagesInbox() {
       <p className="text-sm text-slate-500 mt-1">Private buyer ↔ seller threads from MySQL. Separate from public comments.</p>
       {error && <p className="mt-4 text-sm text-[#DC2626] bg-red-50 border border-red-100 rounded-lg px-3 py-2">{error}</p>}
       {loading ? (
-        <p className="text-sm text-slate-500 mt-6">Loading conversations...</p>
+        <div className="mt-6"><ListCardSkeleton rows={4} /></div>
       ) : (
         <div className="mt-6 bg-white rounded-xl border border-slate-100 shadow-sm divide-y divide-slate-100 overflow-hidden">
           {conversations.length === 0 && <p className="p-8 text-center text-sm text-slate-400">No conversations yet — tap Inquire on any card.</p>}

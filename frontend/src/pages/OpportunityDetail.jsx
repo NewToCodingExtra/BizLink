@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useParams, Link, useNavigate } from "react-router-dom";
 import CommentThread from "../components/CommentThread";
 import ContactForm from "../components/ContactForm";
+import { OpportunityDetailSkeleton } from "../components/Skeleton";
 import { inboxApi, opportunitiesApi } from "../api/client";
 import { useAuth } from "../context/AuthContext";
 
@@ -69,7 +70,7 @@ export default function OpportunityDetail() {
     setComments((prev) => [...prev, res.data]);
   };
 
-  if (loading) return <div className="max-w-2xl mx-auto py-12 text-center"><p className="text-slate-500">Loading opportunity...</p></div>;
+  if (loading) return <OpportunityDetailSkeleton />;
   if (error && !opp) return <div className="max-w-2xl mx-auto py-12 text-center"><p className="text-slate-500">{error}</p><Link to="/feed" className="text-[#2563EB] text-sm font-medium">Back to feed</Link></div>;
   if (!opp) return <div className="max-w-2xl mx-auto py-12 text-center"><p className="text-slate-500">Opportunity not found.</p><Link to="/feed" className="text-[#2563EB] text-sm font-medium">Back to feed</Link></div>;
 

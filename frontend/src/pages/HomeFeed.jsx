@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import StoriesBar from "../components/StoriesBar";
 import OpportunityFeed from "../components/OpportunityFeed";
 import ContactForm from "../components/ContactForm";
+import { FeedSkeleton, StoriesBarSkeleton } from "../components/Skeleton";
 import { inboxApi, opportunitiesApi, preferencesApi, storiesApi } from "../api/client";
 import { useAuth } from "../context/AuthContext";
 
@@ -137,12 +138,15 @@ export default function HomeFeed() {
           <div className="mb-4 bg-amber-50 border border-amber-100 rounded-xl px-4 py-3 flex flex-wrap items-center gap-3">
             <p className="text-sm text-amber-800 flex-1 min-w-[200px]">Browsing as guest — feed is live from Laravel + MySQL. Log in to like, save, comment and inquire.</p>
             <Link to="/login" className="px-4 py-1.5 rounded-lg bg-[#0B1F3A] text-white text-sm font-medium">Log in</Link>
-            <Link to="/" className="px-4 py-1.5 rounded-lg bg-white border border-amber-200 text-amber-800 text-sm font-medium">About BuseLink</Link>
+            <Link to="/" className="px-4 py-1.5 rounded-lg bg-white border border-amber-200 text-amber-800 text-sm font-medium">About BizLink</Link>
           </div>
         )}
         {error && <p className="mb-4 text-sm text-[#DC2626] bg-red-50 border border-red-100 rounded-lg px-3 py-2">{error}</p>}
         {loading ? (
-          <p className="text-sm text-slate-500 text-center py-12">Loading feed from backend...</p>
+          <>
+            <StoriesBarSkeleton />
+            <FeedSkeleton count={3} />
+          </>
         ) : (
           <>
             <StoriesBar stories={stories} />

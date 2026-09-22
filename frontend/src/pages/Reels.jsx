@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import ReelCard from "../components/ReelCard";
 import ContactForm from "../components/ContactForm";
+import { ReelsSkeleton } from "../components/Skeleton";
 import { inboxApi, opportunitiesApi } from "../api/client";
 import { useAuth } from "../context/AuthContext";
 
@@ -44,7 +45,7 @@ export default function Reels() {
     }
   };
 
-  if (loading) return <div className="max-w-md mx-auto py-12 text-center"><p className="text-slate-500">Loading reels...</p></div>;
+  if (loading) return <ReelsSkeleton count={2} />;
   if (error && reels.length === 0) return <div className="max-w-md mx-auto py-12 text-center"><p className="text-slate-500">{error}</p></div>;
   if (reels.length === 0) return <div className="max-w-md mx-auto py-12 text-center"><p className="text-slate-500">No pitch reels yet — post a video opportunity.</p></div>;
 
