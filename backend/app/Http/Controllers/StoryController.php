@@ -22,6 +22,7 @@ class StoryController extends Controller
             'brand_name' => 'sometimes|string|max:255',
             'media_url' => 'required|string|max:2048',
             'caption' => 'nullable|string|max:1024',
+            'duration' => 'nullable|numeric|max:60', // max 60 seconds
         ]);
 
         $user = $request->user();
