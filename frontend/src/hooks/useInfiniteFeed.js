@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { opportunitiesApi } from "../api/client";
 
-export function useInfiniteFeed({ perPage = 8, type = "All", q = "", enabled = true } = {}) {
+export function useInfiniteFeed({ perPage = 8, type = "All", q = "", mediaType, enabled = true } = {}) {
   const [items, setItems] = useState([]);
   const [page, setPage] = useState(1);
   const [lastPage, setLastPage] = useState(1);
@@ -25,6 +25,7 @@ export function useInfiniteFeed({ perPage = 8, type = "All", q = "", enabled = t
         else params.type = type;
       }
       if (q && q.trim()) params.q = q.trim();
+      if (mediaType) params.mediaType = mediaType;
       const res = await opportunitiesApi.list({ ...params, page: pageNum });
       const data = res.data || [];
       setItems((prev) => (append ? [...prev, ...data.filter((d) => !prev.some((p) => String(p.id) === String(d.id)))] : data));

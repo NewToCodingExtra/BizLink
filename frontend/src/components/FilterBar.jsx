@@ -8,7 +8,7 @@ export default function FilterBar({ active, onChange }) {
           <button
             key={c}
             onClick={() => onChange(c)}
-            className={`shrink-0 px-4 py-1.5 rounded-full text-sm font-medium border transition-colors duration-150 ${isActive ? "bg-[#0B1F3A] text-white border-[#0B1F3A]" : "bg-white text-slate-600 border-slate-200 hover:bg-slate-50"}`}
+            className={`shrink-0 px-4 py-1.5 rounded-full text-sm font-medium border transition-colors duration-150 ${isActive ? "bg-primary text-white border-[#0B1F3A]" : "bg-surface text-text-secondary border-border hover:bg-bg"}`}
           >
             {c}
           </button>

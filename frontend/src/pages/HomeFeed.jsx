@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import StoriesBar from "../components/StoriesBar";
 import OpportunityFeed from "../components/OpportunityFeed";
 import ContactForm from "../components/ContactForm";
+import Modal from "../components/Modal";
 import { FeedSkeleton, StoriesBarSkeleton } from "../components/Skeleton";
 import { inboxApi, opportunitiesApi, preferencesApi, storiesApi } from "../api/client";
 import { useInfiniteFeed } from "../hooks/useInfiniteFeed";
@@ -66,8 +67,20 @@ export default function HomeFeed() {
     }
     return () => {
       cancelled = true;
+      delete window.onHideOpp;
     };
   }, [user]);
+
+  useEffect(() => {
+    window.onHideOpp = async (id) => {
+      try {
+        await opportunitiesApi.hide(id);
+        setOpportunities(prev => prev.filter(o => String(o.id) !== String(id)));
+      } catch (err) {
+        setError("Failed to hide opportunity.");
+      }
+    };
+  }, [setOpportunities]);
 
   const comments = useMemo(() => opportunities.flatMap((o) => o.comments || []), [opportunities]);
   const savedIds = useMemo(() => opportunities.filter((o) => o.saved).map((o) => o.id), [opportunities]);
@@ -140,8 +153,8 @@ export default function HomeFeed() {
         {!user && (
           <div className="mb-4 bg-amber-50 border border-amber-100 rounded-xl px-4 py-3 flex flex-wrap items-center gap-3">
             <p className="text-sm text-amber-800 flex-1 min-w-[200px]">Browsing as guest — feed is live from Laravel + MySQL. Log in to like, save, comment and inquire.</p>
-            <Link to="/login" className="px-4 py-1.5 rounded-lg bg-[#0B1F3A] text-white text-sm font-medium">Log in</Link>
-            <Link to="/" className="px-4 py-1.5 rounded-lg bg-white border border-amber-200 text-amber-800 text-sm font-medium">About BizLink</Link>
+            <Link to="/login" className="px-4 py-1.5 rounded-lg bg-primary text-white text-sm font-medium">Log in</Link>
+            <Link to="/" className="px-4 py-1.5 rounded-lg bg-surface border border-amber-200 text-amber-800 text-sm font-medium">About BizLink</Link>
           </div>
         )}
         {error && <p className="mb-4 text-sm text-[#DC2626] bg-red-50 border border-red-100 rounded-lg px-3 py-2">{error}</p>}
@@ -174,14 +187,13 @@ export default function HomeFeed() {
         )}
       </div>
 
-      {isModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-          <div className="absolute inset-0 bg-[#0B1F3A]/60 backdrop-blur-sm" onClick={() => setIsModalOpen(false)} />
-          <div className="relative w-full max-w-lg max-h-[90vh] overflow-auto">
-            <ContactForm prefill={selectedPost} onClose={() => setIsModalOpen(false)} onSubmit={handleInquirySubmit} />
-          </div>
-        </div>
-      )}
+      <Modal 
+        isOpen={isModalOpen} 
+        onClose={() => setIsModalOpen(false)} 
+        maxWidth="max-w-lg"
+      >
+        <ContactForm prefill={selectedPost} onClose={() => setIsModalOpen(false)} onSubmit={handleInquirySubmit} compact />
+      </Modal>
     </div>
   );
 }
