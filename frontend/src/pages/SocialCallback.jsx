@@ -50,9 +50,9 @@ export default function SocialCallback() {
   if (error) {
     return (
       <div className="max-w-md mx-auto px-4 py-12">
-        <div className="bg-white rounded-xl border border-slate-100 shadow-sm p-6 text-center">
+        <div className="bg-surface rounded-xl border border-border shadow-sm p-6 text-center">
           <p className="text-sm text-[#DC2626] bg-red-50 border border-red-100 rounded-lg px-3 py-2">{error}</p>
-          <Link to="/login" className="inline-block mt-4 px-5 py-2.5 rounded-lg bg-[#0B1F3A] text-white text-sm font-medium">Back to login</Link>
+          <Link to="/login" className="inline-block mt-4 px-5 py-2.5 rounded-lg bg-primary text-white text-sm font-medium">Back to login</Link>
         </div>
       </div>
     );
@@ -60,7 +60,7 @@ export default function SocialCallback() {
 
   return (
     <div className="max-w-md mx-auto px-4 py-16 text-center">
-      <p className="text-sm text-slate-500">Finishing {provider === "facebook" ? "Facebook" : "Google"} sign-in...</p>
+      <p className="text-sm text-text-secondary">Finishing {provider === "facebook" ? "Facebook" : "Google"} sign-in...</p>
     </div>
   );
 }

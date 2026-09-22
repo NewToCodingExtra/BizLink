@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import OpportunityCard from "../components/OpportunityCard";
 import ContactForm from "../components/ContactForm";
+import Modal from "../components/Modal";
 import { FeedSkeleton, ProfileHeaderSkeleton } from "../components/Skeleton";
 import { followsApi, inboxApi, opportunitiesApi, usersApi } from "../api/client";
 import { useAuth } from "../context/AuthContext";
@@ -110,8 +111,8 @@ export default function Profile() {
   if (id === "me" && !viewer) {
     return (
       <div className="max-w-2xl mx-auto px-4 sm:px-6 py-12 text-center">
-        <p className="text-slate-500">Log in to view your profile.</p>
-        <Link to="/login" className="inline-block mt-4 px-5 py-2.5 rounded-lg bg-[#0B1F3A] text-white text-sm font-medium">Log in</Link>
+        <p className="text-text-secondary">Log in to view your profile.</p>
+        <Link to="/login" className="inline-block mt-4 px-5 py-2.5 rounded-lg bg-primary text-white text-sm font-medium">Log in</Link>
       </div>
     );
   }
@@ -126,11 +127,11 @@ export default function Profile() {
   }
 
   if (error && !profileUser) {
-    return <div className="max-w-2xl mx-auto py-12 px-4 text-center text-slate-500">{error}</div>;
+    return <div className="max-w-2xl mx-auto py-12 px-4 text-center text-text-secondary">{error}</div>;
   }
 
   if (!profileUser) {
-    return <div className="max-w-2xl mx-auto py-12 text-center text-slate-500">Profile not found.</div>;
+    return <div className="max-w-2xl mx-auto py-12 text-center text-text-secondary">Profile not found.</div>;
   }
 
   const isOwn = viewer && String(viewer.id) === String(profileUser.id);
@@ -139,26 +140,26 @@ export default function Profile() {
     <div className="max-w-2xl mx-auto px-4 sm:px-6 py-6">
       {error && <p className="mb-4 text-sm text-[#DC2626] bg-red-50 border border-red-100 rounded-lg px-3 py-2">{error}</p>}
 
-      <div className="bg-white rounded-xl border border-slate-100 shadow-sm overflow-hidden">
+      <div className="bg-surface rounded-xl border border-border shadow-sm overflow-hidden">
         <div className="h-24 bg-gradient-to-r from-[#0B1F3A] via-[#1E3A5F] to-[#2563EB]" />
         <div className="p-6 pt-0">
-          <img src={profileUser.avatar} alt={profileUser.name} className="w-20 h-20 rounded-full object-cover border-4 border-white -mt-10 bg-slate-100" />
+          <img src={profileUser.avatar} alt={profileUser.name} className="w-20 h-20 rounded-full object-cover border-4 border-white -mt-10 bg-bg" />
           <div className="mt-3 flex flex-wrap items-center gap-2">
-            <h1 className="text-xl font-semibold text-[#0B1F3A]">{profileUser.name}</h1>
+            <h1 className="text-xl font-semibold text-primary">{profileUser.name}</h1>
             {profileUser.role === "brand" && <span className="text-xs bg-green-50 text-[#16A34A] border border-green-100 rounded-full px-2 py-0.5 font-bold">✓ Brand</span>}
-            {isOwn && <span className="text-xs bg-slate-100 text-slate-600 border border-slate-200 rounded-full px-2 py-0.5">You</span>}
+            {isOwn && <span className="text-xs bg-bg text-text-secondary border border-border rounded-full px-2 py-0.5">You</span>}
           </div>
-          {profileUser.bio && <p className="text-sm text-slate-600 mt-2 leading-relaxed">{profileUser.bio}</p>}
+          {profileUser.bio && <p className="text-sm text-text-secondary mt-2 leading-relaxed">{profileUser.bio}</p>}
           <div className="mt-3 flex gap-5 text-sm">
-            <span><strong className="text-slate-900">{stats.posts}</strong> <span className="text-slate-500">posts</span></span>
-            <span><strong className="text-slate-900">{stats.stories}</strong> <span className="text-slate-500">stories</span></span>
-            <span className="text-slate-500 capitalize">{profileUser.role}</span>
+            <span><strong className="text-text-primary">{stats.posts}</strong> <span className="text-text-secondary">posts</span></span>
+            <span><strong className="text-text-primary">{stats.stories}</strong> <span className="text-text-secondary">stories</span></span>
+            <span className="text-text-secondary capitalize">{profileUser.role}</span>
           </div>
           {isOwn && (
-            <Link to="/profile/edit" className="inline-block mt-4 px-5 py-1.5 rounded-full text-sm font-medium border bg-white text-slate-700 border-slate-200 hover:bg-slate-50 transition-colors">Edit profile</Link>
+            <Link to="/profile/edit" className="inline-block mt-4 px-5 py-1.5 rounded-full text-sm font-medium border bg-surface text-text-primary border-border hover:bg-bg transition-colors">Edit profile</Link>
           )}
           {!isOwn && viewer && (
-            <button onClick={toggleFollow} className={`mt-4 px-5 py-1.5 rounded-full text-sm font-medium border transition-colors ${following ? "bg-[#0B1F3A] text-white border-[#0B1F3A]" : "bg-white text-slate-700 border-slate-200 hover:bg-slate-50"}`}>
+            <button onClick={toggleFollow} className={`mt-4 px-5 py-1.5 rounded-full text-sm font-medium border transition-colors ${following ? "bg-primary text-white border-[#0B1F3A]" : "bg-surface text-text-primary border-border hover:bg-bg"}`}>
               {following ? "Following" : "Follow"}
             </button>
           )}
@@ -166,13 +167,13 @@ export default function Profile() {
       </div>
 
       {stories.length > 0 && (
-        <div className="mt-4 bg-white rounded-xl border border-slate-100 shadow-sm p-4">
-          <p className="text-xs font-semibold tracking-widest text-slate-400">STORIES BY {profileUser.name.toUpperCase()}</p>
+        <div className="mt-4 bg-surface rounded-xl border border-border shadow-sm p-4">
+          <p className="text-xs font-semibold tracking-widest text-text-secondary">STORIES BY {profileUser.name.toUpperCase()}</p>
           <div className="mt-3 flex gap-3 overflow-auto pb-1">
             {stories.map((s) => (
               <Link key={s.id} to={`/stories/${s.id}`} className="shrink-0 text-center group">
-                <img src={s.mediaUrl} alt={s.caption} className="w-24 h-32 rounded-xl object-cover border border-slate-100 group-hover:shadow-md transition" />
-                <span className="block mt-1 text-[11px] text-slate-500 truncate w-24">{s.caption}</span>
+                <img src={s.mediaUrl} alt={s.caption} className="w-24 h-32 rounded-xl object-cover border border-border group-hover:shadow-md transition" />
+                <span className="block mt-1 text-[11px] text-text-secondary truncate w-24">{s.caption}</span>
               </Link>
             ))}
           </div>
@@ -180,10 +181,10 @@ export default function Profile() {
       )}
 
       <div className="mt-6 space-y-4">
-        <h2 className="text-sm font-semibold tracking-widest text-slate-400">POSTS BY {profileUser.name.toUpperCase()}</h2>
+        <h2 className="text-sm font-semibold tracking-widest text-text-secondary">POSTS BY {profileUser.name.toUpperCase()}</h2>
         {opps.length === 0 && (
-          <div className="bg-white rounded-xl border border-slate-100 p-8 text-center">
-            <p className="text-sm text-slate-500">No posts yet.</p>
+          <div className="bg-surface rounded-xl border border-border p-8 text-center">
+            <p className="text-sm text-text-secondary">No posts yet.</p>
           </div>
         )}
         {opps.map((o) => (
@@ -206,25 +207,25 @@ export default function Profile() {
           />
         ))}
         {opps.length > 0 && (
-          <p className="text-center text-xs text-slate-400 py-2">End of {profileUser.name}&rsquo;s posts.</p>
+          <p className="text-center text-xs text-text-secondary py-2">End of {profileUser.name}&rsquo;s posts.</p>
         )}
       </div>
 
-      {isModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-          <div className="absolute inset-0 bg-[#0B1F3A]/60 backdrop-blur-sm" onClick={() => setIsModalOpen(false)} />
-          <div className="relative w-full max-w-lg max-h-[90vh] overflow-auto">
-            <ContactForm
-              prefill={selectedPost}
-              onClose={() => setIsModalOpen(false)}
-              onSubmit={async ({ message }) => {
-                await inboxApi.inquire({ opportunity_id: selectedPost.id, message });
-                setIsModalOpen(false);
-              }}
-            />
-          </div>
-        </div>
-      )}
+      <Modal 
+        isOpen={isModalOpen} 
+        onClose={() => setIsModalOpen(false)} 
+        maxWidth="max-w-lg"
+      >
+        <ContactForm
+          prefill={selectedPost}
+          onClose={() => setIsModalOpen(false)}
+          onSubmit={async ({ message }) => {
+            await inboxApi.inquire({ opportunity_id: selectedPost.id, message });
+            setIsModalOpen(false);
+          }}
+          compact
+        />
+      </Modal>
     </div>
   );
 }

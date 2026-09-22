@@ -2,7 +2,9 @@ import { useSearchParams } from "react-router-dom";
 import { useEffect, useMemo, useState } from "react";
 import OpportunityCard from "../components/OpportunityCard";
 import ContactForm from "../components/ContactForm";
+import Modal from "../components/Modal";
 import { FeedSkeleton, OpportunityCardSkeleton } from "../components/Skeleton";
+import ProgressBar from "../components/ProgressBar";
 import { inboxApi, opportunitiesApi } from "../api/client";
 import { useInfiniteFeed } from "../hooks/useInfiniteFeed";
 import { useAuth } from "../context/AuthContext";
@@ -86,32 +88,28 @@ export default function Search() {
 
   return (
     <div className="max-w-2xl mx-auto px-4 sm:px-6 py-6">
-      <h1 className="text-2xl font-semibold text-[#0B1F3A]">Search</h1>
+      <h1 className="text-2xl font-semibold text-primary">Search</h1>
       <div className="mt-4 relative">
-        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400">
+        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-text-secondary">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><circle cx="11" cy="11" r="7" /><path d="M20 20L16.5 16.5" /></svg>
         </span>
-        <input value={input} onChange={(e) => setInput(e.target.value)} placeholder="Search brands, categories..." className="w-full border border-slate-200 focus:border-[#2563EB] focus:ring-2 focus:ring-blue-100 outline-none rounded-lg pl-9 pr-4 py-3 text-sm bg-white" />
+        <input value={input} onChange={(e) => setInput(e.target.value)} placeholder="Search brands, categories..." className="w-full border border-border focus:border-[#2563EB] focus:ring-2 focus:ring-blue-100 outline-none rounded-lg pl-9 pr-4 py-3 text-sm bg-surface" />
       </div>
 
       {error && <p className="mt-4 text-sm text-[#DC2626] bg-red-50 border border-red-100 rounded-lg px-3 py-2">{error}</p>}
 
       {!q ? (
-        <p className="text-sm text-slate-500 mt-6">Type to search franchises, wholesale and resell opportunities.</p>
+        <p className="text-sm text-text-secondary mt-6">Type to search franchises, wholesale and resell opportunities.</p>
       ) : loading && results.length === 0 ? (
         <div className="mt-6"><FeedSkeleton count={2} /></div>
       ) : results.length === 0 ? (
-        <div className="bg-white rounded-xl border border-slate-100 p-8 text-center mt-6">
-          <p className="text-sm text-slate-600">No opportunities match “{q}” — try a broader term.</p>
+        <div className="bg-surface rounded-xl border border-border p-8 text-center mt-6">
+          <p className="text-sm text-text-secondary">No opportunities match “{q}” — try a broader term.</p>
         </div>
       ) : (
         <div className="mt-6 space-y-4">
-          {refreshing && (
-            <div className="h-1 rounded-full bg-blue-100 overflow-hidden" role="status" aria-label="Refreshing results">
-              <div className="h-full w-1/2 rounded-full bg-[#2563EB] animate-pulse" />
-            </div>
-          )}
-          <p className="text-sm text-slate-500">{(hasMore || loadingMore) ? `Showing ${results.length} of ${total} result${total !== 1 ? "s" : ""}` : `${total} result${total !== 1 ? "s" : ""}`} for “{q}”</p>
+          {refreshing && <ProgressBar ariaLabel="Refreshing results" />}
+          <p className="text-sm text-text-secondary">{(hasMore || loadingMore) ? `Showing ${results.length} of ${total} result${total !== 1 ? "s" : ""}` : `${total} result${total !== 1 ? "s" : ""}`} for “{q}”</p>
           {results.map((o) => (
             <OpportunityCard key={o.id} opp={o} comments={comments} onToggleLike={onToggleLike} onToggleSave={onToggleSave} onAddComment={onAddComment} onInquire={onInquire} saved={savedIds.map(String).includes(String(o.id))} />
           ))}
@@ -122,25 +120,25 @@ export default function Search() {
             </>
           )}
           <div ref={sentinelRef} aria-hidden="true" className="h-2" />
-          {!hasMore && !loadingMore && <p className="text-center text-xs text-slate-400 py-2">End of results.</p>}
+          {!hasMore && !loadingMore && <p className="text-center text-xs text-text-secondary py-2">End of results.</p>}
         </div>
       )}
 
-      {isModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-          <div className="absolute inset-0 bg-[#0B1F3A]/60 backdrop-blur-sm" onClick={() => setIsModalOpen(false)} />
-          <div className="relative w-full max-w-lg max-h-[90vh] overflow-auto">
-            <ContactForm
-              prefill={selectedPost}
-              onClose={() => setIsModalOpen(false)}
-              onSubmit={async ({ message }) => {
-                await inboxApi.inquire({ opportunity_id: selectedPost.id, message });
-                setIsModalOpen(false);
-              }}
-            />
-          </div>
-        </div>
-      )}
+      <Modal 
+        isOpen={isModalOpen} 
+        onClose={() => setIsModalOpen(false)} 
+        maxWidth="max-w-lg"
+      >
+        <ContactForm
+          prefill={selectedPost}
+          onClose={() => setIsModalOpen(false)}
+          onSubmit={async ({ message }) => {
+            await inboxApi.inquire({ opportunity_id: selectedPost.id, message });
+            setIsModalOpen(false);
+          }}
+          compact
+        />
+      </Modal>
     </div>
   );
 }

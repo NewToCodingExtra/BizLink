@@ -8,7 +8,7 @@ export default function RequireAuth({ children }) {
   if (loading) {
     return (
       <div className="max-w-2xl mx-auto py-16 text-center">
-        <p className="text-sm text-slate-500">Checking session...</p>
+        <p className="text-sm text-text-secondary">Checking session...</p>
       </div>
     );
   }

@@ -59,42 +59,42 @@ export default function Preferences() {
     }
   };
 
-  if (loading) return <div className="max-w-2xl mx-auto py-12 text-center text-slate-500">Loading preferences...</div>;
+  if (loading) return <div className="max-w-2xl mx-auto py-12 text-center text-text-secondary">Loading preferences...</div>;
 
   return (
     <div className="max-w-2xl mx-auto px-4 sm:px-6 py-6">
-      <h1 className="text-2xl font-semibold text-[#0B1F3A]">Preferences</h1>
-      <p className="text-sm text-slate-500 mt-1">Persisted in MySQL. Drives the auto-sort bonus on the feed.</p>
+      <h1 className="text-2xl font-semibold text-primary">Preferences</h1>
+      <p className="text-sm text-text-secondary mt-1">Persisted in MySQL. Drives the auto-sort bonus on the feed.</p>
 
       {error && <p className="mt-4 text-sm text-[#DC2626] bg-red-50 border border-red-100 rounded-lg px-3 py-2">{error}</p>}
       {saved && <p className="mt-4 text-sm text-[#16A34A] bg-green-50 border border-green-100 rounded-lg px-3 py-2">Preferences saved.</p>}
 
-      <div className="mt-6 bg-white rounded-xl border border-slate-100 shadow-sm p-6 space-y-6">
+      <div className="mt-6 bg-surface rounded-xl border border-border shadow-sm p-6 space-y-6">
         <div>
-          <p className="text-sm font-semibold text-slate-900">Preferred categories</p>
+          <p className="text-sm font-semibold text-text-primary">Preferred categories</p>
           <div className="mt-3 flex flex-wrap gap-2">
             {categories.map((c) => {
               const active = prefs.categories.includes(c);
               return (
-                <button key={c} onClick={() => toggleCategory(c)} className={`px-3 py-1.5 rounded-full text-sm font-medium border ${active ? "bg-[#2563EB] text-white border-[#2563EB]" : "bg-white text-slate-600 border-slate-200"}`}>{c}</button>
+                <button key={c} onClick={() => toggleCategory(c)} className={`px-3 py-1.5 rounded-full text-sm font-medium border ${active ? "bg-action text-white border-[#2563EB]" : "bg-surface text-text-secondary border-border"}`}>{c}</button>
               );
             })}
           </div>
         </div>
 
         <div>
-          <label className="text-sm font-medium text-slate-700">Budget range (₱)</label>
+          <label className="text-sm font-medium text-text-primary">Budget range (₱)</label>
           <div className="mt-2 flex gap-2">
-            <input value={prefs.budgetMin} onChange={(e) => setPrefs((p) => ({ ...p, budgetMin: e.target.value }))} placeholder="Min" className="flex-1 border border-slate-200 rounded-lg px-3 py-2.5 text-sm" />
-            <span className="grid place-items-center text-slate-400">—</span>
-            <input value={prefs.budgetMax} onChange={(e) => setPrefs((p) => ({ ...p, budgetMax: e.target.value }))} placeholder="Max" className="flex-1 border border-slate-200 rounded-lg px-3 py-2.5 text-sm" />
+            <input value={prefs.budgetMin} onChange={(e) => setPrefs((p) => ({ ...p, budgetMin: e.target.value }))} placeholder="Min" className="flex-1 border border-border rounded-lg px-3 py-2.5 text-sm" />
+            <span className="grid place-items-center text-text-secondary">—</span>
+            <input value={prefs.budgetMax} onChange={(e) => setPrefs((p) => ({ ...p, budgetMax: e.target.value }))} placeholder="Max" className="flex-1 border border-border rounded-lg px-3 py-2.5 text-sm" />
           </div>
-          <p className="text-xs text-slate-400 mt-2">Used to score opportunities in the feed.</p>
+          <p className="text-xs text-text-secondary mt-2">Used to score opportunities in the feed.</p>
         </div>
 
         <div className="flex gap-2">
-          <button onClick={save} disabled={saving} className="px-5 py-2 rounded-lg bg-[#2563EB] hover:bg-[#1D4ED8] disabled:bg-blue-300 text-white text-sm font-medium">{saving ? "Saving..." : "Save preferences"}</button>
-          <button onClick={reset} className="px-4 py-2 rounded-lg bg-white border border-slate-200 text-slate-600 text-sm font-medium">Reset</button>
+          <button onClick={save} disabled={saving} className="px-5 py-2 rounded-lg bg-action hover:bg-action-hover disabled:bg-blue-300 text-white text-sm font-medium">{saving ? "Saving..." : "Save preferences"}</button>
+          <button onClick={reset} className="px-4 py-2 rounded-lg bg-surface border border-border text-text-secondary text-sm font-medium">Reset</button>
         </div>
       </div>
     </div>

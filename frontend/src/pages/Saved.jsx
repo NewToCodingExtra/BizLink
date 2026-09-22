@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import OpportunityCard from "../components/OpportunityCard";
 import ContactForm from "../components/ContactForm";
+import Modal from "../components/Modal";
 import { FeedSkeleton } from "../components/Skeleton";
 import { inboxApi, opportunitiesApi } from "../api/client";
 
@@ -61,14 +62,14 @@ export default function Saved() {
 
   return (
     <div className="max-w-2xl mx-auto px-4 sm:px-6 py-6">
-      <h1 className="text-2xl font-semibold text-[#0B1F3A]">Saved Opportunities</h1>
-      <p className="text-sm text-slate-500 mt-1">Bookmarked posts from MySQL — quick access to your shortlist.</p>
+      <h1 className="text-2xl font-semibold text-primary">Saved Opportunities</h1>
+      <p className="text-sm text-text-secondary mt-1">Bookmarked posts from MySQL — quick access to your shortlist.</p>
       {error && <p className="mt-4 text-sm text-[#DC2626] bg-red-50 border border-red-100 rounded-lg px-3 py-2">{error}</p>}
       {loading ? (
         <div className="mt-6"><FeedSkeleton count={2} /></div>
       ) : (
         <div className="mt-6 space-y-4">
-          {opps.length === 0 && <div className="bg-white rounded-xl border border-slate-100 p-8 text-center"><p className="text-sm text-slate-500">No saves yet. Tap ☆ Save on any card.</p></div>}
+          {opps.length === 0 && <div className="bg-surface rounded-xl border border-border p-8 text-center"><p className="text-sm text-text-secondary">No saves yet. Tap ☆ Save on any card.</p></div>}
           {opps.map((o) => (
             <OpportunityCard
               key={o.id}
@@ -85,26 +86,26 @@ export default function Saved() {
             />
           ))}
           {opps.length > 0 && (
-            <p className="text-center text-xs text-slate-400 py-2">{opps.length} saved · End of your shortlist.</p>
+            <p className="text-center text-xs text-text-secondary py-2">{opps.length} saved · End of your shortlist.</p>
           )}
         </div>
       )}
 
-      {isModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-          <div className="absolute inset-0 bg-[#0B1F3A]/60 backdrop-blur-sm" onClick={() => setIsModalOpen(false)} />
-          <div className="relative w-full max-w-lg max-h-[90vh] overflow-auto">
-            <ContactForm
-              prefill={selectedPost}
-              onClose={() => setIsModalOpen(false)}
-              onSubmit={async ({ message }) => {
-                await inboxApi.inquire({ opportunity_id: selectedPost.id, message });
-                setIsModalOpen(false);
-              }}
-            />
-          </div>
-        </div>
-      )}
+      <Modal 
+        isOpen={isModalOpen} 
+        onClose={() => setIsModalOpen(false)} 
+        maxWidth="max-w-lg"
+      >
+        <ContactForm
+          prefill={selectedPost}
+          onClose={() => setIsModalOpen(false)}
+          onSubmit={async ({ message }) => {
+            await inboxApi.inquire({ opportunity_id: selectedPost.id, message });
+            setIsModalOpen(false);
+          }}
+          compact
+        />
+      </Modal>
     </div>
   );
 }

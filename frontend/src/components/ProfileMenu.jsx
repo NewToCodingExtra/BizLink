@@ -1,6 +1,9 @@
-import { useEffect, useRef, useState } from "react";
+import { useContext, useEffect, useRef, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
+import { ThemeContext } from "../App";
+import Modal from "./Modal";
+import Button from "./Button";
 
 function UserIcon() {
   return (
@@ -31,10 +34,12 @@ function LogoutIcon() {
 
 export default function ProfileMenu({ onAction }) {
   const { user, logout } = useAuth();
+  const { isDark, setIsDark } = useContext(ThemeContext);
   const navigate = useNavigate();
   const location = useLocation();
   const [open, setOpen] = useState(false);
   const [busy, setBusy] = useState(false);
+  const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
   const rootRef = useRef(null);
 
   useEffect(() => {
@@ -52,12 +57,13 @@ export default function ProfileMenu({ onAction }) {
 
   if (!user) return null;
 
-  const handleLogout = async () => {
+  const handleConfirmLogout = async () => {
     setBusy(true);
     try {
       await logout();
     } finally {
       setBusy(false);
+      setShowLogoutConfirm(false);
       setOpen(false);
       if (onAction) onAction();
       navigate("/", { replace: true });
@@ -65,66 +71,114 @@ export default function ProfileMenu({ onAction }) {
   };
 
   const itemClass =
-    "w-full flex items-center gap-3 px-4 py-2.5 text-sm font-medium text-slate-700 hover:bg-slate-50 transition-colors text-left";
+    "w-full flex items-center gap-3 px-4 py-2.5 text-sm font-medium text-[var(--color-text-primary)] hover:bg-[var(--color-bg-secondary)] transition-colors text-left";
 
   return (
-    <div ref={rootRef} className="relative shrink-0">
-      <button
-        onClick={() => setOpen(!open)}
-        aria-haspopup="menu"
-        aria-expanded={open}
-        title={user.name}
-        className={`flex items-center gap-1 rounded-full border p-0.5 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-300 ${open ? "border-[#C9A24B]" : "border-white/20 hover:border-white/50"}`}
-      >
-        <img src={user.avatar || "https://i.pravatar.cc/100?img=12"} alt="profile" className="w-7 h-7 rounded-full object-cover" />
-        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#CBD5E1" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" className={`mr-0.5 transition-transform duration-150 ${open ? "rotate-180" : ""}`}>
-          <polyline points="6 9 12 15 18 9" />
-        </svg>
-      </button>
+    <>
+      <div ref={rootRef} className="relative shrink-0">
+        <button
+          onClick={() => setOpen(!open)}
+          aria-haspopup="menu"
+          aria-expanded={open}
+          title={user.name}
+          className={`flex items-center gap-1 rounded-full border p-0.5 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-300 ${open ? "border-accent" : "border-white/20 hover:border-white/50"}`}
+        >
+          <img src={user.avatar || "https://i.pravatar.cc/100?img=12"} alt="profile" className="w-7 h-7 rounded-full object-cover" />
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#CBD5E1" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" className={`mr-0.5 transition-transform duration-150 ${open ? "rotate-180" : ""}`}>
+            <polyline points="6 9 12 15 18 9" />
+          </svg>
+        </button>
 
-      {open && (
-        <>
-          <div className="fixed inset-0 z-40 cursor-default" onClick={() => setOpen(false)} aria-hidden="true" />
-          <div role="menu" className="absolute right-0 mt-2 w-64 bg-white rounded-2xl ring-1 ring-slate-900/5 shadow-xl overflow-hidden z-50 origin-top-right">
-            <div className="px-4 py-3.5 bg-slate-50 border-b border-slate-100 flex items-center gap-3">
-              <img src={user.avatar || "https://i.pravatar.cc/100?img=12"} alt="" className="w-10 h-10 rounded-full object-cover shrink-0" />
-              <div className="flex-1 min-w-0">
-                <p className="text-sm font-semibold text-slate-900 truncate">{user.name}</p>
-                <p className="text-xs text-slate-500 truncate">{user.email}</p>
+        {open && (
+          <>
+            <div className="fixed inset-0 z-40 cursor-default" onClick={() => setOpen(false)} aria-hidden="true" />
+            <div role="menu" className="absolute right-0 mt-2 w-64 bg-[var(--color-surface)] rounded-2xl ring-1 ring-slate-900/5 shadow-xl overflow-hidden z-50 origin-top-right border border-[var(--color-border)]">
+              <div className="px-4 py-3.5 bg-[var(--color-bg-secondary)] border-b border-[var(--color-border)] flex items-center gap-3">
+                <img src={user.avatar || "https://i.pravatar.cc/100?img=12"} alt="" className="w-10 h-10 rounded-full object-cover shrink-0" />
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-semibold text-[var(--color-text-primary)] truncate">{user.name}</p>
+                  <p className="text-xs text-[var(--color-text-secondary)] truncate">{user.email}</p>
+                </div>
+              </div>
+              <div className="py-1.5">
+                <Link
+                  to="/profile/me"
+                  role="menuitem"
+                  onClick={() => {
+                    setOpen(false);
+                    if (onAction) onAction();
+                  }}
+                  className={itemClass}
+                >
+                  <span className="text-[var(--color-text-secondary)]"><UserIcon /></span> Profile
+                </Link>
+                <Link
+                  to="/profile/edit"
+                  role="menuitem"
+                  onClick={() => {
+                    setOpen(false);
+                    if (onAction) onAction();
+                  }}
+                  className={itemClass}
+                >
+                  <span className="text-[var(--color-text-secondary)]"><PencilIcon /></span> Edit profile
+                </Link>
+              </div>
+              <div className="border-t border-[var(--color-border)] py-1.5">
+                <button 
+                  role="menuitem" 
+                  onClick={() => setIsDark(!isDark)} 
+                  className={itemClass}
+                >
+                  <span className="text-[var(--color-text-secondary)]">
+                    {isDark ? (
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                        <circle cx="12" cy="12" r="5" />
+                        <line x1="12" y1="1" x2="12" y2="3" />
+                        <line x1="12" y1="21" x2="12" y2="23" />
+                        <line x1="4.22" y1="4.22" x2="5.64" y2="5.64" />
+                        <line x1="18.36" y1="18.36" x2="19.78" y2="19.78" />
+                        <line x1="1" y1="12" x2="3" y2="12" />
+                        <line x1="21" y1="12" x2="23" y2="12" />
+                        <line x1="4.22" y1="19.78" x2="5.64" y2="18.36" />
+                        <line x1="18.36" y1="4.22" x2="19.78" y2="5.64" />
+                      </svg>
+                    ) : (
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z" />
+                      </svg>
+                    )}
+                  </span> 
+                  {isDark ? "Light Mode" : "Dark Mode"}
+                </button>
+              </div>
+              <div className="border-t border-[var(--color-border)] py-1.5">
+                <button role="menuitem" onClick={() => setShowLogoutConfirm(true)} disabled={busy} className="w-full flex items-center gap-3 px-4 py-2.5 text-sm font-medium text-[#DC2626] hover:bg-red-50/10 disabled:opacity-60 transition-colors text-left">
+                  <span><LogoutIcon /></span> {busy ? "Logging out..." : "Logout"}
+                </button>
               </div>
             </div>
-            <div className="py-1.5">
-              <Link
-                to="/profile/me"
-                role="menuitem"
-                onClick={() => {
-                  setOpen(false);
-                  if (onAction) onAction();
-                }}
-                className={itemClass}
-              >
-                <span className="text-slate-400"><UserIcon /></span> Profile
-              </Link>
-              <Link
-                to="/profile/edit"
-                role="menuitem"
-                onClick={() => {
-                  setOpen(false);
-                  if (onAction) onAction();
-                }}
-                className={itemClass}
-              >
-                <span className="text-slate-400"><PencilIcon /></span> Edit profile
-              </Link>
-            </div>
-            <div className="border-t border-slate-100 py-1.5">
-              <button role="menuitem" onClick={handleLogout} disabled={busy} className="w-full flex items-center gap-3 px-4 py-2.5 text-sm font-medium text-[#DC2626] hover:bg-red-50 disabled:opacity-60 transition-colors text-left">
-                <span><LogoutIcon /></span> {busy ? "Logging out..." : "Logout"}
-              </button>
-            </div>
-          </div>
-        </>
-      )}
-    </div>
+          </>
+        )}
+      </div>
+
+      <Modal
+        isOpen={showLogoutConfirm}
+        onClose={() => setShowLogoutConfirm(false)}
+        title="Confirm Logout"
+        footer={
+          <>
+            <Button variant="ghost" onClick={() => setShowLogoutConfirm(false)} disabled={busy}>Cancel</Button>
+            <Button variant="danger" onClick={handleConfirmLogout} disabled={busy}>
+              {busy ? "Logging out..." : "Yes, logout"}
+            </Button>
+          </>
+        }
+      >
+        <p className="text-[var(--color-text-secondary)] text-sm">
+          Are you sure you want to log out of your account? You will need to log in again to access your dashboard.
+        </p>
+      </Modal>
+    </>
   );
 }

@@ -50,30 +50,30 @@ export default function Notifications() {
     <div className="max-w-2xl mx-auto px-4 sm:px-6 py-6">
       <div className="flex items-center gap-3">
         <div className="flex-1">
-          <h1 className="text-2xl font-semibold text-[#0B1F3A]">Notifications{unread > 0 ? ` (${unread})` : ""}</h1>
-          <p className="text-sm text-slate-500 mt-1">Live from Laravel + MySQL.</p>
+          <h1 className="text-2xl font-semibold text-primary">Notifications{unread > 0 ? ` (${unread})` : ""}</h1>
+          <p className="text-sm text-text-secondary mt-1">Live from Laravel + MySQL.</p>
         </div>
-        {unread > 0 && <button onClick={onMarkAll} className="text-xs font-medium text-[#2563EB] hover:text-[#1D4ED8] border border-blue-100 bg-blue-50 rounded-full px-3 py-1.5">Mark all read</button>}
+        {unread > 0 && <button onClick={onMarkAll} className="text-xs font-medium text-action hover:text-[#1D4ED8] border border-blue-100 bg-blue-50 rounded-full px-3 py-1.5">Mark all read</button>}
       </div>
       {error && <p className="mt-4 text-sm text-[#DC2626] bg-red-50 border border-red-100 rounded-lg px-3 py-2">{error}</p>}
       {loading ? (
         <div className="mt-6"><ListCardSkeleton rows={4} /></div>
       ) : (
-        <div className="mt-6 bg-white rounded-xl border border-slate-100 shadow-sm divide-y divide-slate-100 overflow-hidden">
-          {notifications.length === 0 && <p className="p-8 text-center text-sm text-slate-400">No notifications</p>}
+        <div className="mt-6 bg-surface rounded-xl border border-border shadow-sm divide-y divide-slate-100 overflow-hidden">
+          {notifications.length === 0 && <p className="p-8 text-center text-sm text-text-secondary">No notifications</p>}
           {notifications.map((n) => {
             const body = (
               <>
-                <span className={`mt-1 w-2 h-2 rounded-full shrink-0 ${n.read ? "bg-slate-200" : "bg-[#2563EB]"}`}></span>
+                <span className={`mt-1 w-2 h-2 rounded-full shrink-0 ${n.read ? "bg-bg" : "bg-action"}`}></span>
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm text-slate-700">{n.message}</p>
-                  <p className="text-xs text-slate-400 mt-1">{n.timestamp}{n.link ? " · Tap to view →" : ""}</p>
+                  <p className="text-sm text-text-primary">{n.message}</p>
+                  <p className="text-xs text-text-secondary mt-1">{n.timestamp}{n.link ? " · Tap to view →" : ""}</p>
                 </div>
-                {!n.read && <span className="text-xs font-medium text-[#2563EB] shrink-0">Mark read</span>}
+                {!n.read && <span className="text-xs font-medium text-action shrink-0">Mark read</span>}
               </>
             );
             return n.link ? (
-              <Link key={n.id} to={n.link} onClick={() => onMarkRead(n.id)} className={`p-4 flex gap-3 hover:bg-slate-50 transition-colors ${!n.read ? "bg-blue-50/50" : ""}`}>
+              <Link key={n.id} to={n.link} onClick={() => onMarkRead(n.id)} className={`p-4 flex gap-3 hover:bg-bg transition-colors ${!n.read ? "bg-blue-50/50" : ""}`}>
                 {body}
               </Link>
             ) : (
@@ -85,7 +85,7 @@ export default function Notifications() {
         </div>
       )}
       {!loading && !error && notifications.length > 0 && (
-        <p className="text-center text-xs text-slate-400 mt-4">That's everything — no older notifications.</p>
+        <p className="text-center text-xs text-text-secondary mt-4">That's everything — no older notifications.</p>
       )}
     </div>
   );

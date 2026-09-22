@@ -82,70 +82,70 @@ export default function CreateOpportunity() {
 
   return (
     <div className="max-w-2xl mx-auto px-4 sm:px-6 py-6">
-      <h1 className="text-2xl font-semibold text-[#0B1F3A]">Post an Opportunity</h1>
-      <p className="text-sm text-slate-500 mt-1">Saved to MySQL via Laravel. Images and videos go to Google Cloud Storage when configured, otherwise the app server.</p>
+      <h1 className="text-2xl font-semibold text-primary">Post an Opportunity</h1>
+      <p className="text-sm text-text-secondary mt-1">Saved to MySQL via Laravel. Images and videos go to Google Cloud Storage when configured, otherwise the app server.</p>
 
       {error && <p className="mt-4 text-sm text-[#DC2626] bg-red-50 border border-red-100 rounded-lg px-3 py-2">{error}</p>}
 
-      <form onSubmit={submit} className="mt-6 bg-white rounded-xl border border-slate-100 shadow-sm p-6 space-y-4">
+      <form onSubmit={submit} className="mt-6 bg-surface rounded-xl border border-border shadow-sm p-6 space-y-4">
         <div className="flex gap-2">
           {["Franchise", "Wholesale", "Resell"].map((t) => (
-            <button key={t} type="button" onClick={() => setType(t)} className={`px-4 py-1.5 rounded-full text-sm font-medium border ${type === t ? "bg-[#0B1F3A] text-white border-[#0B1F3A]" : "bg-white text-slate-600 border-slate-200"}`}>{t}</button>
+            <button key={t} type="button" onClick={() => setType(t)} className={`px-4 py-1.5 rounded-full text-sm font-medium border ${type === t ? "bg-primary text-white border-[#0B1F3A]" : "bg-surface text-text-secondary border-border"}`}>{t}</button>
           ))}
         </div>
 
         <div>
-          <label className="text-sm font-medium text-slate-700">Headline *</label>
-          <input value={headline} onChange={(e) => setHeadline(e.target.value)} placeholder="e.g. Premium Coffee Franchise — High Foot Traffic" className="mt-1 w-full border border-slate-200 focus:border-[#2563EB] focus:ring-2 focus:ring-blue-100 outline-none rounded-lg px-3 py-2.5 text-sm" />
+          <label className="text-sm font-medium text-text-primary">Headline *</label>
+          <input value={headline} onChange={(e) => setHeadline(e.target.value)} placeholder="e.g. Premium Coffee Franchise — High Foot Traffic" className="mt-1 w-full border border-border focus:border-[#2563EB] focus:ring-2 focus:ring-blue-100 outline-none rounded-lg px-3 py-2.5 text-sm" />
         </div>
         <div className="grid grid-cols-2 gap-4">
           <div>
-            <label className="text-sm font-medium text-slate-700">Capital Required *</label>
-            <input value={capital} onChange={(e) => setCapital(e.target.value)} placeholder="₱850K" className="mt-1 w-full border border-slate-200 rounded-lg px-3 py-2.5 text-sm" />
+            <label className="text-sm font-medium text-text-primary">Capital Required *</label>
+            <input value={capital} onChange={(e) => setCapital(e.target.value)} placeholder="₱850K" className="mt-1 w-full border border-border rounded-lg px-3 py-2.5 text-sm" />
           </div>
           <div>
-            <label className="text-sm font-medium text-slate-700">ROI / Margin *</label>
-            <input value={roi} onChange={(e) => setRoi(e.target.value)} placeholder="28% ROI" className="mt-1 w-full border border-slate-200 rounded-lg px-3 py-2.5 text-sm" />
+            <label className="text-sm font-medium text-text-primary">ROI / Margin *</label>
+            <input value={roi} onChange={(e) => setRoi(e.target.value)} placeholder="28% ROI" className="mt-1 w-full border border-border rounded-lg px-3 py-2.5 text-sm" />
           </div>
         </div>
 
         <div>
-          <label className="text-sm font-medium text-slate-700">Category</label>
-          <select value={category} onChange={(e) => setCategory(e.target.value)} className="mt-1 w-full border border-slate-200 rounded-lg px-3 py-2.5 text-sm bg-white">
+          <label className="text-sm font-medium text-text-primary">Category</label>
+          <select value={category} onChange={(e) => setCategory(e.target.value)} className="mt-1 w-full border border-border rounded-lg px-3 py-2.5 text-sm bg-surface">
             {categories.map((c) => <option key={c}>{c}</option>)}
           </select>
         </div>
 
         <div>
-          <label className="text-sm font-medium text-slate-700">Description * ({description.length}/2000)</label>
-          <textarea value={description} onChange={(e) => setDescription(e.target.value)} maxLength={2000} rows={4} placeholder="Describe support, location, payback..." className="mt-1 w-full border border-slate-200 rounded-lg px-3 py-2.5 text-sm resize-none" />
+          <label className="text-sm font-medium text-text-primary">Description * ({description.length}/2000)</label>
+          <textarea value={description} onChange={(e) => setDescription(e.target.value)} maxLength={2000} rows={4} placeholder="Describe support, location, payback..." className="mt-1 w-full border border-border rounded-lg px-3 py-2.5 text-sm resize-none" />
         </div>
 
         <div>
-          <label className="text-sm font-medium text-slate-700">Media</label>
+          <label className="text-sm font-medium text-text-primary">Media</label>
           <input ref={fileRef} type="file" accept="image/*,video/mp4,video/quicktime" onChange={onPickFile} className="hidden" />
           <div className="mt-2 flex flex-wrap items-center gap-2">
-            <button type="button" onClick={() => fileRef.current?.click()} disabled={uploading} className="px-4 py-2 rounded-lg bg-[#0B1F3A] text-white text-sm font-medium hover:bg-[#1E3A5F] disabled:opacity-60 transition-colors">
+            <button type="button" onClick={() => fileRef.current?.click()} disabled={uploading} className="px-4 py-2 rounded-lg bg-primary text-white text-sm font-medium hover:bg-primary-light disabled:opacity-60 transition-colors">
               {uploading ? `Uploading ${progress}%...` : "Upload photo / video"}
             </button>
-            <span className="text-xs text-slate-400">JPG, PNG, WebP, GIF, MP4 up to 20MB</span>
+            <span className="text-xs text-text-secondary">JPG, PNG, WebP, GIF, MP4 up to 20MB</span>
           </div>
           {uploading && (
-            <div className="mt-2 h-2 rounded-full bg-slate-100 overflow-hidden">
-              <div className="h-full bg-[#2563EB] transition-all" style={{ width: `${progress}%` }} />
+            <div className="mt-2 h-2 rounded-full bg-bg overflow-hidden">
+              <div className="h-full bg-action transition-all" style={{ width: `${progress}%` }} />
             </div>
           )}
           {disk && !uploading && <p className="mt-2 text-xs text-[#16A34A]">{disk}</p>}
         </div>
 
         <div>
-          <label className="text-sm font-medium text-slate-700">...or paste a media URL</label>
-          <input value={imageUrl} onChange={(e) => { setImageUrl(e.target.value); setDisk(""); }} placeholder="https://... image or mp4" className="mt-1 w-full border border-slate-200 rounded-lg px-3 py-2.5 text-sm" />
-          {preview && mediaType === "image" && <img src={preview} alt="preview" className="mt-3 w-full h-48 object-cover rounded-lg border border-slate-100" onError={(e) => { e.target.style.display = "none"; }} />}
-          {preview && mediaType === "video" && <video src={preview} controls className="mt-3 w-full h-48 object-cover rounded-lg border border-slate-100" />}
+          <label className="text-sm font-medium text-text-primary">...or paste a media URL</label>
+          <input value={imageUrl} onChange={(e) => { setImageUrl(e.target.value); setDisk(""); }} placeholder="https://... image or mp4" className="mt-1 w-full border border-border rounded-lg px-3 py-2.5 text-sm" />
+          {preview && mediaType === "image" && <img src={preview} alt="preview" className="mt-3 w-full h-48 object-cover rounded-lg border border-border" onError={(e) => { e.target.style.display = "none"; }} />}
+          {preview && mediaType === "video" && <video src={preview} controls className="mt-3 w-full h-48 object-cover rounded-lg border border-border" />}
         </div>
 
-        <button type="submit" disabled={busy || uploading} className="w-full bg-[#2563EB] hover:bg-[#1D4ED8] disabled:bg-blue-300 text-white text-sm font-medium py-3 rounded-lg transition-colors">{busy ? "Publishing..." : "Publish Opportunity"}</button>
+        <button type="submit" disabled={busy || uploading} className="w-full bg-action hover:bg-action-hover disabled:bg-blue-300 text-white text-sm font-medium py-3 rounded-lg transition-colors">{busy ? "Publishing..." : "Publish Opportunity"}</button>
       </form>
     </div>
   );
