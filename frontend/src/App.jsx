@@ -1,6 +1,7 @@
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import Navbar from "./components/Navbar";
 import Footer from "./components/Footer";
+import ScrollToTop from "./components/ScrollToTop";
 import { AuthProvider, useAuth } from "./context/AuthContext";
 import RequireAuth from "./components/RequireAuth";
 import Landing from "./pages/Landing";
@@ -58,6 +59,7 @@ export default function App() {
   return (
     <AuthProvider>
       <BrowserRouter>
+        <ScrollToTop />
         <div className="min-h-screen bg-[#F8FAFC] text-slate-900 flex flex-col">
           <Navbar />
           <main className="flex-1">
