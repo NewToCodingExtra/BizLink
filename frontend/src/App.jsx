@@ -31,7 +31,7 @@ function HomeOrLanding() {
   if (loading) {
     return (
       <div className="max-w-2xl mx-auto py-16 text-center">
-        <p className="text-sm text-slate-500">Loading BizLink...</p>
+        <p className="text-sm text-text-secondary">Loading BizLink...</p>
       </div>
     );
   }
@@ -46,7 +46,7 @@ function GuestOnly({ children }) {
   if (loading) {
     return (
       <div className="max-w-2xl mx-auto py-16 text-center">
-        <p className="text-sm text-slate-500">Loading...</p>
+        <p className="text-sm text-text-secondary">Loading...</p>
       </div>
     );
   }
@@ -56,12 +56,93 @@ function GuestOnly({ children }) {
   return children;
 }
 
+import React, { useState, useEffect } from 'react';
+import PreferenceOnboardingModal from "./components/PreferenceOnboardingModal";
+import CreateStoryModal from "./components/CreateStoryModal";
+
+function GlobalModals() {
+  const { user } = useAuth();
+  const [isStoryModalOpen, setIsStoryModalOpen] = useState(false);
+  const [toastMessage, setToastMessage] = useState("");
+
+  useEffect(() => {
+    const msg = sessionStorage.getItem('welcome_toast');
+    if (msg) {
+      setToastMessage(msg);
+      sessionStorage.removeItem('welcome_toast');
+      setTimeout(() => setToastMessage(""), 4000);
+    }
+  }, [user]);
+
+  useEffect(() => {
+    window.onOpenCreateStory = () => {
+      if (!user) {
+        alert("Log in to create a story.");
+        return;
+      }
+      setIsStoryModalOpen(true);
+    };
+    return () => {
+      delete window.onOpenCreateStory;
+    };
+  }, [user]);
+
+  if (!user) return null;
+  
+  return (
+    <>
+      <PreferenceOnboardingModal user={user} />
+      <CreateStoryModal 
+        isOpen={isStoryModalOpen} 
+        onClose={() => setIsStoryModalOpen(false)} 
+        onComplete={() => {
+          // Simplest way to refresh stories globally: reload or trigger event
+          window.location.reload(); 
+        }}
+      />
+      {toastMessage && (
+        <div className="fixed bottom-4 right-4 z-50 bg-[var(--color-bg-secondary)] border border-[var(--color-border)] text-[var(--color-text-primary)] shadow-lg rounded-xl px-5 py-3 flex items-center gap-3 animate-[fade-in_0.3s_ease-out]">
+          <span className="text-xl">👋</span>
+          <span className="text-sm font-medium">{toastMessage}</span>
+        </div>
+      )}
+    </>
+  );
+}
+
+export const ThemeContext = React.createContext();
+
+export function ThemeProvider({ children }) {
+  const [isDark, setIsDark] = useState(() => {
+    return localStorage.getItem('theme') === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches);
+  });
+
+  useEffect(() => {
+    const root = window.document.documentElement;
+    if (isDark) {
+      root.classList.add('dark');
+      localStorage.setItem('theme', 'dark');
+    } else {
+      root.classList.remove('dark');
+      localStorage.setItem('theme', 'light');
+    }
+  }, [isDark]);
+
+  return (
+    <ThemeContext.Provider value={{ isDark, setIsDark }}>
+      {children}
+    </ThemeContext.Provider>
+  );
+}
+
 export default function App() {
   return (
     <AuthProvider>
-      <BrowserRouter>
-        <ScrollToTop />
-        <div className="min-h-screen bg-[#F8FAFC] text-slate-900 flex flex-col">
+      <ThemeProvider>
+        <BrowserRouter>
+          <ScrollToTop />
+          <GlobalModals />
+          <div className="min-h-screen bg-[var(--color-bg)] text-[var(--color-text-primary)] flex flex-col">
           <Navbar />
           <main className="flex-1">
             <Routes>
@@ -88,12 +169,13 @@ export default function App() {
               <Route path="/profile/:id" element={<Profile />} />
               <Route path="/settings/preferences" element={<RequireAuth><Preferences /></RequireAuth>} />
               <Route path="/contact" element={<Contact />} />
-              <Route path="*" element={<div className="max-w-2xl mx-auto py-16 text-center"><p className="text-slate-500">Page not found.</p></div>} />
+              <Route path="*" element={<div className="max-w-2xl mx-auto py-16 text-center"><p className="text-text-secondary">Page not found.</p></div>} />
             </Routes>
           </main>
           <Footer />
         </div>
-      </BrowserRouter>
+        </BrowserRouter>
+      </ThemeProvider>
     </AuthProvider>
   );
 }
