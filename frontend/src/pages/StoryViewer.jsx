@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { Link, useParams, useNavigate } from "react-router-dom";
 import { storiesApi } from "../api/client";
 import { useAuth } from "../context/AuthContext";
 
@@ -64,8 +64,8 @@ export default function StoryViewer() {
       <div className="h-1 bg-white/20 w-full"><div className="h-full bg-white transition-all" style={{ width: `${progress}%` }} /></div>
       <div className="flex items-center justify-between px-4 py-3 text-white max-w-md mx-auto w-full">
         <div className="flex items-center gap-2">
-          <img src={story.avatar} alt={story.brandName} className="w-8 h-8 rounded-full" />
-          <span className="text-sm font-semibold">{story.brandName}</span>
+          <Link to={`/profile/${story.brandId}`}><img src={story.avatar} alt={story.brandName} className="w-8 h-8 rounded-full" /></Link>
+          <Link to={`/profile/${story.brandId}`} className="text-sm font-semibold hover:underline">{story.brandName}</Link>
           <span className="text-xs text-white/60">· now</span>
         </div>
         <button onClick={() => navigate(-1)} className="w-8 h-8 grid place-items-center rounded-full bg-white/10 text-white">×</button>

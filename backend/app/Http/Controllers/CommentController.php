@@ -37,7 +37,8 @@ class CommentController extends Controller
             AppNotification::create([
                 'user_id' => $user->id,
                 'type' => 'comment',
-                'message' => "New comment on {$opportunity->id}",
+                'message' => "New comment on {$opportunity->headline}",
+                'link' => "/post/{$opportunity->id}",
                 'read' => false,
             ]);
         }
@@ -50,6 +51,7 @@ class CommentController extends Controller
         return [
             'id' => $c->id,
             'postId' => $c->opportunity_id,
+            'userId' => $c->user_id,
             'author' => $c->author,
             'avatar' => $c->avatar,
             'text' => $c->text,

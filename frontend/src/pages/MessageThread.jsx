@@ -56,8 +56,8 @@ export default function MessageThread() {
     <div className="max-w-2xl mx-auto flex flex-col h-[calc(100dvh-64px)]">
       <div className="px-4 sm:px-6 py-4 border-b border-slate-100 bg-white flex items-center gap-3">
         <Link to="/messages" className="text-slate-500 hover:text-slate-700">←</Link>
-        <img src={conv.avatar} alt={conv.with} className="w-8 h-8 rounded-full" />
-        <span className="text-sm font-semibold text-slate-900">{conv.with}</span>
+        <Link to={`/profile/${conv.brandId}`}><img src={conv.avatar} alt={conv.with} className="w-8 h-8 rounded-full" /></Link>
+        <Link to={`/profile/${conv.brandId}`} className="text-sm font-semibold text-slate-900 hover:text-[#2563EB]">{conv.with}</Link>
         <span className="text-xs text-slate-400">Private consultation</span>
       </div>
       {error && <p className="mx-4 mt-3 text-sm text-[#DC2626] bg-red-50 border border-red-100 rounded-lg px-3 py-2">{error}</p>}

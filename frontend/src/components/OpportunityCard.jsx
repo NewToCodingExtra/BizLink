@@ -25,6 +25,7 @@ function formatDate(createdAt) {
 export default function OpportunityCard({ opp, comments, onToggleLike, onToggleSave, onAddComment, onInquire, saved }) {
   const [showComments, setShowComments] = useState(false);
   const fresh = isFresh(opp.createdAt);
+  const commentCount = typeof opp.commentsCount === "number" ? opp.commentsCount : (comments || []).filter((c) => String(c.postId) === String(opp.id)).length;
 
   return (
     <article className="bg-white rounded-xl border border-slate-100 shadow-sm hover:shadow-md transition-shadow duration-150 overflow-hidden">
@@ -65,7 +66,7 @@ export default function OpportunityCard({ opp, comments, onToggleLike, onToggleS
             <span>{opp.liked ? "♥" : "♡"}</span> {opp.likes}
           </button>
           <button onClick={() => setShowComments(!showComments)} className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-slate-200 bg-white text-slate-600 hover:bg-slate-50 text-sm font-medium transition-colors">
-            💬 Comment
+            💬 {commentCount > 0 ? commentCount : "Comment"}
           </button>
           <button onClick={() => onToggleSave(opp.id)} className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full border text-sm font-medium transition-colors ml-auto ${saved ? "bg-[#0B1F3A] text-white border-[#0B1F3A]" : "bg-white text-slate-600 border-slate-200 hover:bg-slate-50"}`}>
             {saved ? "★ Saved" : "☆ Save"}

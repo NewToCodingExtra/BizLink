@@ -10,7 +10,7 @@ class OpportunityController extends Controller
 {
     public function index(Request $request)
     {
-        $query = Opportunity::with(['user:id,name,avatar', 'comments'])->withCount(['likedBy', 'savedBy']);
+        $query = Opportunity::with(['user:id,name,avatar', 'comments'])->withCount(['likedBy', 'savedBy', 'comments']);
 
         if ($type = $request->query('type')) {
             if ($type !== 'All' && $type !== 'Following') {
@@ -132,6 +132,7 @@ class OpportunityController extends Controller
                 'user_id' => $user->id,
                 'type' => 'new_post',
                 'message' => "Your opportunity \"{$opp->headline}\" is live on the feed",
+                'link' => "/post/{$opp->id}",
                 'read' => false,
             ]);
         }
@@ -213,9 +214,11 @@ class OpportunityController extends Controller
             'liked' => in_array($o->id, $likedIds),
             'saved' => in_array($o->id, $savedIds),
             'createdAt' => $o->created_at,
+            'commentsCount' => $o->relationLoaded('comments') ? $o->comments->count() : (int) ($o->comments_count ?? 0),
             'comments' => $o->relationLoaded('comments') ? $o->comments->map(fn($c) => [
                 'id' => $c->id,
                 'postId' => $c->opportunity_id,
+                'userId' => $c->user_id,
                 'author' => $c->author,
                 'avatar' => $c->avatar,
                 'text' => $c->text,
