@@ -13,7 +13,8 @@ export function useInfiniteFeed({ perPage = 8, type = "All", q = "", enabled = t
   const sentinelRef = useRef(null);
   const loadMoreRef = useRef(() => {});
   const stateRef = useRef({ page: 1, lastPage: 1, busy: false });
-  const initializedRef = useRef(false);
+  const countRef = useRef(0);
+  countRef.current = items.length;
 
   const fetchPage = useCallback(
     async (pageNum, append) => {
@@ -40,8 +41,7 @@ export function useInfiniteFeed({ perPage = 8, type = "All", q = "", enabled = t
       return;
     }
     let cancelled = false;
-    const first = !initializedRef.current;
-    initializedRef.current = true;
+    const first = countRef.current === 0;
     setError("");
     if (first) {
       setLoading(true);
@@ -95,6 +95,10 @@ export function useInfiniteFeed({ perPage = 8, type = "All", q = "", enabled = t
     return () => observer.disconnect();
   }, [enabled]);
 
+  const loadMore = useCallback(() => {
+    loadMoreRef.current();
+  }, []);
+
   return {
     items,
     setItems,
@@ -106,5 +110,6 @@ export function useInfiniteFeed({ perPage = 8, type = "All", q = "", enabled = t
     hasMore: page < lastPage,
     total,
     sentinelRef,
+    loadMore,
   };
 }

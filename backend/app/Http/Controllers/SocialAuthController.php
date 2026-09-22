@@ -108,6 +108,8 @@ class SocialAuthController extends Controller
 
         $token = $user->createToken($provider)->plainTextToken;
 
+        \App\Models\Preference::firstOrCreate(['user_id' => $user->id], ['categories' => []]);
+
         return redirect($frontend . "?provider={$provider}&token=" . urlencode($token));
     }
 

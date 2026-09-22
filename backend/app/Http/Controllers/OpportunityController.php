@@ -50,6 +50,19 @@ class OpportunityController extends Controller
             }
         }
 
+        $preferredBrands = [];
+        $preferredCategories = [];
+        if ($viewer) {
+            $preferredBrands = \DB::table('follows')->where('user_id', $viewer->id)->pluck('brand_id')->map(fn($b) => (string) $b)->toArray();
+            $pref = $viewer->preference;
+            if ($pref && is_array($pref->categories)) {
+                $preferredCategories = array_values(array_filter($pref->categories, fn($c) => is_string($c) && $c !== ''));
+            }
+            if (!empty($preferredBrands) || !empty($preferredCategories)) {
+                $query->orderByRaw($this->significanceOrder($preferredBrands, $preferredCategories));
+            }
+        }
+
         $perPage = (int) $request->query('per_page', 20);
         $perPage = max(1, min(50, $perPage));
 
@@ -59,7 +72,12 @@ class OpportunityController extends Controller
         $likedIds = $user ? $user->likedOpportunities()->pluck('opportunities.id')->toArray() : [];
         $savedIds = $user ? $user->savedOpportunities()->pluck('opportunities.id')->toArray() : [];
 
-        $data = $opps->getCollection()->map(fn($o) => $this->serialize($o, $likedIds, $savedIds));
+        $preferredIds = $opps->getCollection()
+            ->filter(fn($o) => in_array((string) $o->brand_id, $preferredBrands, true) || in_array($o->category, $preferredCategories, true))
+            ->map(fn($o) => $o->id)
+            ->toArray();
+
+        $data = $opps->getCollection()->map(fn($o) => $this->serialize($o, $likedIds, $savedIds, $preferredIds));
 
         return response()->json([
             'data' => $data,
@@ -184,7 +202,21 @@ class OpportunityController extends Controller
         return response()->json(['data' => $data, 'meta' => ['total' => $opps->total()]]);
     }
 
-    private function serialize(Opportunity $o, array $likedIds, array $savedIds): array
+    private function significanceOrder(array $brands, array $categories): string
+    {
+        $quote = fn($v) => "'" . str_replace("'", "''", $v) . "'";
+        $parts = [];
+        if (!empty($brands)) {
+            $parts[] = 'WHEN brand_id IN (' . implode(',', array_map($quote, $brands)) . ') THEN 0';
+        }
+        if (!empty($categories)) {
+            $parts[] = 'WHEN category IN (' . implode(',', array_map($quote, $categories)) . ') THEN 1';
+        }
+        $parts[] = 'ELSE 2';
+        return 'CASE ' . implode(' ', $parts) . ' END';
+    }
+
+    private function serialize(Opportunity $o, array $likedIds, array $savedIds, array $preferredIds = []): array
     {
         return [
             'id' => $o->id,
@@ -213,6 +245,7 @@ class OpportunityController extends Controller
             'isNew' => (bool) $o->is_new,
             'liked' => in_array($o->id, $likedIds),
             'saved' => in_array($o->id, $savedIds),
+            'preferred' => in_array($o->id, $preferredIds),
             'createdAt' => $o->created_at,
             'commentsCount' => $o->relationLoaded('comments') ? $o->comments->count() : (int) ($o->comments_count ?? 0),
             'comments' => $o->relationLoaded('comments') ? $o->comments->map(fn($c) => [

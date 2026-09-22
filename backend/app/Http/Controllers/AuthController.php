@@ -28,6 +28,8 @@ class AuthController extends Controller
 
         $token = $user->createToken('web')->plainTextToken;
 
+        \App\Models\Preference::firstOrCreate(['user_id' => $user->id], ['categories' => []]);
+
         return response()->json([
             'user' => $this->userPayload($user),
             'token' => $token,
@@ -50,6 +52,8 @@ class AuthController extends Controller
         }
 
         $token = $user->createToken('web')->plainTextToken;
+
+        \App\Models\Preference::firstOrCreate(['user_id' => $user->id], ['categories' => []]);
 
         return response()->json([
             'user' => $this->userPayload($user),

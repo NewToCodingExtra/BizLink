@@ -72,15 +72,6 @@ export default function HomeFeed() {
   const comments = useMemo(() => opportunities.flatMap((o) => o.comments || []), [opportunities]);
   const savedIds = useMemo(() => opportunities.filter((o) => o.saved).map((o) => o.id), [opportunities]);
 
-  const scoredOpportunities = useMemo(() => {
-    if (preferences.categories.length === 0) return opportunities;
-    return [...opportunities].sort((a, b) => {
-      const aScore = preferences.categories.includes(a.category) ? 1 : 0;
-      const bScore = preferences.categories.includes(b.category) ? 1 : 0;
-      return bScore - aScore;
-    });
-  }, [opportunities, preferences]);
-
   const onToggleLike = async (id) => {
     if (!user) {
       setError("Log in to like opportunities.");
@@ -163,7 +154,7 @@ export default function HomeFeed() {
           <>
             {storiesLoading ? <StoriesBarSkeleton /> : <StoriesBar stories={stories} />}
             <OpportunityFeed
-              opportunities={scoredOpportunities}
+              opportunities={opportunities}
               comments={comments}
               activeFilter={activeFilter}
               setActiveFilter={setActiveFilter}
