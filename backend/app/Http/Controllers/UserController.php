@@ -30,15 +30,15 @@ class UserController extends Controller
             }
         }
 
-        if (!$user && $id === 'me' && $request->user()) {
-            $user = $request->user();
+        $viewer = \Illuminate\Support\Facades\Auth::guard('sanctum')->user() ?? $request->user();
+
+        if (!$user && $id === 'me' && $viewer) {
+            $user = $viewer;
         }
 
         if (!$user) {
             return response()->json(['message' => 'User not found'], 404);
         }
-
-        $viewer = $request->user();
         $likedIds = $viewer ? $viewer->likedOpportunities()->pluck('opportunities.id')->toArray() : [];
         $savedIds = $viewer ? $viewer->savedOpportunities()->pluck('opportunities.id')->toArray() : [];
 

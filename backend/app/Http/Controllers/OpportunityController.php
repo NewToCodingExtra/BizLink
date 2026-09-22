@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Opportunity;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 
 class OpportunityController extends Controller
 {
@@ -38,10 +39,14 @@ class OpportunityController extends Controller
             $query->where('brand_id', $brandId);
         }
 
-        if ($request->query('following') && $request->user()) {
-            $brands = \DB::table('follows')->where('user_id', $request->user()->id)->pluck('brand_id');
+        $viewer = Auth::guard('sanctum')->user() ?? $request->user();
+
+        if ($request->query('following') && $viewer) {
+            $brands = \DB::table('follows')->where('user_id', $viewer->id)->pluck('brand_id');
             if ($brands->isNotEmpty()) {
                 $query->whereIn('brand_id', $brands);
+            } else {
+                $query->whereRaw('0 = 1');
             }
         }
 
@@ -50,7 +55,7 @@ class OpportunityController extends Controller
 
         $opps = $query->latest()->paginate($perPage);
 
-        $user = $request->user();
+        $user = $viewer;
         $likedIds = $user ? $user->likedOpportunities()->pluck('opportunities.id')->toArray() : [];
         $savedIds = $user ? $user->savedOpportunities()->pluck('opportunities.id')->toArray() : [];
 
@@ -70,7 +75,7 @@ class OpportunityController extends Controller
     public function show(Request $request, Opportunity $opportunity)
     {
         $opportunity->load(['user:id,name,avatar', 'comments.user:id,name,avatar']);
-        $user = $request->user();
+        $user = Auth::guard('sanctum')->user() ?? $request->user();
         $likedIds = $user ? [$opportunity->id => $user->likedOpportunities()->where('opportunity_id', $opportunity->id)->exists()] : [];
         $savedIds = $user ? [$opportunity->id => $user->savedOpportunities()->where('opportunity_id', $opportunity->id)->exists()] : [];
         $liked = $user ? $user->likedOpportunities()->where('opportunity_id', $opportunity->id)->exists() : false;
