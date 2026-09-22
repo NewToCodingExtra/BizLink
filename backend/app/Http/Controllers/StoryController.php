@@ -50,6 +50,7 @@ class StoryController extends Controller
     {
         return [
             'id' => $s->id,
+            'authorId' => $s->user_id,
             'brandId' => $s->brand_id,
             'brandName' => $s->brand_name,
             'avatar' => $s->avatar,

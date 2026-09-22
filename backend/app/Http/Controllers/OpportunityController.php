@@ -30,6 +30,14 @@ class OpportunityController extends Controller
             $query->where('category', $category);
         }
 
+        if ($userId = $request->query('user_id')) {
+            $query->where('user_id', $userId);
+        }
+
+        if ($brandId = $request->query('brand_id')) {
+            $query->where('brand_id', $brandId);
+        }
+
         if ($request->query('following') && $request->user()) {
             $brands = \DB::table('follows')->where('user_id', $request->user()->id)->pluck('brand_id');
             if ($brands->isNotEmpty()) {
@@ -174,6 +182,12 @@ class OpportunityController extends Controller
     {
         return [
             'id' => $o->id,
+            'authorId' => $o->user_id,
+            'user' => $o->relationLoaded('user') && $o->user ? [
+                'id' => $o->user->id,
+                'name' => $o->user->name,
+                'avatar' => $o->user->avatar,
+            ] : null,
             'brandName' => $o->brand_name,
             'brandAvatar' => $o->brand_avatar,
             'brandId' => $o->brand_id,
