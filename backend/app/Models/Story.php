@@ -1,0 +1,27 @@
+<?php
+
+namespace App\Models;
+
+use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Model;
+
+class Story extends Model
+{
+    use HasFactory;
+
+    protected $fillable = [
+        'user_id',
+        'brand_id',
+        'brand_name',
+        'avatar',
+        'media_url',
+        'caption',
+        'expires_at',
+        'seen',
+    ];
+
+    protected $casts = [
+        'expires_at' => 'datetime',
+        'seen' => 'boolean',
+    ];
+}
