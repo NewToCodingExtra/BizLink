@@ -20,6 +20,7 @@ export default function Search() {
     setItems: setResults,
     loading,
     loadingMore,
+    refreshing,
     error,
     setError,
     hasMore,
@@ -97,7 +98,7 @@ export default function Search() {
 
       {!q ? (
         <p className="text-sm text-slate-500 mt-6">Type to search franchises, wholesale and resell opportunities.</p>
-      ) : loading ? (
+      ) : loading && results.length === 0 ? (
         <div className="mt-6"><FeedSkeleton count={2} /></div>
       ) : results.length === 0 ? (
         <div className="bg-white rounded-xl border border-slate-100 p-8 text-center mt-6">
@@ -105,7 +106,12 @@ export default function Search() {
         </div>
       ) : (
         <div className="mt-6 space-y-4">
-          <p className="text-sm text-slate-500">{total} result{total !== 1 ? "s" : ""} for “{q}”</p>
+          {refreshing && (
+            <div className="h-1 rounded-full bg-blue-100 overflow-hidden" role="status" aria-label="Refreshing results">
+              <div className="h-full w-1/2 rounded-full bg-[#2563EB] animate-pulse" />
+            </div>
+          )}
+          <p className="text-sm text-slate-500">{(hasMore || loadingMore) ? `Showing ${results.length} of ${total} result${total !== 1 ? "s" : ""}` : `${total} result${total !== 1 ? "s" : ""}`} for “{q}”</p>
           {results.map((o) => (
             <OpportunityCard key={o.id} opp={o} comments={comments} onToggleLike={onToggleLike} onToggleSave={onToggleSave} onAddComment={onAddComment} onInquire={onInquire} saved={savedIds.map(String).includes(String(o.id))} />
           ))}

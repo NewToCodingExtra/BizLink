@@ -14,6 +14,7 @@ export default function OpportunityFeed({
   onInquire,
   serverFiltered = false,
   loadingMore = false,
+  refreshing = false,
   hasMore = false,
   sentinelRef = null,
   total = null,
@@ -31,9 +32,14 @@ export default function OpportunityFeed({
       <div className="sticky top-[64px] z-20 bg-[#F8FAFC]/80 backdrop-blur supports-[backdrop-filter]:bg-[#F8FAFC]/80 py-3 -mx-4 px-4 sm:mx-0 sm:px-0 border-b border-slate-100 mb-4">
         <FilterBar active={activeFilter} onChange={setActiveFilter} />
       </div>
+      {refreshing && (
+        <div className="h-1 rounded-full bg-blue-100 overflow-hidden mb-4" role="status" aria-label="Refreshing feed">
+          <div className="h-full w-1/2 rounded-full bg-[#2563EB] animate-pulse" />
+        </div>
+      )}
       <div className="space-y-4">
-        {total !== null && total > 0 && (
-          <p className="text-xs text-slate-400">{total} opportunit{total !== 1 ? "ies" : "y"} found</p>
+        {total !== null && total > 0 && (hasMore || loadingMore) && (
+          <p className="text-xs text-slate-400">Showing {filtered.length} of {total} opportunit{total !== 1 ? "ies" : "y"}</p>
         )}
         {filtered.map((opp) => (
           <OpportunityCard key={opp.id} opp={opp} comments={comments} onToggleLike={onToggleLike} onToggleSave={onToggleSave} onAddComment={onAddComment} onInquire={onInquire} saved={savedIds.map(String).includes(String(opp.id))} />

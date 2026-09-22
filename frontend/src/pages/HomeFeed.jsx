@@ -16,6 +16,7 @@ export default function HomeFeed() {
     setItems: setOpportunities,
     loading,
     loadingMore,
+    refreshing,
     error,
     setError,
     hasMore,
@@ -153,7 +154,7 @@ export default function HomeFeed() {
           </div>
         )}
         {error && <p className="mb-4 text-sm text-[#DC2626] bg-red-50 border border-red-100 rounded-lg px-3 py-2">{error}</p>}
-        {loading ? (
+        {loading && opportunities.length === 0 ? (
           <>
             <StoriesBarSkeleton />
             <FeedSkeleton count={3} />
@@ -173,6 +174,7 @@ export default function HomeFeed() {
               onInquire={onInquire}
               serverFiltered
               loadingMore={loadingMore}
+              refreshing={refreshing}
               hasMore={hasMore}
               sentinelRef={sentinelRef}
               total={total}

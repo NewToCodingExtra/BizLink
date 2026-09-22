@@ -8,10 +8,12 @@ export function useInfiniteFeed({ perPage = 8, type = "All", q = "", enabled = t
   const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState("");
   const sentinelRef = useRef(null);
   const loadMoreRef = useRef(() => {});
   const stateRef = useRef({ page: 1, lastPage: 1, busy: false });
+  const initializedRef = useRef(false);
 
   const fetchPage = useCallback(
     async (pageNum, append) => {
@@ -34,20 +36,29 @@ export function useInfiniteFeed({ perPage = 8, type = "All", q = "", enabled = t
   useEffect(() => {
     if (!enabled) {
       setLoading(false);
+      setRefreshing(false);
       return;
     }
     let cancelled = false;
-    setLoading(true);
+    const first = !initializedRef.current;
+    initializedRef.current = true;
     setError("");
-    setItems([]);
-    setPage(1);
-    setLastPage(1);
+    if (first) {
+      setLoading(true);
+      setItems([]);
+      setPage(1);
+      setLastPage(1);
+    } else {
+      setRefreshing(true);
+    }
     fetchPage(1, false)
       .catch((err) => {
         if (!cancelled) setError(err.message || "Failed to load feed");
       })
       .finally(() => {
-        if (!cancelled) setLoading(false);
+        if (cancelled) return;
+        if (first) setLoading(false);
+        else setRefreshing(false);
       });
     return () => {
       cancelled = true;
@@ -68,8 +79,8 @@ export function useInfiniteFeed({ perPage = 8, type = "All", q = "", enabled = t
   };
 
   useEffect(() => {
-    stateRef.current = { page, lastPage, busy: loading || loadingMore };
-  }, [page, lastPage, loading, loadingMore]);
+    stateRef.current = { page, lastPage, busy: loading || loadingMore || refreshing };
+  }, [page, lastPage, loading, loadingMore, refreshing]);
 
   useEffect(() => {
     const el = sentinelRef.current;
@@ -89,6 +100,7 @@ export function useInfiniteFeed({ perPage = 8, type = "All", q = "", enabled = t
     setItems,
     loading,
     loadingMore,
+    refreshing,
     error,
     setError,
     hasMore: page < lastPage,
