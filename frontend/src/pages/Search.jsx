@@ -1,23 +1,31 @@
 import { useSearchParams } from "react-router-dom";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import OpportunityCard from "../components/OpportunityCard";
 import ContactForm from "../components/ContactForm";
-import { FeedSkeleton } from "../components/Skeleton";
+import { FeedSkeleton, OpportunityCardSkeleton } from "../components/Skeleton";
 import { inboxApi, opportunitiesApi } from "../api/client";
+import { useInfiniteFeed } from "../hooks/useInfiniteFeed";
 import { useAuth } from "../context/AuthContext";
 
 export default function Search() {
   const [params, setParams] = useSearchParams();
   const q = params.get("q") || "";
   const [input, setInput] = useState(q);
-  const [results, setResults] = useState([]);
-  const [savedIds, setSavedIds] = useState([]);
-  const [comments, setComments] = useState([]);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState("");
   const [selectedPost, setSelectedPost] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const { user } = useAuth();
+
+  const {
+    items: results,
+    setItems: setResults,
+    loading,
+    loadingMore,
+    error,
+    setError,
+    hasMore,
+    total,
+    sentinelRef,
+  } = useInfiniteFeed({ perPage: 6, type: "All", q, enabled: q.trim().length > 0 });
 
   useEffect(() => setInput(q), [q]);
 
@@ -28,33 +36,8 @@ export default function Search() {
     return () => clearTimeout(t);
   }, [input, q, setParams]);
 
-  useEffect(() => {
-    if (!q.trim()) {
-      setResults([]);
-      return;
-    }
-    let cancelled = false;
-    setLoading(true);
-    setError("");
-    opportunitiesApi
-      .list({ q: q.trim(), per_page: 30 })
-      .then((res) => {
-        if (cancelled) return;
-        const data = res.data || [];
-        setResults(data);
-        setComments(data.flatMap((o) => o.comments || []));
-        setSavedIds(data.filter((o) => o.saved).map((o) => o.id));
-      })
-      .catch((err) => {
-        if (!cancelled) setError(err.message || "Search failed");
-      })
-      .finally(() => {
-        if (!cancelled) setLoading(false);
-      });
-    return () => {
-      cancelled = true;
-    };
-  }, [q]);
+  const comments = useMemo(() => results.flatMap((o) => o.comments || []), [results]);
+  const savedIds = useMemo(() => results.filter((o) => o.saved).map((o) => o.id), [results]);
 
   const onToggleLike = async (id) => {
     if (!user) {
@@ -77,7 +60,6 @@ export default function Search() {
     }
     try {
       const res = await opportunitiesApi.toggleSave(id);
-      setSavedIds((prev) => (res.saved ? [...new Set([...prev, id])] : prev.filter((x) => String(x) !== String(id))));
       setResults((prev) => prev.map((o) => (String(o.id) === String(id) ? { ...o, saved: res.saved } : o)));
     } catch (err) {
       setError(err.message || "Save failed");
@@ -87,7 +69,9 @@ export default function Search() {
   const onAddComment = async ({ postId, text }) => {
     if (!user) return;
     const res = await opportunitiesApi.addComment(postId, text);
-    setComments((prev) => [...prev, res.data]);
+    setResults((prev) =>
+      prev.map((o) => (String(o.id) === String(postId) ? { ...o, comments: [...(o.comments || []), res.data] } : o))
+    );
   };
 
   const onInquire = (opp) => {
@@ -121,10 +105,18 @@ export default function Search() {
         </div>
       ) : (
         <div className="mt-6 space-y-4">
-          <p className="text-sm text-slate-500">{results.length} result{results.length !== 1 ? "s" : ""} for “{q}”</p>
+          <p className="text-sm text-slate-500">{total} result{total !== 1 ? "s" : ""} for “{q}”</p>
           {results.map((o) => (
             <OpportunityCard key={o.id} opp={o} comments={comments} onToggleLike={onToggleLike} onToggleSave={onToggleSave} onAddComment={onAddComment} onInquire={onInquire} saved={savedIds.map(String).includes(String(o.id))} />
           ))}
+          {loadingMore && (
+            <>
+              <OpportunityCardSkeleton />
+              <OpportunityCardSkeleton />
+            </>
+          )}
+          <div ref={sentinelRef} aria-hidden="true" className="h-2" />
+          {!hasMore && !loadingMore && <p className="text-center text-xs text-slate-400 py-2">End of results.</p>}
         </div>
       )}
 

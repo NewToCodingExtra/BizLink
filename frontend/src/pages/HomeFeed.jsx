@@ -1,63 +1,75 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import StoriesBar from "../components/StoriesBar";
 import OpportunityFeed from "../components/OpportunityFeed";
 import ContactForm from "../components/ContactForm";
 import { FeedSkeleton, StoriesBarSkeleton } from "../components/Skeleton";
 import { inboxApi, opportunitiesApi, preferencesApi, storiesApi } from "../api/client";
+import { useInfiniteFeed } from "../hooks/useInfiniteFeed";
 import { useAuth } from "../context/AuthContext";
 
 export default function HomeFeed() {
   const { user } = useAuth();
-  const [opportunities, setOpportunities] = useState([]);
-  const [stories, setStories] = useState([]);
-  const [comments, setComments] = useState([]);
-  const [savedIds, setSavedIds] = useState([]);
   const [activeFilter, setActiveFilter] = useState("All");
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
+  const {
+    items: opportunities,
+    setItems: setOpportunities,
+    loading,
+    loadingMore,
+    error,
+    setError,
+    hasMore,
+    total,
+    sentinelRef,
+  } = useInfiniteFeed({ perPage: 6, type: activeFilter });
+
+  const [stories, setStories] = useState([]);
+  const [storiesLoading, setStoriesLoading] = useState(true);
   const [preferences, setPreferences] = useState({ categories: [], budgetMin: "", budgetMax: "" });
   const [selectedPost, setSelectedPost] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
 
-  const load = useCallback(async () => {
-    setLoading(true);
-    setError("");
-    try {
-      const [oppsRes, storiesRes, prefsRes] = await Promise.all([
-        opportunitiesApi.list({ per_page: 30 }),
-        storiesApi.list().catch(() => ({ data: [] })),
-        user ? preferencesApi.get().catch(() => ({ data: { categories: [], budgetMin: "", budgetMax: "" } })) : Promise.resolve({ data: { categories: [], budgetMin: "", budgetMax: "" } }),
-      ]);
-      setPreferences({ categories: prefsRes.data.categories || [], budgetMin: prefsRes.data.budgetMin || "", budgetMax: prefsRes.data.budgetMax || "" });
-      const opps = oppsRes.data || [];
-      setOpportunities(opps);
-      const allComments = opps.flatMap((o) => o.comments || []);
-      setComments(allComments);
-      setSavedIds(opps.filter((o) => o.saved).map((o) => o.id));
-      const rawStories = storiesRes.data || [];
-      setStories(
-        rawStories.map((s) => ({
-          id: s.id,
-          brandId: s.brandId,
-          brandName: s.brandName,
-          avatar: s.avatar,
-          mediaUrl: s.mediaUrl,
-          caption: s.caption,
-          expiresAt: s.expiresAt ? new Date(s.expiresAt).getTime() : Date.now() + 1000 * 60 * 60 * 20,
-          seen: s.seen,
-        }))
-      );
-    } catch (err) {
-      setError(err.message || "Failed to load feed");
-    } finally {
-      setLoading(false);
+  useEffect(() => {
+    let cancelled = false;
+    setStoriesLoading(true);
+    storiesApi
+      .list()
+      .then((res) => {
+        if (cancelled) return;
+        setStories(
+          (res.data || []).map((s) => ({
+            id: s.id,
+            brandId: s.brandId,
+            brandName: s.brandName,
+            avatar: s.avatar,
+            mediaUrl: s.mediaUrl,
+            caption: s.caption,
+            expiresAt: s.expiresAt ? new Date(s.expiresAt).getTime() : Date.now() + 1000 * 60 * 60 * 20,
+            seen: s.seen,
+          }))
+        );
+      })
+      .catch(() => {
+        if (!cancelled) setStories([]);
+      })
+      .finally(() => {
+        if (!cancelled) setStoriesLoading(false);
+      });
+    if (user) {
+      preferencesApi
+        .get()
+        .then((res) => {
+          if (!cancelled) setPreferences({ categories: res.data.categories || [], budgetMin: res.data.budgetMin || "", budgetMax: res.data.budgetMax || "" });
+        })
+        .catch(() => {});
     }
+    return () => {
+      cancelled = true;
+    };
   }, [user]);
 
-  useEffect(() => {
-    load();
-  }, [load, user]);
+  const comments = useMemo(() => opportunities.flatMap((o) => o.comments || []), [opportunities]);
+  const savedIds = useMemo(() => opportunities.filter((o) => o.saved).map((o) => o.id), [opportunities]);
 
   const scoredOpportunities = useMemo(() => {
     if (preferences.categories.length === 0) return opportunities;
@@ -78,7 +90,7 @@ export default function HomeFeed() {
       const res = await opportunitiesApi.toggleLike(id);
       setOpportunities((prev) => prev.map((o) => (String(o.id) === String(id) ? { ...o, liked: res.liked, likes: res.likes_count } : o)));
     } catch {
-      load();
+      setError("Like failed. Try again.");
     }
   };
 
@@ -87,14 +99,11 @@ export default function HomeFeed() {
       setError("Log in to save opportunities.");
       return;
     }
-    const wasSaved = savedIds.map(String).includes(String(id));
-    setSavedIds((prev) => (wasSaved ? prev.filter((x) => String(x) !== String(id)) : [...prev, id]));
     try {
       const res = await opportunitiesApi.toggleSave(id);
-      setSavedIds((prev) => (res.saved ? [...new Set([...prev, id])] : prev.filter((x) => String(x) !== String(id))));
       setOpportunities((prev) => prev.map((o) => (String(o.id) === String(id) ? { ...o, saved: res.saved, saves: res.saves_count } : o)));
-    } catch {
-      load();
+    } catch (err) {
+      setError(err.message || "Save failed");
     }
   };
 
@@ -105,7 +114,9 @@ export default function HomeFeed() {
     }
     try {
       const res = await opportunitiesApi.addComment(postId, text);
-      setComments((prev) => [...prev, res.data]);
+      setOpportunities((prev) =>
+        prev.map((o) => (String(o.id) === String(postId) ? { ...o, comments: [...(o.comments || []), res.data] } : o))
+      );
     } catch (err) {
       setError(err.message || "Failed to add comment");
     }
@@ -149,7 +160,7 @@ export default function HomeFeed() {
           </>
         ) : (
           <>
-            <StoriesBar stories={stories} />
+            {storiesLoading ? <StoriesBarSkeleton /> : <StoriesBar stories={stories} />}
             <OpportunityFeed
               opportunities={scoredOpportunities}
               comments={comments}
@@ -160,6 +171,11 @@ export default function HomeFeed() {
               onToggleSave={onToggleSave}
               onAddComment={onAddComment}
               onInquire={onInquire}
+              serverFiltered
+              loadingMore={loadingMore}
+              hasMore={hasMore}
+              sentinelRef={sentinelRef}
+              total={total}
             />
           </>
         )}

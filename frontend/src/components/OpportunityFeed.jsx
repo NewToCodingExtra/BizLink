@@ -1,12 +1,30 @@
 import OpportunityCard from "./OpportunityCard";
 import FilterBar from "./FilterBar";
+import { OpportunityCardSkeleton } from "./Skeleton";
 
-export default function OpportunityFeed({ opportunities, comments, activeFilter, setActiveFilter, savedIds, onToggleLike, onToggleSave, onAddComment, onInquire }) {
-  const filtered = opportunities.filter(o => {
-    if (activeFilter === "All") return true;
-    if (activeFilter === "Following") return o.liked || savedIds.includes(o.id);
-    return o.type === activeFilter;
-  });
+export default function OpportunityFeed({
+  opportunities,
+  comments,
+  activeFilter,
+  setActiveFilter,
+  savedIds,
+  onToggleLike,
+  onToggleSave,
+  onAddComment,
+  onInquire,
+  serverFiltered = false,
+  loadingMore = false,
+  hasMore = false,
+  sentinelRef = null,
+  total = null,
+}) {
+  const filtered = serverFiltered
+    ? opportunities
+    : opportunities.filter((o) => {
+        if (activeFilter === "All") return true;
+        if (activeFilter === "Following") return o.liked || savedIds.includes(o.id);
+        return o.type === activeFilter;
+      });
 
   return (
     <div className="max-w-2xl mx-auto w-full">
@@ -14,10 +32,29 @@ export default function OpportunityFeed({ opportunities, comments, activeFilter,
         <FilterBar active={activeFilter} onChange={setActiveFilter} />
       </div>
       <div className="space-y-4">
-        {filtered.map(opp => (
-          <OpportunityCard key={opp.id} opp={opp} comments={comments} onToggleLike={onToggleLike} onToggleSave={onToggleSave} onAddComment={onAddComment} onInquire={onInquire} saved={savedIds.includes(opp.id)} />
+        {total !== null && total > 0 && (
+          <p className="text-xs text-slate-400">{total} opportunit{total !== 1 ? "ies" : "y"} found</p>
+        )}
+        {filtered.map((opp) => (
+          <OpportunityCard key={opp.id} opp={opp} comments={comments} onToggleLike={onToggleLike} onToggleSave={onToggleSave} onAddComment={onAddComment} onInquire={onInquire} saved={savedIds.map(String).includes(String(opp.id))} />
         ))}
-        {filtered.length===0 && <div className="bg-white rounded-xl border border-slate-100 p-8 text-center"><p className="text-sm text-slate-500">No opportunities in this filter.</p></div>}
+        {filtered.length === 0 && (
+          <div className="bg-white rounded-xl border border-slate-100 p-8 text-center">
+            <p className="text-sm text-slate-500">
+              {activeFilter === "Following" ? "Follow brands on their profile pages to build this feed." : "No opportunities in this filter."}
+            </p>
+          </div>
+        )}
+        {loadingMore && (
+          <>
+            <OpportunityCardSkeleton />
+            <OpportunityCardSkeleton />
+          </>
+        )}
+        {sentinelRef && <div ref={sentinelRef} aria-hidden="true" className="h-2" />}
+        {!hasMore && filtered.length > 0 && !loadingMore && (
+          <p className="text-center text-xs text-slate-400 py-4">You're all caught up.</p>
+        )}
       </div>
     </div>
   );
