@@ -10,7 +10,8 @@ export function useInfiniteFeed({ perPage = 8, type = "All", q = "", enabled = t
   const [loadingMore, setLoadingMore] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState("");
-  const sentinelRef = useRef(null);
+  const [sentinelElement, setSentinelElement] = useState(null);
+  const sentinelRef = setSentinelElement;
   const loadMoreRef = useRef(() => {});
   const stateRef = useRef({ page: 1, lastPage: 1, busy: false });
   const countRef = useRef(0);
@@ -83,17 +84,16 @@ export function useInfiniteFeed({ perPage = 8, type = "All", q = "", enabled = t
   }, [page, lastPage, loading, loadingMore, refreshing]);
 
   useEffect(() => {
-    const el = sentinelRef.current;
-    if (!el || !enabled) return;
+    if (!sentinelElement || !enabled) return;
     const observer = new IntersectionObserver(
       (entries) => {
         if (entries[0].isIntersecting) loadMoreRef.current();
       },
       { rootMargin: "600px" }
     );
-    observer.observe(el);
+    observer.observe(sentinelElement);
     return () => observer.disconnect();
-  }, [enabled]);
+  }, [sentinelElement, enabled]);
 
   const loadMore = useCallback(() => {
     loadMoreRef.current();
