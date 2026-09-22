@@ -24,6 +24,7 @@ class ContactController extends Controller
                 'user_id' => $request->user()->id,
                 'type' => 'contact',
                 'message' => 'Thanks ' . $data['name'] . ' — we received your message and will reply to ' . $data['email'],
+                'link' => '/contact',
                 'read' => false,
             ]);
         }

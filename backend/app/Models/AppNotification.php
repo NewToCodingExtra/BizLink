@@ -15,6 +15,7 @@ class AppNotification extends Model
         'user_id',
         'type',
         'message',
+        'link',
         'read',
     ];
 

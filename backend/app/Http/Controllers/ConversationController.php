@@ -67,6 +67,7 @@ class ConversationController extends Controller
             'user_id' => $user->id,
             'type' => 'inquiry',
             'message' => "You inquired on {$opp->headline}",
+            'link' => "/messages/{$convo->id}",
             'read' => false,
         ]);
 

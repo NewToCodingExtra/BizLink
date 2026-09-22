@@ -1,7 +1,9 @@
 import { useEffect, useState } from "react";
-import { Link, useLocation, useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import NotificationBell from "./NotificationBell";
 import SearchBar from "./SearchBar";
+import SmartLink from "./SmartLink";
+import ProfileMenu from "./ProfileMenu";
 import markUrl from "../assets/bizlink-mark.svg";
 import { useAuth } from "../context/AuthContext";
 import { notificationsApi } from "../api/client";
@@ -49,18 +51,18 @@ export default function Navbar() {
   return (
     <header className="sticky top-0 z-40 bg-[#0B1F3A] border-b border-white/10">
       <div className="max-w-6xl mx-auto px-4 sm:px-6 h-[64px] flex items-center gap-4">
-        <Link to={user ? "/feed" : "/"} className="flex items-center gap-2 shrink-0">
+        <SmartLink to={user ? "/feed" : "/"} className="flex items-center gap-2 shrink-0">
           <img src={markUrl} alt="BizLink" className="w-8 h-8 rounded-lg" />
           <span className="font-bold tracking-tight text-[18px]"><span className="text-white">Biz</span><span className="text-[#C9A24B]">Link</span></span>
           <span className="hidden sm:inline text-[10px] tracking-[0.18em] text-[#C9A24B] font-semibold ml-1">BRIDGING BRANDS</span>
-        </Link>
+        </SmartLink>
 
         <nav className="hidden md:flex items-center gap-6 ml-6">
-          <Link to={user ? "/feed" : "/"} className={linkClass(user ? "/feed" : "/")}>{user ? "Feed" : "Home"}</Link>
-          <Link to="/about" className={linkClass("/about")}>About</Link>
-          <Link to="/reels" className={linkClass("/reels")}>Reels</Link>
-          {user && <Link to="/messages" className={linkClass("/messages")}>Messages</Link>}
-          {user && <Link to="/saved" className={linkClass("/saved")}>Saved</Link>}
+          <SmartLink to={user ? "/feed" : "/"} className={linkClass(user ? "/feed" : "/")}>{user ? "Feed" : "Home"}</SmartLink>
+          <SmartLink to="/about" className={linkClass("/about")}>About</SmartLink>
+          <SmartLink to="/reels" className={linkClass("/reels")}>Reels</SmartLink>
+          {user && <SmartLink to="/messages" className={linkClass("/messages")}>Messages</SmartLink>}
+          {user && <SmartLink to="/saved" className={linkClass("/saved")}>Saved</SmartLink>}
         </nav>
 
         <div className="hidden md:block flex-1 max-w-[360px] ml-auto">
@@ -69,13 +71,13 @@ export default function Navbar() {
 
         <div className="flex items-center gap-2 ml-auto md:ml-0">
           {user ? (
-            <Link to="/create" className="hidden sm:inline-flex items-center gap-1.5 bg-[#2563EB] hover:bg-[#1D4ED8] active:bg-[#1E40AF] text-white text-sm font-medium px-4 py-2 rounded-lg transition-colors duration-150 focus-visible:ring-2 focus-visible:ring-blue-300 focus-visible:ring-offset-2 focus-visible:ring-offset-[#0B1F3A]">
+            <SmartLink to="/create" className="hidden sm:inline-flex items-center gap-1.5 bg-[#2563EB] hover:bg-[#1D4ED8] active:bg-[#1E40AF] text-white text-sm font-medium px-4 py-2 rounded-lg transition-colors duration-150 focus-visible:ring-2 focus-visible:ring-blue-300 focus-visible:ring-offset-2 focus-visible:ring-offset-[#0B1F3A]">
               <span className="text-lg leading-none -mt-0.5">+</span> Post
-            </Link>
+            </SmartLink>
           ) : (
             <>
-              <Link to="/login" className="hidden sm:inline-flex text-sm font-medium text-slate-200 hover:text-white px-3 py-2">Log in</Link>
-              <Link to="/register" className="hidden sm:inline-flex items-center bg-[#2563EB] hover:bg-[#1D4ED8] text-white text-sm font-medium px-4 py-2 rounded-lg transition-colors">Sign up</Link>
+              <SmartLink to="/login" className="hidden sm:inline-flex text-sm font-medium text-slate-200 hover:text-white px-3 py-2">Log in</SmartLink>
+              <SmartLink to="/register" className="hidden sm:inline-flex items-center bg-[#2563EB] hover:bg-[#1D4ED8] text-white text-sm font-medium px-4 py-2 rounded-lg transition-colors">Sign up</SmartLink>
             </>
           )}
 
@@ -86,16 +88,25 @@ export default function Navbar() {
                 <div className="absolute right-0 mt-3 w-[340px] bg-white rounded-xl shadow-md border border-slate-100 overflow-hidden z-50">
                   <div className="px-4 py-3 flex items-center justify-between border-b border-slate-100">
                     <p className="text-sm font-semibold text-slate-900">Notifications{unread > 0 ? ` (${unread})` : ""}</p>
-                    <Link to="/notifications" onClick={() => setShowBell(false)} className="text-xs font-medium text-[#2563EB] hover:text-[#1D4ED8]">View all</Link>
+                    <SmartLink to="/notifications" onClick={() => setShowBell(false)} className="text-xs font-medium text-[#2563EB] hover:text-[#1D4ED8]">View all</SmartLink>
                   </div>
                   <div className="max-h-[320px] overflow-auto divide-y divide-slate-50">
                     {notifications.length === 0 && <p className="p-6 text-sm text-slate-400 text-center">No notifications</p>}
                     {notifications.slice(0, 5).map((n) => (
-                      <button key={n.id} onClick={() => markRead(n.id)} className={`w-full text-left px-4 py-3 flex gap-3 ${!n.read ? "bg-blue-50/60" : ""}`}>
+                      <button
+                        key={n.id}
+                        onClick={() => {
+                          markRead(n.id);
+                          setShowBell(false);
+                          if (n.link) navigate(n.link);
+                          else navigate("/notifications");
+                        }}
+                        className={`w-full text-left px-4 py-3 flex gap-3 hover:bg-slate-50 transition-colors ${!n.read ? "bg-blue-50/60" : ""}`}
+                      >
                         <span className={`mt-1 w-2 h-2 rounded-full shrink-0 ${n.read ? "bg-slate-200" : "bg-[#2563EB]"}`}></span>
                         <div className="flex-1 min-w-0">
                           <p className="text-sm text-slate-700 leading-snug">{n.message}</p>
-                          <p className="text-xs text-slate-400 mt-1">{n.timestamp}</p>
+                          <p className="text-xs text-slate-400 mt-1">{n.timestamp}{n.link ? " · Tap to view →" : ""}</p>
                         </div>
                       </button>
                     ))}
@@ -105,16 +116,9 @@ export default function Navbar() {
             </div>
           )}
 
-          {user ? (
-            <div className="flex items-center gap-2">
-              <Link to="/profile/me" className="w-8 h-8 rounded-full overflow-hidden border border-white/20 shrink-0" title={user.name}>
-                <img src={user.avatar || "https://i.pravatar.cc/100?img=12"} alt="profile" className="w-full h-full object-cover" />
-              </Link>
-              <button onClick={handleLogout} className="hidden sm:inline text-xs font-medium text-slate-300 hover:text-white border border-white/20 hover:border-white/40 rounded-lg px-3 py-1.5 transition-colors">Logout</button>
-            </div>
-          ) : null}
+          {user && <ProfileMenu />}
 
-          <button onClick={() => setMobileOpen(!mobileOpen)} className="md:hidden w-9 h-9 grid place-items-center rounded-lg text-slate-300 hover:text-white hover:bg-white/10 transition-colors">
+          <button onClick={() => setMobileOpen(!mobileOpen)} className="md:hidden w-9 h-9 grid place-items-center rounded-lg text-slate-300 hover:text-white hover:bg-white/10 transition-colors" aria-label="Menu">
             <span className="text-xl leading-none">{mobileOpen ? "×" : "☰"}</span>
           </button>
         </div>
@@ -123,19 +127,32 @@ export default function Navbar() {
       {mobileOpen && (
         <div className="md:hidden border-t border-white/10 bg-[#0B1F3A] px-4 py-4 space-y-3">
           <SearchBar onSearch={(q) => { setMobileOpen(false); navigate(`/search?q=${encodeURIComponent(q)}`); }} />
-          <div className="flex flex-wrap gap-2 pt-2">
-            <Link to={user ? "/feed" : "/"} onClick={() => setMobileOpen(false)} className="px-3 py-1.5 rounded-full bg-white text-[#0B1F3A] text-sm font-medium">{user ? "Feed" : "Home"}</Link>
-            <Link to="/about" onClick={() => setMobileOpen(false)} className="px-3 py-1.5 rounded-full border border-white/20 text-white text-sm">About</Link>
-            <Link to="/reels" onClick={() => setMobileOpen(false)} className="px-3 py-1.5 rounded-full border border-white/20 text-white text-sm">Reels</Link>
-            {user && <Link to="/messages" onClick={() => setMobileOpen(false)} className="px-3 py-1.5 rounded-full border border-white/20 text-white text-sm">Messages</Link>}
-            <Link to="/contact" onClick={() => setMobileOpen(false)} className="px-3 py-1.5 rounded-full border border-white/20 text-white text-sm">Contact</Link>
-            {!user && <Link to="/login" onClick={() => setMobileOpen(false)} className="px-3 py-1.5 rounded-full border border-white/20 text-white text-sm">Log in</Link>}
-            {!user && <Link to="/register" onClick={() => setMobileOpen(false)} className="px-3 py-1.5 rounded-full bg-[#2563EB] text-white text-sm">Sign up</Link>}
+          {user && (
+            <div className="flex items-center gap-3 rounded-xl bg-white/5 border border-white/10 px-3 py-2.5">
+              <img src={user.avatar || "https://i.pravatar.cc/100?img=12"} alt="" className="w-9 h-9 rounded-full object-cover shrink-0" />
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-semibold text-white truncate">{user.name}</p>
+                <p className="text-xs text-slate-400 truncate">{user.email}</p>
+              </div>
+              <SmartLink to="/profile/edit" onClick={() => setMobileOpen(false)} className="text-xs font-medium text-[#C9A24B] hover:text-white shrink-0">Edit</SmartLink>
+            </div>
+          )}
+          <div className="flex flex-wrap gap-2 pt-1">
+            <SmartLink to={user ? "/feed" : "/"} onClick={() => setMobileOpen(false)} className="px-3 py-1.5 rounded-full bg-white text-[#0B1F3A] text-sm font-medium">{user ? "Feed" : "Home"}</SmartLink>
+            <SmartLink to="/about" onClick={() => setMobileOpen(false)} className="px-3 py-1.5 rounded-full border border-white/20 text-white text-sm">About</SmartLink>
+            <SmartLink to="/reels" onClick={() => setMobileOpen(false)} className="px-3 py-1.5 rounded-full border border-white/20 text-white text-sm">Reels</SmartLink>
+            {user && <SmartLink to="/messages" onClick={() => setMobileOpen(false)} className="px-3 py-1.5 rounded-full border border-white/20 text-white text-sm">Messages</SmartLink>}
+            <SmartLink to="/contact" onClick={() => setMobileOpen(false)} className="px-3 py-1.5 rounded-full border border-white/20 text-white text-sm">Contact</SmartLink>
+            {!user && <SmartLink to="/login" onClick={() => setMobileOpen(false)} className="px-3 py-1.5 rounded-full border border-white/20 text-white text-sm">Log in</SmartLink>}
+            {!user && <SmartLink to="/register" onClick={() => setMobileOpen(false)} className="px-3 py-1.5 rounded-full bg-[#2563EB] text-white text-sm">Sign up</SmartLink>}
           </div>
           {user ? (
             <>
-              <Link to="/create" onClick={() => setMobileOpen(false)} className="block text-center bg-[#2563EB] text-white rounded-lg py-2.5 text-sm font-medium">+ Post Opportunity</Link>
-              <button onClick={handleLogout} className="block w-full text-center border border-white/20 text-white rounded-lg py-2.5 text-sm">Logout ({user.name})</button>
+              <SmartLink to="/create" onClick={() => setMobileOpen(false)} className="block text-center bg-[#2563EB] text-white rounded-lg py-2.5 text-sm font-medium">+ Post Opportunity</SmartLink>
+              <div className="grid grid-cols-2 gap-2">
+                <SmartLink to="/profile/me" onClick={() => setMobileOpen(false)} className="block text-center border border-white/20 text-white rounded-lg py-2.5 text-sm">Profile</SmartLink>
+                <button onClick={handleLogout} className="block w-full text-center bg-red-500/15 border border-red-400/30 text-red-200 rounded-lg py-2.5 text-sm font-medium">Logout</button>
+              </div>
             </>
           ) : null}
         </div>
