@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import NotificationBell from "./NotificationBell";
 import SearchBar from "./SearchBar";
+import markUrl from "../assets/bizlink-mark.svg";
 import { useAuth } from "../context/AuthContext";
 import { notificationsApi } from "../api/client";
 
@@ -49,8 +50,8 @@ export default function Navbar() {
     <header className="sticky top-0 z-40 bg-[#0B1F3A] border-b border-white/10">
       <div className="max-w-6xl mx-auto px-4 sm:px-6 h-[64px] flex items-center gap-4">
         <Link to={user ? "/feed" : "/"} className="flex items-center gap-2 shrink-0">
-          <span className="w-8 h-8 rounded-lg bg-[#C9A24B] flex items-center justify-center text-[#0B1F3A] font-extrabold text-sm">B</span>
-          <span className="text-white font-bold tracking-tight text-[18px]">BuseLink</span>
+          <img src={markUrl} alt="BizLink" className="w-8 h-8 rounded-lg" />
+          <span className="font-bold tracking-tight text-[18px]"><span className="text-white">Biz</span><span className="text-[#C9A24B]">Link</span></span>
           <span className="hidden sm:inline text-[10px] tracking-[0.18em] text-[#C9A24B] font-semibold ml-1">BRIDGING BRANDS</span>
         </Link>
 
