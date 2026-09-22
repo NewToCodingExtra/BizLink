@@ -53,6 +53,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/opportunities', [OpportunityController::class, 'store']);
     Route::post('/opportunities/{opportunity}/like', [OpportunityController::class, 'toggleLike']);
     Route::post('/opportunities/{opportunity}/save', [OpportunityController::class, 'toggleSave']);
+    Route::post('/opportunities/{opportunity}/hide', [OpportunityController::class, 'hide']);
     Route::get('/saved', [OpportunityController::class, 'saved']);
 
     Route::post('/opportunities/{opportunity}/comments', [CommentController::class, 'store']);

@@ -3,103 +3,69 @@
 namespace App\Http\Controllers;
 
 use App\Models\Opportunity;
+use App\Models\HiddenOpportunity;
+use App\Models\AppNotification;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use App\Services\OpportunityService;
+use App\Http\Resources\OpportunityResource;
 
 class OpportunityController extends Controller
 {
+    protected $service;
+
+    public function __construct(OpportunityService $service)
+    {
+        $this->service = $service;
+    }
+
     public function index(Request $request)
     {
-        $query = Opportunity::with(['user:id,name,avatar', 'comments'])->withCount(['likedBy', 'savedBy', 'comments']);
-
-        if ($type = $request->query('type')) {
-            if ($type !== 'All' && $type !== 'Following') {
-                $query->where('type', $type);
-            }
-        }
-
-        if ($search = $request->query('q')) {
-            $query->where(function ($q) use ($search) {
-                $q->where('brand_name', 'like', "%{$search}%")
-                    ->orWhere('headline', 'like', "%{$search}%")
-                    ->orWhere('description', 'like', "%{$search}%")
-                    ->orWhere('category', 'like', "%{$search}%");
-            });
-        }
-
-        if ($category = $request->query('category')) {
-            $query->where('category', $category);
-        }
-
-        if ($userId = $request->query('user_id')) {
-            $query->where('user_id', $userId);
-        }
-
-        if ($brandId = $request->query('brand_id')) {
-            $query->where('brand_id', $brandId);
-        }
-
         $viewer = Auth::guard('sanctum')->user() ?? $request->user();
+        $result = $this->service->getFeed($request, $viewer);
+        
+        $paginator = $result['paginator'];
+        $preferredBrands = $result['preferredBrands'];
+        $preferredCategories = $result['preferredCategories'];
 
-        if ($request->query('following') && $viewer) {
-            $brands = \DB::table('follows')->where('user_id', $viewer->id)->pluck('brand_id');
-            if ($brands->isNotEmpty()) {
-                $query->whereIn('brand_id', $brands);
-            } else {
-                $query->whereRaw('0 = 1');
-            }
-        }
+        $likedIds = $viewer ? $viewer->likedOpportunities()->pluck('opportunities.id')->toArray() : [];
+        $savedIds = $viewer ? $viewer->savedOpportunities()->pluck('opportunities.id')->toArray() : [];
 
-        $preferredBrands = [];
-        $preferredCategories = [];
-        if ($viewer) {
-            $preferredBrands = \DB::table('follows')->where('user_id', $viewer->id)->pluck('brand_id')->map(fn($b) => (string) $b)->toArray();
-            $pref = $viewer->preference;
-            if ($pref && is_array($pref->categories)) {
-                $preferredCategories = array_values(array_filter($pref->categories, fn($c) => is_string($c) && $c !== ''));
-            }
-            if (!empty($preferredBrands) || !empty($preferredCategories)) {
-                $query->orderByRaw($this->significanceOrder($preferredBrands, $preferredCategories));
-            }
-        }
-
-        $perPage = (int) $request->query('per_page', 20);
-        $perPage = max(1, min(50, $perPage));
-
-        $opps = $query->latest()->paginate($perPage);
-
-        $user = $viewer;
-        $likedIds = $user ? $user->likedOpportunities()->pluck('opportunities.id')->toArray() : [];
-        $savedIds = $user ? $user->savedOpportunities()->pluck('opportunities.id')->toArray() : [];
-
-        $preferredIds = $opps->getCollection()
+        $preferredIds = $paginator->getCollection()
             ->filter(fn($o) => in_array((string) $o->brand_id, $preferredBrands, true) || in_array($o->category, $preferredCategories, true))
             ->map(fn($o) => $o->id)
             ->toArray();
 
-        $data = $opps->getCollection()->map(fn($o) => $this->serialize($o, $likedIds, $savedIds, $preferredIds));
+        // Attach additional data for resource
+        $paginator->getCollection()->transform(function ($o) use ($likedIds, $savedIds, $preferredIds) {
+            $o->additional = [
+                'likedIds' => $likedIds,
+                'savedIds' => $savedIds,
+                'preferredIds' => $preferredIds,
+            ];
+            return $o;
+        });
 
-        return response()->json([
-            'data' => $data,
-            'meta' => [
-                'current_page' => $opps->currentPage(),
-                'last_page' => $opps->lastPage(),
-                'per_page' => $opps->perPage(),
-                'total' => $opps->total(),
-            ],
-        ]);
+        return OpportunityResource::collection($paginator);
     }
 
     public function show(Request $request, Opportunity $opportunity)
     {
         $opportunity->load(['user:id,name,avatar', 'comments.user:id,name,avatar']);
         $user = Auth::guard('sanctum')->user() ?? $request->user();
+        
         $likedIds = $user ? [$opportunity->id => $user->likedOpportunities()->where('opportunity_id', $opportunity->id)->exists()] : [];
         $savedIds = $user ? [$opportunity->id => $user->savedOpportunities()->where('opportunity_id', $opportunity->id)->exists()] : [];
         $liked = $user ? $user->likedOpportunities()->where('opportunity_id', $opportunity->id)->exists() : false;
         $saved = $user ? $user->savedOpportunities()->where('opportunity_id', $opportunity->id)->exists() : false;
 
-        $payload = $this->serialize($opportunity, [], []);
+        $opportunity->additional = [
+            'likedIds' => $liked ? [$opportunity->id] : [],
+            'savedIds' => $saved ? [$opportunity->id] : [],
+        ];
+
+        $resource = new OpportunityResource($opportunity);
+        $payload = $resource->resolve();
         $payload['liked'] = $liked;
         $payload['saved'] = $saved;
 
@@ -146,7 +112,7 @@ class OpportunityController extends Controller
         ]);
 
         if ($user) {
-            \App\Models\AppNotification::create([
+            AppNotification::create([
                 'user_id' => $user->id,
                 'type' => 'new_post',
                 'message' => "Your opportunity \"{$opp->headline}\" is live on the feed",
@@ -154,8 +120,10 @@ class OpportunityController extends Controller
                 'read' => false,
             ]);
         }
+        
+        $opp->additional = ['likedIds' => [], 'savedIds' => []];
 
-        return response()->json(['data' => $this->serialize($opp, [], [])], 201);
+        return response()->json(['data' => new OpportunityResource($opp)], 201);
     }
 
     public function toggleLike(Request $request, Opportunity $opportunity)
@@ -170,6 +138,16 @@ class OpportunityController extends Controller
             $user->likedOpportunities()->attach($opportunity->id);
             $opportunity->increment('likes_count');
             $liked = true;
+            
+            if ($opportunity->user_id !== $user->id) {
+                AppNotification::create([
+                    'user_id' => $opportunity->user_id,
+                    'type' => 'like',
+                    'message' => "{$user->name} liked your post \"{$opportunity->headline}\"",
+                    'link' => "/post/{$opportunity->id}",
+                    'read' => false,
+                ]);
+            }
         }
         $opportunity->refresh();
         return response()->json(['liked' => $liked, 'likes_count' => $opportunity->likes_count]);
@@ -198,66 +176,26 @@ class OpportunityController extends Controller
         $opps = $user->savedOpportunities()->with(['user:id,name,avatar', 'comments'])->latest('opportunity_user_saves.created_at')->paginate(20);
         $likedIds = $user->likedOpportunities()->pluck('opportunities.id')->toArray();
         $savedIds = $user->savedOpportunities()->pluck('opportunities.id')->toArray();
-        $data = $opps->getCollection()->map(fn($o) => $this->serialize($o, $likedIds, $savedIds));
-        return response()->json(['data' => $data, 'meta' => ['total' => $opps->total()]]);
+        
+        $opps->getCollection()->transform(function ($o) use ($likedIds, $savedIds) {
+            $o->additional = [
+                'likedIds' => $likedIds,
+                'savedIds' => $savedIds,
+            ];
+            return $o;
+        });
+        
+        return OpportunityResource::collection($opps);
     }
-
-    private function significanceOrder(array $brands, array $categories): string
+    
+    public function hide(Request $request, Opportunity $opportunity)
     {
-        $quote = fn($v) => "'" . str_replace("'", "''", $v) . "'";
-        $parts = [];
-        if (!empty($brands)) {
-            $parts[] = 'WHEN brand_id IN (' . implode(',', array_map($quote, $brands)) . ') THEN 0';
-        }
-        if (!empty($categories)) {
-            $parts[] = 'WHEN category IN (' . implode(',', array_map($quote, $categories)) . ') THEN 1';
-        }
-        $parts[] = 'ELSE 2';
-        return 'CASE ' . implode(' ', $parts) . ' END';
-    }
-
-    private function serialize(Opportunity $o, array $likedIds, array $savedIds, array $preferredIds = []): array
-    {
-        return [
-            'id' => $o->id,
-            'authorId' => $o->user_id,
-            'user' => $o->relationLoaded('user') && $o->user ? [
-                'id' => $o->user->id,
-                'name' => $o->user->name,
-                'avatar' => $o->user->avatar,
-            ] : null,
-            'brandName' => $o->brand_name,
-            'brandAvatar' => $o->brand_avatar,
-            'brandId' => $o->brand_id,
-            'type' => $o->type,
-            'category' => $o->category,
-            'headline' => $o->headline,
-            'capitalRequired' => $o->capital_required,
-            'roi' => $o->roi,
-            'description' => $o->description,
-            'image' => $o->image,
-            'mediaType' => $o->media_type,
-            'videoUrl' => $o->video_url,
-            'featured' => (bool) $o->featured,
-            'verified' => (bool) $o->verified,
-            'likes' => (int) $o->likes_count,
-            'saves' => (int) $o->saves_count,
-            'isNew' => (bool) $o->is_new,
-            'liked' => in_array($o->id, $likedIds),
-            'saved' => in_array($o->id, $savedIds),
-            'preferred' => in_array($o->id, $preferredIds),
-            'createdAt' => $o->created_at,
-            'commentsCount' => $o->relationLoaded('comments') ? $o->comments->count() : (int) ($o->comments_count ?? 0),
-            'comments' => $o->relationLoaded('comments') ? $o->comments->map(fn($c) => [
-                'id' => $c->id,
-                'postId' => $c->opportunity_id,
-                'userId' => $c->user_id,
-                'author' => $c->author,
-                'avatar' => $c->avatar,
-                'text' => $c->text,
-                'timestamp' => $c->created_at?->diffForHumans(),
-                'isSellerReply' => (bool) $c->is_seller_reply,
-            ])->values() : [],
-        ];
+        $user = $request->user();
+        HiddenOpportunity::firstOrCreate([
+            'user_id' => $user->id,
+            'opportunity_id' => $opportunity->id,
+        ]);
+        
+        return response()->json(['hidden' => true]);
     }
 }
