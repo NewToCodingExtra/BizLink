@@ -1,8 +1,8 @@
 <div align="center">
 
-<img src="frontend/src/assets/hero.png" width="72" alt="BuseLink" />
+<img src="frontend/src/assets/bizlink-wordmark.svg" width="220" alt="BizLink" />
 
-# BuseLink
+# BizLink
 ### Bridging Brands and Business Owners
 
 **Philippines' verified franchise & wholesale matchmaking platform — curated, transparent, nationwide.**
@@ -23,10 +23,10 @@
 
 ---
 
-## Why BuseLink?
+## Why BizLink?
 
 > Most franchise discovery in PH happens on scattered Facebook pages and untrusted posters.  
-> **BuseLink centralizes it** — a single trusted feed where brands publish opportunities and entrepreneurs discover, compare, and launch.
+> **BizLink centralizes it** — a single trusted feed where brands publish opportunities and entrepreneurs discover, compare, and launch.
 
 **Dual-role model:** Brands publish verified opportunities → Entrepreneurs discover, inquire, and open private consultation threads — now backed by Laravel + MySQL instead of static mocks.
 
@@ -41,7 +41,7 @@ Brand posts Franchise/Wholesale/Resell → Feed + Reels + Stories → Buyer like
 ## Preview
 
 <p align="center">
-  <img src="https://images.unsplash.com/photo-1497366216548-37526070297c?w=1200&q=80&auto=format&fit=crop" width="100%" alt="BuseLink Hero" style="border-radius: 16px; border: 1px solid #E2E8F0;" />
+  <img src="https://images.unsplash.com/photo-1497366216548-37526070297c?w=1200&q=80&auto=format&fit=crop" width="100%" alt="BizLink Hero" style="border-radius: 16px; border: 1px solid #E2E8F0;" />
 </p>
 
 | Feed | Reels | Inbox |
@@ -73,6 +73,20 @@ Brand posts Franchise/Wholesale/Resell → Feed + Reels + Stories → Buyer like
 
 ---
 
+## Brand
+
+The **BizLink** mark is a "linked B": two chain-link bowls sharing a single stem — partnership (the link) forming the initial (the B). Navy `#0B1F3A` = structure/trust, gold `#C9A24B` = status/verified, matching the design tokens below.
+
+| File | Use |
+|------|-----|
+| `frontend/src/assets/bizlink-mark.svg` | Pictorial mark — Navbar, Footer, tab icon |
+| `frontend/src/assets/bizlink-wordmark.svg` | Full lockup (mark + two-tone wordmark) — light backgrounds, docs |
+| `frontend/public/favicon.svg` | Browser tab icon (same as pictorial mark) |
+
+On dark surfaces the wordmark splits `Biz` (white) / `Link` (gold); on light surfaces `Biz` (navy) / `Link` (gold).
+
+---
+
 ## Design System
 
 Locked via CSS variables + Tailwind — no hardcoded hex in components.
@@ -100,7 +114,7 @@ Locked via CSS variables + Tailwind — no hardcoded hex in components.
 
 - **Frontend:** React 19 + Vite 8 + Tailwind CSS v4 + React Router 7 (20 routes)
 - **Backend:** Laravel 12 + Sanctum (token auth) + Socialite (Google OAuth)
-- **Database:** MySQL 8.0 (`buselink` on `127.0.0.1:3307`), seeded from the old frontend mocks
+- **Database:** MySQL 8.0 (`bizlink` on `127.0.0.1:3307`), seeded from the old frontend mocks
 - **State:** Per-page API fetching via `src/api/client.js` + `AuthContext` — no more lifted mock seeds
 - **Lint:** Oxlint
 - **Icons:** Inline SVG + Unsplash/Pravatar placeholders
@@ -110,7 +124,7 @@ Locked via CSS variables + Tailwind — no hardcoded hex in components.
 ## Project Structure
 
 ```
-BuseLink/
+BizLink/
 ├── backend/
 │   ├── app/
 │   │   ├── Http/Controllers/  Auth, GoogleAuth, Opportunity, Comment, Story,
@@ -142,7 +156,7 @@ BuseLink/
 │   │   └── index.css      Design tokens + Tailwind import + Inter
 │   ├── .env.example       VITE_API_URL=http://localhost:8000/api
 │   └── vite.config.js     /api proxy to :8000
-└── start-buselink.ps1     starts MySQL:3307 + API:8000
+└── start-bizlink.ps1     starts MySQL:3307 + API:8000
 ```
 
 **Activity 4 → Rubric Mapping**
@@ -167,12 +181,12 @@ BuseLink/
 **0) Database (isolated instance on :3307 so existing MySQL installs are untouched):**
 
 ```powershell
-# data dir already initialized at C:\temp\buselink-mysql\data
-# start it (or run .\start-buselink.ps1 which does steps 0-2):
-& "C:\Program Files\MySQL\MySQL Server 8.0\bin\mysqld.exe" --datadir=C:\temp\buselink-mysql\data --port=3307 --mysqlx-port=33070 --bind-address=127.0.0.1 --server-id=99
+# data dir already initialized at C:\temp\bizlink-mysql\data
+# start it (or run .\start-bizlink.ps1 which does steps 0-2):
+& "C:\Program Files\MySQL\MySQL Server 8.0\bin\mysqld.exe" --datadir=C:\temp\bizlink-mysql\data --port=3307 --mysqlx-port=33070 --bind-address=127.0.0.1 --server-id=99
 ```
 
-Database `buselink`, user `buselink` / `Buselink123!` must exist (created once via `CREATE DATABASE buselink ...; CREATE USER ...; GRANT ALL ...`).
+Database `bizlink`, user `bizlink` / `Bizlink123!` must exist (created once via `CREATE DATABASE bizlink ...; CREATE USER ...; GRANT ALL ...`).
 
 **1) Backend (`http://localhost:8000`):**
 
@@ -185,7 +199,7 @@ C:\xampp\php\php.exe artisan migrate:fresh --seed
 C:\xampp\php\php.exe artisan serve --host=127.0.0.1 --port=8000
 ```
 
-Or one shot: `.\start-buselink.ps1` from the repo root.
+Or one shot: `.\start-bizlink.ps1` from the repo root.
 
 **2) Frontend (`http://localhost:5173`):**
 
@@ -202,8 +216,8 @@ npm run lint     # oxlint
 
 | Role | Email | Password |
 |------|-------|----------|
-| Entrepreneur | `demo@buselink.ph` | `password123` |
-| Brand owner | `brand@buselink.ph` | `password123` |
+| Entrepreneur | `demo@bizlink.ph` | `password123` |
+| Brand owner | `brand@bizlink.ph` | `password123` |
 
 ---
 

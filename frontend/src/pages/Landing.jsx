@@ -49,13 +49,13 @@ export default function Landing() {
           <div className="bg-white border border-slate-100 rounded-xl p-5 shadow-sm">
             <p className="text-xs font-bold tracking-widest text-[#C9A24B]">DEMO LOGIN</p>
             <p className="font-semibold text-slate-900 mt-1">Entrepreneur</p>
-            <p className="text-slate-500 mt-1">demo@buselink.ph · password123</p>
+            <p className="text-slate-500 mt-1">demo@bizlink.ph · password123</p>
             <Link to="/login" className="text-[#2563EB] text-sm font-medium mt-2 inline-block">Log in →</Link>
           </div>
           <div className="bg-white border border-slate-100 rounded-xl p-5 shadow-sm">
             <p className="text-xs font-bold tracking-widest text-[#C9A24B]">DEMO LOGIN</p>
             <p className="font-semibold text-slate-900 mt-1">Brand owner</p>
-            <p className="text-slate-500 mt-1">brand@buselink.ph · password123</p>
+            <p className="text-slate-500 mt-1">brand@bizlink.ph · password123</p>
             <Link to="/login" className="text-[#2563EB] text-sm font-medium mt-2 inline-block">Log in →</Link>
           </div>
           <div className="bg-white border border-slate-100 rounded-xl p-5 shadow-sm">

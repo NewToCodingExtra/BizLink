@@ -7,7 +7,7 @@ export default function Login() {
   const navigate = useNavigate();
   const location = useLocation();
   const { login } = useAuth();
-  const [email, setEmail] = useState("demo@buselink.ph");
+  const [email, setEmail] = useState("demo@bizlink.ph");
   const [password, setPassword] = useState("password123");
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
@@ -52,7 +52,7 @@ export default function Login() {
   return (
     <div className="max-w-md mx-auto px-4 sm:px-6 py-10">
       <div className="bg-white rounded-2xl border border-slate-100 shadow-sm p-6 md:p-8">
-        <p className="text-[11px] tracking-[0.16em] font-semibold text-[#1E3A5F]">BUSELINK · LOGIN</p>
+        <p className="text-[11px] tracking-[0.16em] font-semibold text-[#1E3A5F]">BIZLINK · LOGIN</p>
         <h1 className="text-2xl font-bold text-[#0B1F3A] mt-2">Welcome back</h1>
         <p className="text-sm text-slate-500 mt-1">Session is issued by Laravel Sanctum and stored in MySQL.</p>
 

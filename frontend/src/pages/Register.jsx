@@ -42,7 +42,7 @@ export default function Register() {
   return (
     <div className="max-w-md mx-auto px-4 sm:px-6 py-10">
       <div className="bg-white rounded-2xl border border-slate-100 shadow-sm p-6 md:p-8">
-        <p className="text-[11px] tracking-[0.16em] font-semibold text-[#1E3A5F]">BUSELINK · REGISTER</p>
+        <p className="text-[11px] tracking-[0.16em] font-semibold text-[#1E3A5F]">BIZLINK · REGISTER</p>
         <h1 className="text-2xl font-bold text-[#0B1F3A] mt-2">Create account</h1>
         <p className="text-sm text-slate-500 mt-1">Join as entrepreneur or brand. Stored in MySQL via Laravel.</p>
 

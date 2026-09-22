@@ -11,7 +11,7 @@ export default function BusinessOverview() {
         <div>
           <span className="inline-flex items-center gap-2 text-[11px] tracking-[0.16em] font-semibold text-[#1E3A5F] bg-slate-50 border border-slate-200 rounded-full px-3 py-1">BUSINESS DIRECTORY · PHILIPPINES</span>
           <h1 className="mt-4 text-4xl md:text-5xl font-bold tracking-tight text-[#0B1F3A] leading-[1.05]">Bridging Brands<br />and Business<br /><span className="text-[#C9A24B]">Owners</span></h1>
-          <p className="mt-4 text-base text-slate-500 leading-relaxed max-w-xl">BuseLink connects franchisers and wholesalers with aspiring buyers. Discover verified franchise directories, wholesale hubs and direct matching — all in one trusted feed.</p>
+          <p className="mt-4 text-base text-slate-500 leading-relaxed max-w-xl">BizLink connects franchisers and wholesalers with aspiring buyers. Discover verified franchise directories, wholesale hubs and direct matching — all in one trusted feed.</p>
           <p className="mt-3 text-sm text-slate-500">Dual-role explained: <span className="font-semibold text-slate-700">Brands publish opportunities</span> — <span className="font-semibold text-slate-700">Entrepreneurs discover, inquire and launch.</span></p>
 
           <form onSubmit={(e)=>{e.preventDefault(); navigate(`/search?q=${encodeURIComponent(q)}`);}} className="mt-6 flex gap-2 max-w-md">
@@ -42,7 +42,7 @@ export default function BusinessOverview() {
 
         <div className="relative">
           <div className="rounded-2xl overflow-hidden border border-slate-100 shadow-sm bg-slate-50">
-            <img src="https://images.unsplash.com/photo-1497366216548-37526070297c?w=900&q=80&auto=format&fit=crop" alt="BuseLink overview" className="w-full h-[380px] md:h-[460px] object-cover" />
+            <img src="https://images.unsplash.com/photo-1497366216548-37526070297c?w=900&q=80&auto=format&fit=crop" alt="BizLink overview" className="w-full h-[380px] md:h-[460px] object-cover" />
           </div>
           <div className="absolute -bottom-4 -left-4 bg-white border border-slate-100 rounded-xl shadow-md p-4 max-w-[260px] hidden md:block">
             <p className="text-xs font-semibold tracking-widest text-[#C9A24B]">FEATURED</p>

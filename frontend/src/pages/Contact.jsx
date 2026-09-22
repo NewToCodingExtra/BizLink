@@ -14,10 +14,10 @@ export default function Contact() {
 
       <div className="mt-6 grid gap-6">
         <div className="bg-[#0B1F3A] rounded-xl p-6 text-white">
-          <h3 className="text-base font-semibold">BuseLink HQ</h3>
-          <p className="text-sm text-slate-300 mt-2 leading-relaxed">15F One World Place, BGC, Taguig · hello@buselink.ph · +63 917 000 0000<br />Mon–Fri 9AM–6PM PHT</p>
+          <h3 className="text-base font-semibold">BizLink HQ</h3>
+          <p className="text-sm text-slate-300 mt-2 leading-relaxed">15F One World Place, BGC, Taguig · hello@bizlink.ph · +63 917 000 0000<br />Mon–Fri 9AM–6PM PHT</p>
           <div className="mt-4 flex gap-2">
-            <span className="text-xs bg-white/10 rounded-full px-3 py-1">hello@buselink.ph</span>
+            <span className="text-xs bg-white/10 rounded-full px-3 py-1">hello@bizlink.ph</span>
             <span className="text-xs bg-[#C9A24B] text-[#0B1F3A] font-semibold rounded-full px-3 py-1">Verified Support</span>
           </div>
         </div>

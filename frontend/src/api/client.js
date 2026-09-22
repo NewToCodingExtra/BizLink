@@ -1,14 +1,14 @@
 const API_BASE = import.meta.env.VITE_API_URL || "http://localhost:8000/api";
 
 function getToken() {
-  return localStorage.getItem("buselink_token");
+  return localStorage.getItem("bizlink_token");
 }
 
 export function setToken(token) {
   if (token) {
-    localStorage.setItem("buselink_token", token);
+    localStorage.setItem("bizlink_token", token);
   } else {
-    localStorage.removeItem("buselink_token");
+    localStorage.removeItem("bizlink_token");
   }
 }
 

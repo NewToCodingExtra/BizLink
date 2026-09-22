@@ -9,7 +9,7 @@ export function AuthProvider({ children }) {
 
   useEffect(() => {
     const init = async () => {
-      const token = localStorage.getItem("buselink_token");
+      const token = localStorage.getItem("bizlink_token");
       if (!token) {
         setLoading(false);
         return;

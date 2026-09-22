@@ -31,7 +31,7 @@ export default function ContactForm({ prefill, onClose, onSubmit, compact=false 
     <form onSubmit={submit} className={`bg-white rounded-xl border border-slate-100 shadow-sm ${compact ? "p-5" : "p-6 md:p-8"}`}>
       <div className="flex items-start justify-between gap-4">
         <div>
-          <h3 className="text-lg font-semibold text-slate-900">{prefill ? `Inquire · ${prefill.brandName}` : "Contact BuseLink"}</h3>
+          <h3 className="text-lg font-semibold text-slate-900">{prefill ? `Inquire · ${prefill.brandName}` : "Contact BizLink"}</h3>
           <p className="text-sm text-slate-500 mt-1">{prefill ? `About: ${prefill.headline}` : "General inquiry — we’ll respond within 24h."}</p>
         </div>
         {onClose && <button type="button" onClick={onClose} className="w-8 h-8 grid place-items-center rounded-full border border-slate-200 text-slate-500 hover:bg-slate-50 text-lg leading-none">×</button>}
