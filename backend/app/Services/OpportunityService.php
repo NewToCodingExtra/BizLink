@@ -218,7 +218,7 @@ class OpportunityService
 
         // Engagement velocity: likes/saves/comments so far (IG: how quickly
         // people engage). Capped so mega-posts can't dominate forever.
-        $parts[] = 'LEAST(15, likes_count * 0.05 + saves_count * 0.1 + (SELECT COUNT(*) FROM comments WHERE comments.opportunity_id = opportunities.id) * 0.5)';
+        $parts[] = 'LEAST(15, likes_count * 0.05 + saves_count * 0.1 + (SELECT COUNT(*) FROM comments WHERE comments.opportunity_id = opportunities.id AND comments.deleted_at IS NULL) * 0.5)';
 
         // Trust: verified brands get a small boost (IG demotes problematic).
         $parts[] = 'IF(verified, 3, 0)';

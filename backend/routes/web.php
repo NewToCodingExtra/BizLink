@@ -76,7 +76,13 @@ Route::middleware('auth')->group(function () {
     Route::post('/opportunities/{opportunity}/like', [OpportunityController::class, 'toggleLike']);
     Route::post('/opportunities/{opportunity}/save', [OpportunityController::class, 'toggleSave']);
     Route::post('/opportunities/{opportunity}/hide', [OpportunityController::class, 'hide']);
-    Route::post('/opportunities/{opportunity}/comments', [CommentController::class, 'store']);
+    Route::post('/opportunities/{opportunity}/comments', [CommentController::class, 'store'])->middleware('throttle:10,1');
+    Route::get('/opportunities/{opportunity}/comments', [CommentController::class, 'index']);
+    Route::get('/comments/{comment}/replies', [CommentController::class, 'replies']);
+    Route::patch('/comments/{comment}', [CommentController::class, 'update']);
+    Route::delete('/comments/{comment}', [CommentController::class, 'destroy']);
+    Route::post('/comments/{comment}/react', [CommentController::class, 'react'])->middleware('throttle:60,1');
+    Route::post('/comments/{comment}/report', [CommentController::class, 'report']);
     Route::post('/stories', [StoryController::class, 'store']);
     Route::post('/stories/{story}/seen', [StoryController::class, 'markSeen']);
     Route::post('/stories/{story}/like', [StoryController::class, 'toggleLike']);

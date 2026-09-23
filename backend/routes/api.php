@@ -18,20 +18,6 @@ use Illuminate\Support\Facades\Route;
 
 Route::get('/health', fn() => response()->json(['ok' => true, 'app' => 'BizLink']));
 
-Route::get('/migrate-now', function () {
-    \Illuminate\Support\Facades\Schema::create('story_user_likes', function (\Illuminate\Database\Schema\Blueprint $table) {
-        $table->id();
-        $table->foreignId('story_id')->constrained()->cascadeOnDelete();
-        $table->foreignId('user_id')->constrained()->cascadeOnDelete();
-        $table->timestamps();
-        $table->unique(['story_id', 'user_id']);
-    });
-    \Illuminate\Support\Facades\Schema::table('stories', function (\Illuminate\Database\Schema\Blueprint $table) {
-        $table->unsignedInteger('likes_count')->default(0);
-    });
-    return 'migrated';
-});
-
 Route::prefix('auth')->group(function () {
     Route::post('/register', [AuthController::class, 'register']);
     Route::post('/login', [AuthController::class, 'login']);
@@ -70,7 +56,12 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/opportunities/{opportunity}/hide', [OpportunityController::class, 'hide']);
     Route::get('/saved', [OpportunityController::class, 'saved']);
 
-    Route::post('/opportunities/{opportunity}/comments', [CommentController::class, 'store']);
+    Route::post('/opportunities/{opportunity}/comments', [CommentController::class, 'store'])->middleware('throttle:10,1');
+    Route::get('/comments/{comment}/replies', [CommentController::class, 'replies']);
+    Route::patch('/comments/{comment}', [CommentController::class, 'update']);
+    Route::delete('/comments/{comment}', [CommentController::class, 'destroy']);
+    Route::post('/comments/{comment}/react', [CommentController::class, 'react'])->middleware('throttle:60,1');
+    Route::post('/comments/{comment}/report', [CommentController::class, 'report']);
 
     Route::post('/stories', [StoryController::class, 'store']);
     Route::post('/stories/{story}/seen', [StoryController::class, 'markSeen']);
@@ -79,6 +70,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/conversations', [ConversationController::class, 'index']);
     Route::get('/conversations/{conversation}', [ConversationController::class, 'show']);
     Route::post('/inquiries', [ConversationController::class, 'inquire']);
+    Route::post('/inquiries/resolve', [ConversationController::class, 'resolve']);
     Route::post('/conversations/{conversation}/messages', [ConversationController::class, 'send']);
 
     Route::get('/notifications', [NotificationController::class, 'index']);

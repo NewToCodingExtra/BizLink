@@ -81,13 +81,22 @@ class UserController extends Controller
                 'comments' => $o->comments->map(fn($c) => [
                     'id' => $c->id,
                     'postId' => $c->opportunity_id,
+                    'parentId' => $c->parent_id,
                     'userId' => $c->user_id,
                     'username' => $c->user?->username,
                     'author' => $c->author,
                     'avatar' => $c->avatar,
                     'text' => $c->text,
+                    'mediaUrl' => $c->media_url,
+                    'mediaType' => $c->media_type,
                     'timestamp' => $c->created_at?->diffForHumans(),
                     'isSellerReply' => (bool) $c->is_seller_reply,
+                    'edited' => $c->edited_at !== null,
+                    'deleted' => (bool) $c->trashed(),
+                    'reactions' => [],
+                    'myReaction' => null,
+                    'replies' => [],
+                    'repliesCount' => 0,
                 ])->values(),
             ])->values();
 
