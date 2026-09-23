@@ -164,9 +164,12 @@ class ConversationController extends Controller
 
     private function serialize(Conversation $c, bool $withMessages = false): array
     {
+        $owner = $this->resolveOwner($c);
         $payload = [
             'id' => $c->id,
             'with' => $c->with_name,
+            'withId' => $owner?->id,
+            'withUsername' => $owner?->username,
             'avatar' => $c->avatar,
             'lastMessage' => $c->last_message,
             'unread' => (int) $c->unread,
@@ -190,5 +193,25 @@ class ConversationController extends Controller
             ])->values();
         }
         return $payload;
+    }
+
+    /**
+     * The brand owner on the other side of the thread. Prefers the linked
+     * opportunity's actual author over the ambiguous brand_id slug.
+     */
+    private function resolveOwner(Conversation $c): ?\App\Models\User
+    {
+        if ($c->opportunity_id) {
+            $ownerId = Opportunity::where('id', $c->opportunity_id)->value('user_id');
+            if ($ownerId) {
+                $owner = \App\Models\User::select('id', 'username')->find($ownerId);
+                if ($owner) {
+                    return $owner;
+                }
+            }
+        }
+        $ownerId = Opportunity::where('brand_id', $c->brand_id)->value('user_id')
+            ?? \App\Models\Story::where('brand_id', $c->brand_id)->value('user_id');
+        return $ownerId ? \App\Models\User::select('id', 'username')->find($ownerId) : null;
     }
 }

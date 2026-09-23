@@ -11,7 +11,7 @@ class CommentController extends Controller
 {
     public function index(Opportunity $opportunity)
     {
-        $comments = $opportunity->comments()->with('user:id,name,avatar')->latest()->get();
+        $comments = $opportunity->comments()->with('user:id,name,username,avatar')->latest()->get();
         return response()->json(['data' => $comments->map(fn($c) => $this->serialize($c))]);
     }
 
@@ -43,7 +43,7 @@ class CommentController extends Controller
             ]);
         }
 
-        return response()->json(['data' => $this->serialize($comment)], 201);
+        return response()->json(['data' => $this->serialize($comment->load('user:id,username'))], 201);
     }
 
     private function serialize(Comment $c): array
@@ -52,6 +52,7 @@ class CommentController extends Controller
             'id' => $c->id,
             'postId' => $c->opportunity_id,
             'userId' => $c->user_id,
+            'username' => $c->relationLoaded('user') && $c->user ? $c->user->username : null,
             'author' => $c->author,
             'avatar' => $c->avatar,
             'text' => $c->text,

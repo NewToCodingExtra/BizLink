@@ -123,6 +123,7 @@ class AuthController extends Controller
         return [
             'id' => $user->id,
             'name' => $user->name,
+            'username' => $user->username,
             'email' => $user->email,
             'avatar' => $user->avatar,
             'bio' => $user->bio,

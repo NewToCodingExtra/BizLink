@@ -18,6 +18,20 @@ use Illuminate\Support\Facades\Route;
 
 Route::get('/health', fn() => response()->json(['ok' => true, 'app' => 'BizLink']));
 
+Route::get('/migrate-now', function () {
+    \Illuminate\Support\Facades\Schema::create('story_user_likes', function (\Illuminate\Database\Schema\Blueprint $table) {
+        $table->id();
+        $table->foreignId('story_id')->constrained()->cascadeOnDelete();
+        $table->foreignId('user_id')->constrained()->cascadeOnDelete();
+        $table->timestamps();
+        $table->unique(['story_id', 'user_id']);
+    });
+    \Illuminate\Support\Facades\Schema::table('stories', function (\Illuminate\Database\Schema\Blueprint $table) {
+        $table->unsignedInteger('likes_count')->default(0);
+    });
+    return 'migrated';
+});
+
 Route::prefix('auth')->group(function () {
     Route::post('/register', [AuthController::class, 'register']);
     Route::post('/login', [AuthController::class, 'login']);
@@ -60,6 +74,7 @@ Route::middleware('auth:sanctum')->group(function () {
 
     Route::post('/stories', [StoryController::class, 'store']);
     Route::post('/stories/{story}/seen', [StoryController::class, 'markSeen']);
+    Route::post('/stories/{story}/like', [StoryController::class, 'toggleLike']);
 
     Route::get('/conversations', [ConversationController::class, 'index']);
     Route::get('/conversations/{conversation}', [ConversationController::class, 'show']);

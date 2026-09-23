@@ -8,16 +8,24 @@ class OpportunityResource extends JsonResource
 {
     public function toArray($request)
     {
-        $likedIds = $this->additional['likedIds'] ?? [];
-        $savedIds = $this->additional['savedIds'] ?? [];
-        $preferredIds = $this->additional['preferredIds'] ?? [];
+        // NOTE: $this->additional is the resource's own meta bag (always
+        // empty here). Per-item data attached by the controller lives on the
+        // underlying model, so read it from there.
+        $attached = ($this->resource instanceof \App\Models\Opportunity)
+            ? ($this->resource->getAttribute('additional') ?? [])
+            : [];
+        $likedIds = $attached['likedIds'] ?? [];
+        $savedIds = $attached['savedIds'] ?? [];
+        $preferredIds = $attached['preferredIds'] ?? [];
 
         return [
             'id' => $this->id,
             'authorId' => $this->user_id,
+            'authorUsername' => $this->relationLoaded('user') && $this->user ? $this->user->username : null,
             'user' => $this->relationLoaded('user') && $this->user ? [
                 'id' => $this->user->id,
                 'name' => $this->user->name,
+                'username' => $this->user->username,
                 'avatar' => $this->user->avatar,
             ] : null,
             'brandName' => $this->brand_name,
@@ -40,12 +48,14 @@ class OpportunityResource extends JsonResource
             'liked' => in_array($this->id, $likedIds),
             'saved' => in_array($this->id, $savedIds),
             'preferred' => in_array($this->id, $preferredIds),
+            'reasons' => $attached['reasons'] ?? [],
             'createdAt' => $this->created_at,
             'commentsCount' => $this->relationLoaded('comments') ? $this->comments->count() : (int) ($this->comments_count ?? 0),
             'comments' => $this->relationLoaded('comments') ? $this->comments->map(fn($c) => [
                 'id' => $c->id,
                 'postId' => $c->opportunity_id,
                 'userId' => $c->user_id,
+                'username' => $c->relationLoaded('user') && $c->user ? $c->user->username : null,
                 'author' => $c->author,
                 'avatar' => $c->avatar,
                 'text' => $c->text,

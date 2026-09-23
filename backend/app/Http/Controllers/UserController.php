@@ -13,7 +13,12 @@ class UserController extends Controller
     {
         $user = null;
 
-        if (is_numeric($id)) {
+        // Canonical profile slug: username (e.g. /profile/sparklewash-auto).
+        if ($id !== 'me' && !is_numeric($id) && !str_starts_with($id, 'brand-')) {
+            $user = User::where('username', $id)->first();
+        }
+
+        if (!$user && is_numeric($id)) {
             $user = User::find($id);
         }
 
@@ -42,19 +47,15 @@ class UserController extends Controller
         $likedIds = $viewer ? $viewer->likedOpportunities()->pluck('opportunities.id')->toArray() : [];
         $savedIds = $viewer ? $viewer->savedOpportunities()->pluck('opportunities.id')->toArray() : [];
 
-        $opportunities = \App\Models\Opportunity::with(['user:id,name,avatar', 'comments'])
-            ->where(function ($q) use ($user, $id) {
-                $q->where('user_id', $user->id);
-                if (str_starts_with($id, 'brand-')) {
-                    $q->orWhere('brand_id', $id);
-                }
-            })
+        $opportunities = \App\Models\Opportunity::with(['user:id,name,username,avatar', 'comments.user:id,username'])
+            ->where('user_id', $user->id)
             ->latest()
             ->get()
             ->map(fn($o) => [
                 'id' => $o->id,
                 'authorId' => $o->user_id,
-                'user' => $o->user ? ['id' => $o->user->id, 'name' => $o->user->name, 'avatar' => $o->user->avatar] : null,
+                'authorUsername' => $o->user?->username,
+                'user' => $o->user ? ['id' => $o->user->id, 'name' => $o->user->name, 'username' => $o->user->username, 'avatar' => $o->user->avatar] : null,
                 'brandName' => $o->brand_name,
                 'brandAvatar' => $o->brand_avatar,
                 'brandId' => $o->brand_id,
@@ -80,6 +81,7 @@ class UserController extends Controller
                     'id' => $c->id,
                     'postId' => $c->opportunity_id,
                     'userId' => $c->user_id,
+                    'username' => $c->user?->username,
                     'author' => $c->author,
                     'avatar' => $c->avatar,
                     'text' => $c->text,
@@ -97,6 +99,7 @@ class UserController extends Controller
             ->map(fn($s) => [
                 'id' => $s->id,
                 'authorId' => $s->user_id,
+                'authorUsername' => $user->username,
                 'brandId' => $s->brand_id,
                 'brandName' => $s->brand_name,
                 'avatar' => $s->avatar,
@@ -108,8 +111,12 @@ class UserController extends Controller
 
         $following = false;
         if ($viewer) {
-            $following = DB::table('follows')->where('user_id', $viewer->id)->where('brand_id', 'brand-' . $user->id)->exists()
-                || DB::table('follows')->where('user_id', $viewer->id)->where('brand_id', $id)->exists();
+            // Follows are keyed by author ("brand-{userId}"), so check the
+            // resolved owner — not the raw slug, which may be shared.
+            $following = DB::table('follows')->where('user_id', $viewer->id)->where('brand_id', 'brand-' . $user->id)->exists();
+            if (!$following && !is_numeric($id) && !str_starts_with($id, 'brand-')) {
+                $following = DB::table('follows')->where('user_id', $viewer->id)->where('brand_id', $id)->exists();
+            }
         }
 
         return response()->json([
@@ -117,6 +124,7 @@ class UserController extends Controller
                 'user' => [
                     'id' => $user->id,
                     'name' => $user->name,
+                    'username' => $user->username,
                     'avatar' => $user->avatar,
                     'bio' => $user->bio,
                     'role' => $user->role,

@@ -24,4 +24,9 @@ class Story extends Model
         'expires_at' => 'datetime',
         'seen' => 'boolean',
     ];
+
+    public function likes()
+    {
+        return $this->belongsToMany(User::class, 'story_user_likes')->withTimestamps();
+    }
 }

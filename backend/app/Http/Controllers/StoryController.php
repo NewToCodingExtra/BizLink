@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Story;
+use App\Models\AppNotification;
 use Illuminate\Http\Request;
 
 class StoryController extends Controller
@@ -13,7 +14,10 @@ class StoryController extends Controller
             $q->whereNull('expires_at')->orWhere('expires_at', '>', now());
         })->latest()->get();
 
-        return response()->json(['data' => $stories->map(fn($s) => $this->serialize($s))]);
+        $usernames = \App\Models\User::whereIn('id', $stories->pluck('user_id')->filter()->unique())
+            ->pluck('username', 'id');
+
+        return response()->json(['data' => $stories->map(fn($s) => $this->serialize($s, $usernames[$s->user_id] ?? null))]);
     }
 
     public function store(Request $request)
@@ -47,18 +51,50 @@ class StoryController extends Controller
         return response()->json(['data' => $this->serialize($story)]);
     }
 
-    private function serialize(Story $s): array
+    public function toggleLike(Request $request, Story $story)
+    {
+        $user = $request->user();
+        $exists = $user->likedStories()->where('story_id', $story->id)->exists();
+        
+        if ($exists) {
+            $user->likedStories()->detach($story->id);
+            $story->decrement('likes_count');
+            $liked = false;
+        } else {
+            $user->likedStories()->attach($story->id);
+            $story->increment('likes_count');
+            $liked = true;
+            
+            if ($story->user_id !== $user->id && $story->user_id) {
+                AppNotification::create([
+                    'user_id' => $story->user_id,
+                    'type' => 'like',
+                    'message' => "{$user->name} reacted to your story",
+                    'link' => "/",
+                    'read' => false,
+                ]);
+            }
+        }
+        $story->refresh();
+        return response()->json(['liked' => $liked, 'likes_count' => $story->likes_count]);
+    }
+
+    private function serialize(Story $s, ?string $username = null): array
     {
         return [
             'id' => $s->id,
             'authorId' => $s->user_id,
+            'authorUsername' => $username ?? \App\Models\User::where('id', $s->user_id)->value('username'),
             'brandId' => $s->brand_id,
             'brandName' => $s->brand_name,
             'avatar' => $s->avatar,
             'mediaUrl' => $s->media_url,
             'caption' => $s->caption,
             'expiresAt' => $s->expires_at?->toISOString(),
+            'createdAt' => $s->created_at?->toISOString(),
             'seen' => (bool) $s->seen,
+            'likesCount' => $s->likes_count ?? 0,
+            'liked' => request()->user() ? request()->user()->likedStories()->where('story_id', $s->id)->exists() : false,
         ];
     }
 }

@@ -14,6 +14,7 @@ class User extends Authenticatable
 
     protected $fillable = [
         'name',
+        'username',
         'email',
         'password',
         'google_id',
@@ -34,6 +35,37 @@ class User extends Authenticatable
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
         ];
+    }
+
+    protected static function booted(): void
+    {
+        static::creating(function (User $user) {
+            if (empty($user->username)) {
+                $user->username = static::makeUsername($user->name ?? '');
+            }
+        });
+    }
+
+    public static function makeUsername(string $name, ?int $ignoreId = null): string
+    {
+        $reserved = ['me', 'edit', 'login', 'register', 'feed', 'admin', 'api'];
+        $base = \Illuminate\Support\Str::slug($name);
+        if ($base === '') {
+            $base = 'user';
+        }
+        $base = substr($base, 0, 40);
+        if (in_array($base, $reserved, true)) {
+            $base .= '-u';
+        }
+        $candidate = $base;
+        $i = 2;
+        while (static::where('username', $candidate)
+            ->when($ignoreId, fn($q) => $q->where('id', '!=', $ignoreId))
+            ->exists()) {
+            $candidate = substr($base, 0, 45) . '-' . $i;
+            $i++;
+        }
+        return $candidate;
     }
 
     public function opportunities()
@@ -59,6 +91,11 @@ class User extends Authenticatable
     public function conversations()
     {
         return $this->hasMany(Conversation::class);
+    }
+
+    public function likedStories()
+    {
+        return $this->belongsToMany(Story::class, 'story_user_likes')->withTimestamps();
     }
 
     public function notifications()

@@ -25,23 +25,19 @@ class OpportunityController extends Controller
         $result = $this->service->getFeed($request, $viewer);
         
         $paginator = $result['paginator'];
-        $preferredBrands = $result['preferredBrands'];
-        $preferredCategories = $result['preferredCategories'];
+        $preferredIds = $result['preferredIds'] ?? [];
+        $reasons = $result['reasons'] ?? [];
 
         $likedIds = $viewer ? $viewer->likedOpportunities()->pluck('opportunities.id')->toArray() : [];
         $savedIds = $viewer ? $viewer->savedOpportunities()->pluck('opportunities.id')->toArray() : [];
 
-        $preferredIds = $paginator->getCollection()
-            ->filter(fn($o) => in_array((string) $o->brand_id, $preferredBrands, true) || in_array($o->category, $preferredCategories, true))
-            ->map(fn($o) => $o->id)
-            ->toArray();
-
         // Attach additional data for resource
-        $paginator->getCollection()->transform(function ($o) use ($likedIds, $savedIds, $preferredIds) {
+        $paginator->getCollection()->transform(function ($o) use ($likedIds, $savedIds, $preferredIds, $reasons) {
             $o->additional = [
                 'likedIds' => $likedIds,
                 'savedIds' => $savedIds,
                 'preferredIds' => $preferredIds,
+                'reasons' => $reasons[$o->id] ?? [],
             ];
             return $o;
         });
@@ -51,7 +47,7 @@ class OpportunityController extends Controller
 
     public function show(Request $request, Opportunity $opportunity)
     {
-        $opportunity->load(['user:id,name,avatar', 'comments.user:id,name,avatar']);
+        $opportunity->load(['user:id,name,username,avatar', 'comments.user:id,name,username,avatar']);
         $user = Auth::guard('sanctum')->user() ?? $request->user();
         
         $likedIds = $user ? [$opportunity->id => $user->likedOpportunities()->where('opportunity_id', $opportunity->id)->exists()] : [];
