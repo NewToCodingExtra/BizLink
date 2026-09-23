@@ -40,9 +40,9 @@ Route::get('/contact', [PageController::class, 'contactPage']);
 Route::post('/contact', [ContactController::class, 'submit']);
 
 // Legal pages
-Route::inertia('/privacy', 'Legal/PrivacyPolicy');
-Route::inertia('/terms', 'Legal/TermsOfService');
-Route::inertia('/acceptable-use', 'Legal/AcceptableUse');
+Route::inertia('/privacy', 'Legal/SitePrivacy');
+Route::inertia('/terms', 'Legal/SiteTerms');
+Route::inertia('/acceptable-use', 'Legal/SiteAcceptable');
 
 // Session authentication (guest only)
 Route::middleware('guest')->group(function () {

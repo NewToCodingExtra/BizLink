@@ -1,7 +1,7 @@
 import { Head } from "@inertiajs/react";
 import LegalLayout from "../../Components/LegalLayout";
 
-export default function TermsOfService() {
+export default function SiteTerms() {
   return (
     <LegalLayout title="Terms of Service" lastUpdated="September 23, 2026">
       <Head title="Terms of Service" />

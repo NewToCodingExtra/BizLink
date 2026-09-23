@@ -1,7 +1,7 @@
 import { Head } from "@inertiajs/react";
 import LegalLayout from "../../Components/LegalLayout";
 
-export default function AcceptableUse() {
+export default function SiteAcceptable() {
   return (
     <LegalLayout title="Acceptable Use Policy" lastUpdated="September 23, 2026">
       <Head title="Acceptable Use Policy" />

@@ -1,7 +1,7 @@
 import { Head } from "@inertiajs/react";
 import LegalLayout from "../../Components/LegalLayout";
 
-export default function PrivacyPolicy() {
+export default function SitePrivacy() {
   return (
     <LegalLayout title="Privacy Policy" lastUpdated="September 23, 2026">
       <Head title="Privacy Policy" />
