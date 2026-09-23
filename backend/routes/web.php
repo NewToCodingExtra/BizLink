@@ -66,7 +66,7 @@ Route::middleware('auth')->group(function () {
     Route::get('/create', [PageController::class, 'create']);
     Route::post('/opportunities', [PageController::class, 'storeOpportunity']);
     Route::get('/messages', [PageController::class, 'messages']);
-    Route::get('/messages/{id}', [PageController::class, 'thread'])->whereNumber('id');
+    Route::get('/messages/{identifier}', [PageController::class, 'thread']);
     Route::get('/notifications', [PageController::class, 'notifications']);
     Route::get('/saved', [PageController::class, 'saved']);
     Route::get('/settings/preferences', [PageController::class, 'preferencesPage']);

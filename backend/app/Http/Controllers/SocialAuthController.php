@@ -154,6 +154,7 @@ class SocialAuthController extends Controller
             ->orWhere('email', $socialUser->getEmail())
             ->first();
 
+        $isNew = !$user;
         if (!$user) {
             $user = User::create([
                 'name' => $socialUser->getName() ?: explode('@', $socialUser->getEmail())[0],
@@ -177,7 +178,8 @@ class SocialAuthController extends Controller
         $request->session()->regenerate();
         $request->session()->put('last_activity_at', now());
 
-        return redirect()->intended('/feed')->with('success', "Welcome back, {$user->name}!");
+        $greeting = $isNew ? "Welcome to BizLink, {$user->name}!" : "Welcome back, {$user->name}!";
+        return redirect()->intended('/feed')->with('success', $greeting);
     }
 
     public function tokenFromSession(Request $request)

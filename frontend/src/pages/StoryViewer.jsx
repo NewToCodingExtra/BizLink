@@ -85,6 +85,7 @@ export default function StoryViewer({ stories: serverStories, id: idProp, storyI
       duration: s.duration || 5,
       liked: s.liked,
       likesCount: s.likesCount,
+      slug: s.slug,
     }));
 
     // Group by brandId
@@ -108,7 +109,7 @@ export default function StoryViewer({ stories: serverStories, id: idProp, storyI
       const filtered = finalStories.filter((s) => String(s.brandId) === String(authorFilter));
       if (filtered.length > 0) finalStories = filtered;
       else {
-        const target = finalStories.find((st) => String(st.id) === String(routeId));
+        const target = finalStories.find((st) => String(st.slug) === String(routeId));
         if (target) finalStories = finalStories.filter((s) => s.brandId === target.brandId);
       }
     }
@@ -193,7 +194,8 @@ export default function StoryViewer({ stories: serverStories, id: idProp, storyI
     setIsPaused(true);
     try {
       const res = await httpApi.post("/inquiries", { story_id: story.id, message: msg });
-      const convId = res?.conversation?.id ?? res?.data?.conversation?.id;
+      const conv = res?.conversation ?? res?.data?.conversation;
+      const convId = conv?.withUsername || conv?.brandId || conv?.id;
       if (convId) {
         router.visit(`/messages/${convId}`);
       } else {

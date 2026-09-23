@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from 'react';
+import { Link } from '@inertiajs/react';
 import Modal from './Modal';
 import Button from './Button';
 import { httpApi } from '../utils/http';
+import { useToast } from '../context/ToastContext';
 
 const REAL_CATEGORIES = ['Food & Beverage', 'Beauty & Wellness', 'Health & Fitness', 'Services & Logistics', 'Education', 'Fashion & Apparel', 'Home & Living'];
 
@@ -24,7 +26,8 @@ function asPrefs(res) {
 }
 
 export default function PreferenceOnboardingModal({ user, onComplete, forceOpen = false }) {
-  const [isOpen, setIsOpen] = useState(false);
+  const toast = useToast();
+  const [isOpen, setIsOpen] = useState(forceOpen);
   const [loading, setLoading] = useState(false);
   const [loadingBrands, setLoadingBrands] = useState(false);
   const [brands, setBrands] = useState([]);
@@ -37,17 +40,34 @@ export default function PreferenceOnboardingModal({ user, onComplete, forceOpen 
 
   useEffect(() => {
     if (!user) return;
+    if (forceOpen) {
+      setIsOpen(true);
+      return;
+    }
 
+    let cancelled = false;
+    let timer = null;
+    const storageKey = `bizlink:preference-onboarding:${user.id}`;
+
+    // Show once per session for users who haven't finished setup.
+    // Skip/dismiss is session-only (no server write), so unfinished users
+    // are reminded again next session — but never nagged on every reload.
     const checkPreferences = async () => {
       try {
+        if (sessionStorage.getItem(storageKey) === 'done') return;
         const prefsRes = await httpApi.get('/preferences');
+        if (cancelled) return;
         const prefs = asPrefs(prefsRes);
         setSelectedCategories(prefs.categories);
         setBudgetMin(prefs.budgetMin);
         setBudgetMax(prefs.budgetMax);
-        const dismissedThisSession = sessionStorage.getItem(`bizlink:preference-onboarding:${user.id}`) === 'done';
-        if (forceOpen || (!prefs.onboardingCompleted && !dismissedThisSession)) {
-          setTimeout(() => setIsOpen(true), forceOpen ? 0 : 1500);
+        if (!prefs.onboardingCompleted) {
+          timer = setTimeout(() => {
+            if (cancelled) return;
+            // Mark shown so a reload in the same session doesn't pop again.
+            sessionStorage.setItem(storageKey, 'done');
+            setIsOpen(true);
+          }, 1500);
         }
       } catch (e) {
         console.error('Failed to fetch preferences', e);
@@ -55,7 +75,11 @@ export default function PreferenceOnboardingModal({ user, onComplete, forceOpen 
     };
 
     checkPreferences();
-  }, [user, forceOpen]);
+    return () => {
+      cancelled = true;
+      if (timer) clearTimeout(timer);
+    };
+  }, [user?.id, forceOpen]);
 
   // Real brands from the live feed (deduped by author), so follows actually match posts.
   useEffect(() => {
@@ -103,8 +127,17 @@ export default function PreferenceOnboardingModal({ user, onComplete, forceOpen 
         budgetMax,
         onboardingCompleted: true,
       });
-      sessionStorage.setItem(`bizlink:preference-onboarding:${user.id}`, 'done');
+      try {
+        if (user?.id) sessionStorage.setItem(`bizlink:preference-onboarding:${user.id}`, 'done');
+      } catch {}
       setIsOpen(false);
+      toast.info(
+        <span>
+          ✦ Personalized for you
+          {selectedCategories.length > 0 ? ` · ${selectedCategories.join(", ")}` : ""}
+          {" · "}<Link href="/settings/preferences" className="text-action font-medium hover:underline">Edit preferences</Link>
+        </span>
+      );
       if (onComplete) onComplete();
     } catch (e) {
       setError(e?.data?.message || e.message || 'Could not save your preferences. Please try again.');
@@ -113,18 +146,13 @@ export default function PreferenceOnboardingModal({ user, onComplete, forceOpen 
     }
   };
 
-  const dismiss = async () => {
-    setLoading(true);
-    setError('');
+  // "Skip for now" / X is session-only: no server write, so users without
+  // preferences still see the setup again next session (but not on reload).
+  const dismiss = () => {
     try {
-      await httpApi.put('/preferences', { onboardingCompleted: true });
-      sessionStorage.setItem(`bizlink:preference-onboarding:${user.id}`, 'done');
-      setIsOpen(false);
-    } catch (e) {
-      setError(e?.data?.message || 'Could not save your choice. Please try again.');
-    } finally {
-      setLoading(false);
-    }
+      if (user?.id) sessionStorage.setItem(`bizlink:preference-onboarding:${user.id}`, 'done');
+    } catch {}
+    setIsOpen(false);
   };
 
   const toggleAuthor = (authorId) => {

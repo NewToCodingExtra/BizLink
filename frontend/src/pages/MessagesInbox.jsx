@@ -14,7 +14,7 @@ export default function MessagesInbox({ conversations = [] }) {
             <Link href={profilePath({ username: c.withUsername, authorId: c.withId, brandId: c.brandId })} className="shrink-0" title={`View ${c.with}`}>
               <img src={c.avatar} alt={c.with} className="w-10 h-10 rounded-full" />
             </Link>
-            <Link href={`/messages/${c.id}`} className="flex-1 min-w-0 flex items-center gap-3">
+            <Link href={`/messages/${c.withUsername || c.brandId}`} className="flex-1 min-w-0 flex items-center gap-3">
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2">
                   <span className="text-sm font-semibold text-text-primary">{c.with}</span>

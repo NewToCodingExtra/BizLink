@@ -63,8 +63,12 @@ export default function CreateOpportunity() {
   const onPickFile = async (e) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    if (file.size > 20 * 1024 * 1024) {
-      toast.error('File must be under 20MB.');
+    // Client-side guard only (the server re-checks everything):
+    // videos up to 100MB, images up to 20MB.
+    const isVideoPicked = (file.type || '').startsWith('video');
+    const maxBytes = isVideoPicked ? 100 * 1024 * 1024 : 20 * 1024 * 1024;
+    if (file.size > maxBytes) {
+      toast.error(isVideoPicked ? 'Video must be under 100MB.' : 'Image must be under 20MB.');
       if (fileRef.current) fileRef.current.value = '';
       return;
     }
@@ -173,7 +177,7 @@ export default function CreateOpportunity() {
             <button type="button" onClick={() => fileRef.current?.click()} disabled={uploading} className="px-4 py-2 rounded-lg bg-primary text-white text-sm font-medium hover:bg-primary-light disabled:opacity-60 transition-colors">
               {uploading ? `Uploading ${progress}%...` : 'Upload photo / video'}
             </button>
-            <span className="text-xs text-text-secondary">JPG, PNG, WebP, GIF, MP4 up to 20MB</span>
+            <span className="text-xs text-text-secondary">JPG, PNG, WebP, GIF up to 20MB · MP4, MOV up to 100MB</span>
           </div>
           {uploading && (
             <div className="mt-2 h-2 rounded-full bg-bg overflow-hidden">

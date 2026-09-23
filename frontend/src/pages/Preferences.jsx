@@ -1,6 +1,7 @@
 import { useState } from 'react';
-import { Head } from '@inertiajs/react';
+import { Head, Link } from '@inertiajs/react';
 import { httpApi } from '../utils/http';
+import { useToast } from '../context/ToastContext';
 
 const CATEGORIES = ['Food & Beverage', 'Beauty & Wellness', 'Health & Fitness', 'Services & Logistics', 'Education', 'Fashion & Apparel', 'Home & Living'];
 
@@ -14,6 +15,7 @@ function normalizePrefs(raw) {
 }
 
 export default function Preferences({ prefs: initialPrefs }) {
+  const toast = useToast();
   const [prefs, setPrefs] = useState(() => normalizePrefs(initialPrefs));
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
@@ -24,13 +26,27 @@ export default function Preferences({ prefs: initialPrefs }) {
     setSaved(false);
   };
 
+  const showPersonalizedToast = (savedPrefs) => {
+    const cats = savedPrefs.categories || [];
+    toast.info(
+      <span>
+        ✦ Personalized for you
+        {cats.length > 0 ? ` · ${cats.join(", ")}` : ""}
+        {(savedPrefs.budgetMin || savedPrefs.budgetMax) ? ` · ₱${savedPrefs.budgetMin || "0"}–₱${savedPrefs.budgetMax || "∞"}` : ""}
+        {" · "}<Link href="/feed" className="text-action font-medium hover:underline">View feed</Link>
+      </span>
+    );
+  };
+
   const save = async () => {
     setSaving(true);
     setError('');
     try {
-      const res = await httpApi.put('/preferences', { categories: prefs.categories, budgetMin: prefs.budgetMin, budgetMax: prefs.budgetMax });
-      setPrefs(normalizePrefs(res));
+      const res = await httpApi.put('/preferences', { categories: prefs.categories, budgetMin: prefs.budgetMin, budgetMax: prefs.budgetMax, onboardingCompleted: true });
+      const next = normalizePrefs(res);
+      setPrefs(next);
       setSaved(true);
+      showPersonalizedToast(next);
     } catch (err) {
       setError(err.message || 'Save failed');
     } finally {
@@ -42,8 +58,9 @@ export default function Preferences({ prefs: initialPrefs }) {
     setPrefs({ categories: [], budgetMin: '', budgetMax: '' });
     setSaving(true);
     try {
-      await httpApi.put('/preferences', { categories: [], budgetMin: '', budgetMax: '' });
+      await httpApi.put('/preferences', { categories: [], budgetMin: '', budgetMax: '', onboardingCompleted: true });
       setSaved(true);
+      toast.success('Preferences reset.');
     } catch (err) {
       setError(err.message || 'Reset failed');
     } finally {

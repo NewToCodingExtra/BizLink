@@ -59,7 +59,9 @@ class SessionAuthController extends Controller
 
         Preference::firstOrCreate(['user_id' => Auth::id()], ['categories' => []]);
 
-        return redirect()->intended('/feed');
+        $user = Auth::user();
+
+        return redirect()->intended('/feed')->with('success', "Welcome back, {$user->name}!");
     }
 
     public function showRegister()

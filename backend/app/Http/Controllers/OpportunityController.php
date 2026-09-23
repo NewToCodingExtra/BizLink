@@ -124,7 +124,7 @@ class OpportunityController extends Controller
                 'user_id' => $user->id,
                 'type' => 'new_post',
                 'message' => "Your opportunity \"{$opp->headline}\" is live on the feed",
-                'link' => "/post/{$opp->id}",
+                'link' => "/post/{$opp->slug}",
                 'read' => false,
             ]);
         }
@@ -152,7 +152,7 @@ class OpportunityController extends Controller
                     'user_id' => $opportunity->user_id,
                     'type' => 'like',
                     'message' => "{$user->name} liked your post \"{$opportunity->headline}\"",
-                    'link' => "/post/{$opportunity->id}",
+                    'link' => "/post/{$opportunity->slug}",
                     'read' => false,
                 ]);
             }

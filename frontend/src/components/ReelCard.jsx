@@ -10,6 +10,9 @@ export default function ReelCard({ opp, onToggleLike, onInquire, onOpenComments 
   const { auth } = usePage().props;
   void auth;
   const commentCount = typeof opp.commentsCount === "number" ? opp.commentsCount : (opp.comments || []).length;
+  // From a reel, the author profile should open straight on its REELS tab —
+  // otherwise the just-watched video is hidden under POSTS.
+  const authorProfile = `${profilePath({ username: opp.user?.username || opp.authorUsername, authorId: opp.authorId, brandId: opp.brandId })}?tab=reels`;
   return (
     <div className="snap-start relative h-[100dvh] w-full bg-black flex items-center justify-center overflow-hidden">
       <video
@@ -24,8 +27,8 @@ export default function ReelCard({ opp, onToggleLike, onInquire, onOpenComments 
       <div className="absolute bottom-0 left-0 right-0 p-4 flex items-end justify-between gap-4 max-w-md mx-auto w-full">
         <div className="flex-1 min-w-0">
           <p className="text-white font-semibold text-sm flex items-center gap-2">
-            <Link href={profilePath({ username: opp.user?.username || opp.authorUsername, authorId: opp.authorId, brandId: opp.brandId })}><img src={opp.brandAvatar} alt={opp.brandName} className="w-7 h-7 rounded-full border border-white/30" /></Link>
-            <Link href={profilePath({ username: opp.user?.username || opp.authorUsername, authorId: opp.authorId, brandId: opp.brandId })} className="hover:underline truncate">{opp.brandName}</Link>
+            <Link href={authorProfile}><img src={opp.brandAvatar} alt={opp.brandName} className="w-7 h-7 rounded-full border border-white/30" /></Link>
+            <Link href={authorProfile} className="hover:underline truncate">{opp.brandName}</Link>
             <span className="text-[10px] tracking-widest bg-white/20 px-2 py-0.5 rounded-full shrink-0">{opp.type}</span>
           </p>
           <Link href={`/post/${opp.slug}`} className="block text-white text-sm mt-1 line-clamp-2 hover:underline">{opp.headline}</Link>

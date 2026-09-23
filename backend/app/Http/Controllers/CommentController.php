@@ -33,12 +33,12 @@ class CommentController extends Controller
             'is_seller_reply' => (bool) $isSeller,
         ]);
 
-        if ($user) {
+        if ($user && $user->id !== $opportunity->user_id) {
             AppNotification::create([
-                'user_id' => $user->id,
+                'user_id' => $opportunity->user_id,
                 'type' => 'comment',
-                'message' => "New comment on {$opportunity->headline}",
-                'link' => "/post/{$opportunity->id}",
+                'message' => "{$user->name} commented on {$opportunity->headline}",
+                'link' => "/post/{$opportunity->slug}",
                 'read' => false,
             ]);
         }

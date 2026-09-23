@@ -34,7 +34,6 @@ export default function HomeFeed({ opportunities, stories, preferences }) {
   const [isCreateStoryOpen, setIsCreateStoryOpen] = useState(false);
   const [selectedPost, setSelectedPost] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const personalizedToastShown = useRef(false);
   const sentinelRef = useRef(null);
 
   // Sync server props: page 1 replaces, later pages append by id.
@@ -72,23 +71,9 @@ export default function HomeFeed({ opportunities, stories, preferences }) {
     };
   }, []);
 
-  // Personalized toast (once, when preferences present).
-  const prefs = preferences ?? { categories: [], budgetMin: "", budgetMax: "" };
-  useEffect(() => {
-    const hasPrefs = user && ((prefs.categories || []).length > 0 || prefs.budgetMin || prefs.budgetMax);
-    if (hasPrefs && !personalizedToastShown.current) {
-      personalizedToastShown.current = true;
-      toast.info(
-        <span>
-          ✦ Personalized for you
-          {(prefs.categories || []).length > 0 ? ` · ${prefs.categories.join(", ")}` : ""}
-          {(prefs.budgetMin || prefs.budgetMax) ? ` · ₱${prefs.budgetMin || "0"}–₱${prefs.budgetMax || "∞"}` : ""}
-          {" · "}<Link href="/settings/preferences" className="text-action font-medium hover:underline">Edit preferences</Link>
-        </span>
-      );
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [user]);
+  // NOTE: no auto "Personalized for you" toast here. It is shown only at
+  // the moment preferences are set up / changed (onboarding modal +
+  // Preferences page), never on plain feed visits or reloads.
 
   const handleFilterChange = (next) => {
     setActiveFilter(next);

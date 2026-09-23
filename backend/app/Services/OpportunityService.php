@@ -270,12 +270,23 @@ class OpportunityService
                     $query->whereIn('id', $scoutIds);
                 }
             } catch (\Exception $e) {
-                // Fallback to basic DB search if Meilisearch is down
+                // Fallback to basic DB search with typo tolerance (SOUNDEX) if Meilisearch is down
                 $query->where(function ($q) use ($search) {
-                    $q->where('brand_name', 'like', "%{$search}%")
-                      ->orWhere('headline', 'like', "%{$search}%")
-                      ->orWhere('description', 'like', "%{$search}%")
-                      ->orWhere('category', 'like', "%{$search}%");
+                    $words = array_filter(explode(' ', trim($search)));
+                    if (empty($words)) {
+                        $words = [$search];
+                    }
+                    foreach ($words as $word) {
+                        $q->where(function ($sub) use ($word) {
+                            $sub->where('brand_name', 'like', "%{$word}%")
+                              ->orWhere('headline', 'like', "%{$word}%")
+                              ->orWhere('description', 'like', "%{$word}%")
+                              ->orWhere('category', 'like', "%{$word}%")
+                              ->orWhereRaw("SOUNDEX(brand_name) = SOUNDEX(?)", [$word])
+                              ->orWhereRaw("SOUNDEX(headline) = SOUNDEX(?)", [$word])
+                              ->orWhereRaw("SOUNDEX(category) = SOUNDEX(?)", [$word]);
+                        });
+                    }
                 });
             }
         }

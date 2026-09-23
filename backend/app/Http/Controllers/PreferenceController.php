@@ -55,10 +55,11 @@ class PreferenceController extends Controller
             $pref->budget_max = $data['budgetMax'];
         }
 
-        // Any explicit preference save is a completed setup unless a caller
-        // deliberately says otherwise. This also lets a dismissal persist
-        // without erasing an existing preference selection.
-        if (($data['onboardingCompleted'] ?? true) === true) {
+        // Onboarding is only marked complete on an explicit save. A plain
+        // "Skip for now" closes the modal client-side without touching the
+        // server, so users without preferences are reminded again next
+        // session instead of being silently marked complete.
+        if (($data['onboardingCompleted'] ?? false) === true) {
             $pref->onboarding_completed_at = now();
         }
         $pref->save();

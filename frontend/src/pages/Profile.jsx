@@ -13,6 +13,7 @@ export default function Profile({
   opportunities: initialOpps = [],
   stories: initialStories = [],
   savedIds: initialSavedIds = [],
+  tab = "posts",
 }) {
   const toast = useToast();
   const { auth, username } = usePage().props;
@@ -25,7 +26,19 @@ export default function Profile({
   const [error, setError] = useState("");
   const [selectedPost, setSelectedPost] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [activeTab, setActiveTab] = useState("posts"); // "posts" or "reels"
+  // Deep-linkable tabs: /profile/:user?tab=reels opens straight on REELS
+  // (used by reel author links so the watched video is actually visible).
+  const [activeTab, setActiveTab] = useState(tab === "reels" ? "reels" : "posts");
+
+  const switchTab = (next) => {
+    setActiveTab(next);
+    try {
+      const url = new URL(window.location.href);
+      if (next === "reels") url.searchParams.set("tab", "reels");
+      else url.searchParams.delete("tab");
+      window.history.replaceState(null, "", url.pathname + (url.search ? url.search : ""));
+    } catch {}
+  };
 
   const toggleFollow = async () => {
     if (!viewer) {
@@ -147,13 +160,13 @@ export default function Profile({
         <div className="mt-6">
           <div className="flex items-center gap-6 border-b border-border mb-4 px-2">
             <button
-              onClick={() => setActiveTab("posts")}
+              onClick={() => switchTab("posts")}
               className={`pb-3 text-sm font-semibold transition-colors ${activeTab === "posts" ? "text-action border-b-2 border-action" : "text-text-secondary hover:text-text-primary"}`}
             >
               POSTS
             </button>
             <button
-              onClick={() => setActiveTab("reels")}
+              onClick={() => switchTab("reels")}
               className={`pb-3 text-sm font-semibold transition-colors ${activeTab === "reels" ? "text-action border-b-2 border-action" : "text-text-secondary hover:text-text-primary"}`}
             >
               REELS
@@ -223,8 +236,19 @@ export default function Profile({
             prefill={selectedPost}
             onClose={() => setIsModalOpen(false)}
             onSubmit={async ({ message }) => {
-              await httpApi.post("/inquiries", { opportunity_id: selectedPost.id, message });
-              setIsModalOpen(false);
+              try {
+                const res = await httpApi.post("/inquiries", { opportunity_id: selectedPost.id, message });
+                setIsModalOpen(false);
+                setSelectedPost(null);
+                const convId = res?.conversation?.withUsername || res?.conversation?.brandId || res?.conversation?.id;
+                if (convId) {
+                  router.visit(`/messages/${convId}`);
+                } else {
+                  toast.success("Inquiry sent.");
+                }
+              } catch (err) {
+                toast.error(err.message || "Inquiry failed");
+              }
             }}
             compact
           />

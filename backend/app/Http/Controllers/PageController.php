@@ -67,6 +67,8 @@ class PageController extends Controller
 
         return Inertia::render('Reels', [
             'opportunities' => $result['page'],
+            // Deep-link target from profile reels grids (/reels?slug=...).
+            'slug' => (string) $request->query('slug', ''),
         ]);
     }
 
@@ -95,6 +97,7 @@ class PageController extends Controller
 
         return Inertia::render('Profile', [
             'username' => $username,
+            'tab' => (string) $request->query('tab', 'posts'),
             'profileUser' => $data['user'],
             'stats' => $data['stats'],
             'following' => $data['following'],
@@ -111,11 +114,54 @@ class PageController extends Controller
         return Inertia::render('MessagesInbox', ['conversations' => $data]);
     }
 
-    public function thread(Request $request, int $id)
+    public function thread(Request $request, string $identifier)
     {
-        $conversation = Conversation::findOrFail($id);
+        $user = $request->user();
+        $conversation = null;
 
-        if ((int) $conversation->user_id !== (int) $request->user()->id) {
+        if (is_numeric($identifier)) {
+            $conversation = Conversation::find($identifier);
+        }
+
+        if (!$conversation) {
+            // Try as buyer (identifier is brand_id)
+            $conversation = Conversation::where('user_id', $user->id)
+                ->where('brand_id', $identifier)
+                ->latest()
+                ->first();
+        }
+
+        if (!$conversation) {
+            // Try as seller (identifier is buyer's username)
+            $buyer = \App\Models\User::where('username', $identifier)->first();
+            if ($buyer) {
+                // Find all brand IDs owned by this seller
+                $myBrandIds = \App\Models\Opportunity::where('user_id', $user->id)->pluck('brand_id')->toArray();
+                $myStoryBrandIds = \App\Models\Story::where('user_id', $user->id)->pluck('brand_id')->toArray();
+                $allMyBrands = array_unique(array_merge($myBrandIds, $myStoryBrandIds));
+
+                $conversation = Conversation::where('user_id', $buyer->id)
+                    ->whereIn('brand_id', $allMyBrands)
+                    ->latest()
+                    ->first();
+            }
+        }
+
+        if (!$conversation) {
+            return redirect('/messages')->with('error', 'Conversation not found.');
+        }
+
+        // Authorize: user must be the buyer or the seller
+        $isBuyer = (int) $conversation->user_id === (int) $user->id;
+        
+        $isSeller = false;
+        if (!$isBuyer) {
+            $ownerId = Opportunity::where('brand_id', $conversation->brand_id)->value('user_id')
+                ?? \App\Models\Story::where('brand_id', $conversation->brand_id)->value('user_id');
+            $isSeller = (int) $ownerId === (int) $user->id;
+        }
+
+        if (!$isBuyer && !$isSeller) {
             return redirect('/messages')->with('error', 'Conversation not found.');
         }
 
@@ -175,8 +221,8 @@ class PageController extends Controller
         $response = app(OpportunityController::class)->store($request);
 
         if ($response->getStatusCode() === 201) {
-            $id = $response->getData(true)['data']['id'] ?? null;
-            return redirect($id ? "/post/{$id}" : '/feed')->with('success', 'Opportunity published.');
+            $slug = $response->getData(true)['data']['slug'] ?? null;
+            return redirect($slug ? "/post/{$slug}" : '/feed')->with('success', 'Opportunity published.');
         }
 
         return $response;

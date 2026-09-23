@@ -13,10 +13,11 @@ function appendById(prev, incoming) {
   return [...prev, ...fresh];
 }
 
-export default function Reels({ opportunities }) {
+export default function Reels({ opportunities, slug = "" }) {
   const toast = useToast();
   const { auth } = usePage().props;
   const user = auth?.user ?? null;
+  const targetSlug = (slug || "").trim();
 
   const initialData = opportunities?.data ?? [];
   const meta = opportunities?.meta ?? {};
@@ -29,6 +30,7 @@ export default function Reels({ opportunities }) {
   const [error, setError] = useState("");
   const [selected, setSelected] = useState(null);
   const [commentOpp, setCommentOpp] = useState(null);
+  const [highlightSlug, setHighlightSlug] = useState("");
   const sentinelRef = useRef(null);
 
   useEffect(() => {
@@ -56,7 +58,9 @@ export default function Reels({ opportunities }) {
   const handleLoadMore = () => {
     if (loadingMore || !hasMore) return;
     setLoadingMore(true);
-    router.get("/reels", { page: currentPage + 1 }, {
+    const params = { page: currentPage + 1 };
+    if (targetSlug) params.slug = targetSlug; // keep deep-link while paging
+    router.get("/reels", params, {
       preserveState: true,
       preserveScroll: true,
       only: ["opportunities"],
@@ -84,6 +88,29 @@ export default function Reels({ opportunities }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [hasMore, currentPage]);
 
+  const targetFound = targetSlug ? reels.some((r) => r.slug === targetSlug) : true;
+  const targetMissing = targetSlug ? !targetFound && !hasMore && !loadingMore : false;
+
+  // Deep-link (/reels?slug=...) from profile reels grids: keep paging until
+  // the requested reel is loaded (or the feed is exhausted).
+  useEffect(() => {
+    if (!targetSlug || targetFound || !hasMore || loadingMore) return;
+    handleLoadMore();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [targetSlug, targetFound, hasMore, loadingMore, reels]);
+
+  // Deep-link: scroll the requested reel into view and flash a highlight.
+  useEffect(() => {
+    if (!targetSlug || !targetFound) return;
+    const t = setTimeout(() => {
+      document.getElementById(`reel-${targetSlug}`)?.scrollIntoView({ behavior: "smooth", block: "start" });
+      setHighlightSlug(targetSlug);
+      setTimeout(() => setHighlightSlug(""), 2600);
+    }, 150);
+    return () => clearTimeout(t);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [targetSlug, targetFound]);
+
   const onToggleLike = async (id) => {
     if (!user) {
       toast.error("Log in to like reels.");
@@ -104,15 +131,17 @@ export default function Reels({ opportunities }) {
     <div className="relative">
       <Head title="Reels" />
       {error && <p className="mx-auto max-w-md mt-3 text-sm text-error bg-error/10 border border-error/20 rounded-lg px-3 py-2">{error}</p>}
+      {targetMissing && <p className="mx-auto max-w-md mt-3 text-sm text-text-secondary bg-surface border border-border rounded-lg px-3 py-2">That reel isn&apos;t available — showing all reels.</p>}
       <div className="h-[calc(100dvh-64px)] overflow-y-scroll snap-y snap-mandatory bg-black">
         {reels.map((r) => (
-          <ReelCard
-            key={r.id}
-            opp={r}
-            onToggleLike={onToggleLike}
-            onInquire={(o) => (user ? setSelected(o) : toast.error("Log in to inquire."))}
-            onOpenComments={(o) => (user ? setCommentOpp(o) : toast.error("Log in to comment."))}
-          />
+          <div key={r.id} id={`reel-${r.slug}`} className={`snap-start ${highlightSlug === r.slug ? "outline outline-4 outline-action" : ""}`}>
+            <ReelCard
+              opp={r}
+              onToggleLike={onToggleLike}
+              onInquire={(o) => (user ? setSelected(o) : toast.error("Log in to inquire."))}
+              onOpenComments={(o) => (user ? setCommentOpp(o) : toast.error("Log in to comment."))}
+            />
+          </div>
         ))}
         {hasMore && (
           <div ref={sentinelRef} className="snap-start h-[100dvh] w-full bg-black grid place-items-center">

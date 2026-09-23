@@ -12,13 +12,34 @@ class ConversationController extends Controller
 {
     public function index(Request $request)
     {
-        $convos = $request->user()->conversations()->with('messages')->latest()->get();
+        $user = $request->user();
+        
+        $myBrandIds = \App\Models\Opportunity::where('user_id', $user->id)->pluck('brand_id')->toArray();
+        $myStoryBrandIds = \App\Models\Story::where('user_id', $user->id)->pluck('brand_id')->toArray();
+        $allMyBrands = array_unique(array_merge($myBrandIds, $myStoryBrandIds));
+
+        $convos = Conversation::where('user_id', $user->id)
+            ->orWhereIn('brand_id', $allMyBrands)
+            ->with('messages')
+            ->latest()
+            ->get();
+            
         return response()->json(['data' => $convos->map(fn($c) => $this->serialize($c))]);
     }
 
     public function show(Request $request, Conversation $conversation)
     {
-        if ((int) $conversation->user_id !== (int) $request->user()->id) {
+        $user = $request->user();
+        $isBuyer = (int) $conversation->user_id === (int) $user->id;
+        $isSeller = false;
+        
+        if (!$isBuyer) {
+            $ownerId = Opportunity::where('brand_id', $conversation->brand_id)->value('user_id')
+                ?? \App\Models\Story::where('brand_id', $conversation->brand_id)->value('user_id');
+            $isSeller = (int) $ownerId === (int) $user->id;
+        }
+
+        if (!$isBuyer && !$isSeller) {
             return response()->json(['message' => 'Forbidden'], 403);
         }
         $conversation->load('messages.sender:id,name,avatar');
@@ -93,16 +114,6 @@ class ConversationController extends Controller
             'attachment_type' => $attachmentType,
         ]);
 
-        // Notify the sender
-        AppNotification::create([
-            'user_id' => $user->id,
-            'type' => 'inquiry',
-            'message' => "You inquired on {$headline}",
-            'link' => "/messages/{$convo->id}",
-            'read' => false,
-        ]);
-
-        // Notify the receiver (owner of opportunity/story)
         $ownerId = null;
         if (!empty($data['opportunity_id']) && isset($opp)) {
             $ownerId = $opp->user_id;
@@ -110,12 +121,26 @@ class ConversationController extends Controller
             $ownerId = $story->user_id;
         }
 
+        $ownerUsername = null;
+        if ($ownerId) {
+            $ownerUsername = \App\Models\User::find($ownerId)?->username;
+        }
+
+        // Notify the sender
+        AppNotification::create([
+            'user_id' => $user->id,
+            'type' => 'inquiry',
+            'message' => "You inquired on {$headline}",
+            'link' => "/messages/" . ($ownerUsername ?: $brandId),
+            'read' => false,
+        ]);
+
         if ($ownerId && $ownerId !== $user->id) {
             AppNotification::create([
                 'user_id' => $ownerId,
                 'type' => 'inquiry',
                 'message' => "{$user->name} inquired about {$headline}",
-                'link' => "/messages/{$convo->id}",
+                'link' => "/messages/" . ($user->username ?: $user->id),
                 'read' => false,
             ]);
         }
@@ -141,7 +166,17 @@ class ConversationController extends Controller
 
     public function send(Request $request, Conversation $conversation)
     {
-        if ((int) $conversation->user_id !== (int) $request->user()->id) {
+        $user = $request->user();
+        $isBuyer = (int) $conversation->user_id === (int) $user->id;
+        $isSeller = false;
+        
+        if (!$isBuyer) {
+            $ownerId = Opportunity::where('brand_id', $conversation->brand_id)->value('user_id')
+                ?? \App\Models\Story::where('brand_id', $conversation->brand_id)->value('user_id');
+            $isSeller = (int) $ownerId === (int) $user->id;
+        }
+
+        if (!$isBuyer && !$isSeller) {
             return response()->json(['message' => 'Forbidden'], 403);
         }
         $data = $request->validate(['text' => 'required|string|max:2000']);
@@ -164,13 +199,18 @@ class ConversationController extends Controller
 
     private function serialize(Conversation $c, bool $withMessages = false): array
     {
+        $viewerId = (int) request()->user()?->id;
+        $isBuyer = (int) $c->user_id === $viewerId;
+        
         $owner = $this->resolveOwner($c);
+        $buyer = \App\Models\User::find($c->user_id);
+        
         $payload = [
             'id' => $c->id,
-            'with' => $c->with_name,
-            'withId' => $owner?->id,
-            'withUsername' => $owner?->username,
-            'avatar' => $c->avatar,
+            'with' => $isBuyer ? $c->with_name : ($buyer?->name ?? 'User'),
+            'withId' => $isBuyer ? $owner?->id : $buyer?->id,
+            'withUsername' => $isBuyer ? $owner?->username : $buyer?->username,
+            'avatar' => $isBuyer ? $c->avatar : $buyer?->avatar,
             'lastMessage' => $c->last_message,
             'unread' => (int) $c->unread,
             'brandId' => $c->brand_id,
@@ -180,7 +220,7 @@ class ConversationController extends Controller
             $payload['messages'] = $c->messages->map(fn($m) => [
                 'id' => $m->id,
                 'conversationId' => $m->conversation_id,
-                'from' => $m->from_side === 'them' ? 'them' : 'me',
+                'from' => (int) $m->sender_id === (int) request()->user()?->id ? 'me' : 'them',
                 'text' => $m->text,
                 'time' => $m->created_at?->diffForHumans(),
                 'attachment' => $m->attachment ? [

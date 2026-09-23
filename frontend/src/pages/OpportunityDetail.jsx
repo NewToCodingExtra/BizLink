@@ -80,7 +80,7 @@ export default function OpportunityDetail({ opp: initialOpp }) {
             {opp.verified && <span className="text-xs font-bold text-success bg-success/10 border border-success/20 rounded-full px-2 py-0.5">✓ Verified</span>}
             <span className={`ml-auto text-xs font-medium border rounded-full px-2.5 py-1 ${badgeClasses(opp.type)}`}>{opp.type}</span>
           </div>
-          <h1 className="text-2xl font-semibold text-primary tracking-tight mt-4">{opp.headline}</h1>
+          <h1 className="text-2xl font-semibold text-text-primary tracking-tight mt-4">{opp.headline}</h1>
           <p className="text-sm text-text-secondary mt-2 leading-relaxed">{opp.description}</p>
           <div className="mt-4 flex gap-2">
             <span className="text-sm font-semibold bg-primary-light text-white rounded-full px-3 py-1">{opp.capitalRequired}</span>
@@ -106,9 +106,18 @@ export default function OpportunityDetail({ opp: initialOpp }) {
           prefill={opp}
           onClose={() => setIsModalOpen(false)}
           onSubmit={async ({ message }) => {
-            await httpApi.post("/inquiries", { opportunity_id: opp.id, message });
-            setIsModalOpen(false);
-            toast.success("Inquiry sent.");
+            try {
+              const res = await httpApi.post("/inquiries", { opportunity_id: opp.id, message });
+              setIsModalOpen(false);
+              const convId = res?.conversation?.withUsername || res?.conversation?.brandId || res?.conversation?.id;
+              if (convId) {
+                import("@inertiajs/react").then(({ router }) => router.visit(`/messages/${convId}`));
+              } else {
+                toast.success("Inquiry sent.");
+              }
+            } catch (err) {
+              toast.error(err.message || "Inquiry failed");
+            }
           }}
           compact
         />
