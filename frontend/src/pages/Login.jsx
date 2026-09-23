@@ -5,10 +5,26 @@ import { FacebookIcon, GoogleIcon } from '../Components/SocialIcons';
 
 export default function Login() {
   const toast = useToast();
-  const { data, setData, post, processing, errors } = useForm({
+  const { data, setData, post, processing, errors, setError, clearErrors } = useForm({
     email: 'demo@bizlink.ph',
     password: '',
   });
+
+  const handleBlur = (field, e) => {
+    if (!e.target.checkValidity()) {
+      setError(field, true);
+      toast.error(e.target.validationMessage);
+    } else {
+      clearErrors(field);
+    }
+  };
+
+  const getInputClass = (field) => {
+    const base = "mt-1 w-full border outline-none rounded-lg px-3 py-2.5 text-sm transition-colors";
+    return errors[field] 
+      ? `${base} border-error focus:border-error focus:ring-2 focus:ring-error/20 bg-error/5` 
+      : `${base} border-border focus:border-[#2563EB] focus:ring-2 focus:ring-blue-100 bg-transparent`;
+  };
 
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -36,8 +52,7 @@ export default function Login() {
         <form onSubmit={handleSubmit} className="mt-6 space-y-4">
           <div>
             <label className="text-sm font-medium text-text-primary">Email</label>
-            <input value={data.email} onChange={(e) => setData('email', e.target.value)} type="email" required placeholder="you@email.com" className="mt-1 w-full border border-border focus:border-[#2563EB] focus:ring-2 focus:ring-blue-100 outline-none rounded-lg px-3 py-2.5 text-sm" />
-            {errors.email && <p className="mt-1 text-xs text-error">{errors.email}</p>}
+            <input value={data.email} onChange={(e) => setData('email', e.target.value)} onBlur={(e) => handleBlur('email', e)} type="email" required placeholder="you@email.com" className={getInputClass('email')} />
           </div>
           <div>
             <div className="flex items-center justify-between">
@@ -45,9 +60,8 @@ export default function Login() {
               <Link href="/forgot-password" className="text-xs font-medium text-[var(--color-action)] hover:text-[var(--color-action-hover)]">Forgot password?</Link>
             </div>
             <div className="mt-1">
-              <PasswordInput value={data.password} onChange={(e) => setData('password', e.target.value)} />
+              <PasswordInput value={data.password} onChange={(e) => setData('password', e.target.value)} onBlur={(e) => handleBlur('password', e)} error={!!errors.password} />
             </div>
-            {errors.password && <p className="mt-1 text-xs text-error">{errors.password}</p>}
           </div>
           <button type="submit" disabled={processing} className="w-full bg-action hover:bg-action-hover disabled:bg-blue-300 text-white text-sm font-medium py-2.5 rounded-lg transition-colors">
             {processing ? 'Logging in...' : 'Log in'}

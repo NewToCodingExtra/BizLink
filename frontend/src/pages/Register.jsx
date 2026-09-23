@@ -5,13 +5,29 @@ import { FacebookIcon, GoogleIcon } from '../Components/SocialIcons';
 
 export default function Register() {
   const toast = useToast();
-  const { data, setData, post, processing, errors } = useForm({
+  const { data, setData, post, processing, errors, setError, clearErrors } = useForm({
     name: '',
     email: '',
     password: '',
     password_confirmation: '',
     role: 'entrepreneur',
   });
+
+  const handleBlur = (field, e) => {
+    if (!e.target.checkValidity()) {
+      setError(field, true);
+      toast.error(e.target.validationMessage);
+    } else {
+      clearErrors(field);
+    }
+  };
+
+  const getInputClass = (field) => {
+    const base = "mt-1 w-full border outline-none rounded-lg px-3 py-2.5 text-sm transition-colors";
+    return errors[field] 
+      ? `${base} border-error focus:border-error focus:ring-2 focus:ring-error/20 bg-error/5` 
+      : `${base} border-border focus:border-[#2563EB] focus:ring-2 focus:ring-blue-100 bg-transparent`;
+  };
 
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -60,26 +76,23 @@ export default function Register() {
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
             <label className="text-sm font-medium text-text-primary">Full name</label>
-            <input value={data.name} onChange={(e) => setData('name', e.target.value)} required placeholder="Juan Dela Cruz" className="mt-1 w-full border border-border focus:border-[#2563EB] focus:ring-2 focus:ring-blue-100 outline-none rounded-lg px-3 py-2.5 text-sm" />
-            {errors.name && <p className="mt-1 text-xs text-error">{errors.name}</p>}
+            <input value={data.name} onChange={(e) => setData('name', e.target.value)} onBlur={(e) => handleBlur('name', e)} required placeholder="Juan Dela Cruz" className={getInputClass('name')} />
           </div>
           <div>
             <label className="text-sm font-medium text-text-primary">Email</label>
-            <input value={data.email} onChange={(e) => setData('email', e.target.value)} type="email" required placeholder="you@email.com" className="mt-1 w-full border border-border focus:border-[#2563EB] focus:ring-2 focus:ring-blue-100 outline-none rounded-lg px-3 py-2.5 text-sm" />
-            {errors.email && <p className="mt-1 text-xs text-error">{errors.email}</p>}
+            <input value={data.email} onChange={(e) => setData('email', e.target.value)} onBlur={(e) => handleBlur('email', e)} type="email" required placeholder="you@email.com" className={getInputClass('email')} />
           </div>
           <div className="grid grid-cols-2 gap-3">
             <div>
               <label className="text-sm font-medium text-text-primary">Password</label>
               <div className="mt-1">
-                <PasswordInput value={data.password} onChange={(e) => setData('password', e.target.value)} minLength={8} placeholder="Min 8 chars" autoComplete="new-password" />
+                <PasswordInput value={data.password} onChange={(e) => setData('password', e.target.value)} onBlur={(e) => handleBlur('password', e)} error={!!errors.password} minLength={8} placeholder="Min 8 chars" autoComplete="new-password" />
               </div>
-              {errors.password && <p className="mt-1 text-xs text-error">{errors.password}</p>}
             </div>
             <div>
               <label className="text-sm font-medium text-text-primary">Confirm</label>
               <div className="mt-1">
-                <PasswordInput value={data.password_confirmation} onChange={(e) => setData('password_confirmation', e.target.value)} placeholder="Repeat" autoComplete="new-password" />
+                <PasswordInput value={data.password_confirmation} onChange={(e) => setData('password_confirmation', e.target.value)} onBlur={(e) => handleBlur('password_confirmation', e)} error={!!errors.password_confirmation} placeholder="Repeat" autoComplete="new-password" />
               </div>
             </div>
           </div>
@@ -92,7 +105,6 @@ export default function Register() {
                 </button>
               ))}
             </div>
-            {errors.role && <p className="mt-1 text-xs text-error">{errors.role}</p>}
           </div>
           <div className="text-[11px] text-text-secondary leading-tight pt-2">
             By creating an account, you agree to our <Link href="/terms" className="text-action hover:underline">Terms of Service</Link> and acknowledge our <Link href="/privacy" className="text-action hover:underline">Privacy Policy</Link>.

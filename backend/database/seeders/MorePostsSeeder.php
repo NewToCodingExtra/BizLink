@@ -12,7 +12,11 @@ class MorePostsSeeder extends Seeder
     public function run(): void
     {
         // Fetch all brand users, excluding the entrepreneur/demo accounts and any manual/social logins
-        $brands = User::where('role', 'brand')->get();
+        $brands = User::where('role', 'brand')->orderBy('id')->get();
+        if ($brands->isEmpty()) {
+            $this->command->warn('MorePostsSeeder: no brand users found, skipping.');
+            return;
+        }
 
         $categories = ['Food & Beverage', 'Beauty & Wellness', 'Health & Fitness', 'Services & Logistics', 'Education', 'Fashion & Apparel', 'Home & Living'];
 
@@ -33,24 +37,27 @@ class MorePostsSeeder extends Seeder
         ];
 
         foreach ($brands as $index => $brand) {
-            // Determine brand_id (e.g. brand-1 to brand-16 based on how it's seeded originally)
-            // The original seeder created BrewCraft as brand-1, and others as brand-2 to brand-16
-            // We can just extract it from email (e.g. brand@bizlink.ph -> brand-1, glow@bizlink.ph -> brand-2)
-            // But we actually don't need exact match to the old ones as long as it's a string, we can just use "brand-{$brand->id}"
+            // Authoritative scheme: brand-{userId}, same as OpportunityController::store.
+            // (Old rows used logical brand-1..16 / drifted pairs; repair seeder heals those.)
             $brandId = 'brand-' . $brand->id;
 
-            // Add 2 Opportunities (Feeds)
+            // Add 2 Opportunities (Feeds) — firstOrCreate by headline so reseeds never duplicate.
             for ($i = 1; $i <= 2; $i++) {
-                Opportunity::create([
+                $headline = "New Opportunity from {$brand->name} #{$i}";
+                $capitalAmount = rand(100, 999) * 1000;
+                $roiPercent = rand(15, 45);
+                Opportunity::firstOrCreate(['headline' => $headline], [
                     'brand_name' => $brand->name,
                     'brand_avatar' => $brand->avatar,
                     'brand_id' => $brandId,
                     'user_id' => $brand->id,
                     'type' => 'Franchise',
                     'category' => $categories[array_rand($categories)],
-                    'headline' => "New Opportunity from {$brand->name} #{$i}",
-                    'capital_required' => '₱' . rand(100, 999) . 'K',
-                    'roi' => rand(15, 45) . '% ROI',
+                    'headline' => $headline,
+                    'capital_required' => '₱' . ($capitalAmount / 1000) . 'K',
+                    'capital_amount' => $capitalAmount,
+                    'roi' => $roiPercent . '% ROI',
+                    'roi_percent' => $roiPercent,
                     'description' => "This is a brand new opportunity added to {$brand->name}'s feed. Take advantage of our scalable business model today!",
                     'image' => $imagePlaceholders[array_rand($imagePlaceholders)],
                     'media_type' => 'image',
@@ -63,15 +70,16 @@ class MorePostsSeeder extends Seeder
                 ]);
             }
 
-            // Add 2 Stories (Reels)
+            // Add 2 Stories (Reels) — firstOrCreate by caption so reseeds never duplicate.
             for ($j = 1; $j <= 2; $j++) {
-                Story::create([
+                $caption = "Behind the scenes at {$brand->name} #{$j}";
+                Story::firstOrCreate(['brand_name' => $brand->name, 'caption' => $caption], [
                     'user_id' => $brand->id,
                     'brand_name' => $brand->name,
                     'brand_id' => $brandId,
                     'avatar' => $brand->avatar,
                     'media_url' => $storyPlaceholders[array_rand($storyPlaceholders)],
-                    'caption' => "Behind the scenes at {$brand->name} #{$j}",
+                    'caption' => $caption,
                     'expires_at' => now()->addHours(rand(12, 24)),
                     'seen' => false,
                 ]);

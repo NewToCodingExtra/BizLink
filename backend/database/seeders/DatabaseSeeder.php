@@ -402,6 +402,12 @@ class DatabaseSeeder extends Seeder
         $oppModels = [];
         foreach ($opportunities as $attrs) {
             $owner = $brandUsers[$attrs['brand_id']] ?? $brandOwner;
+            // Numeric source of truth for sorting/filtering; the legacy
+            // strings stay as the display snapshot.
+            $attrs['capital_amount'] = $attrs['capital_amount']
+                ?? self::parseCapitalAmount($attrs['capital_required'] ?? null);
+            $attrs['roi_percent'] = $attrs['roi_percent']
+                ?? self::parseRoiPercent($attrs['roi'] ?? null);
             $opp = Opportunity::firstOrCreate(
                 ['headline' => $attrs['headline']],
                 array_merge($attrs, ['user_id' => $owner->id])
@@ -527,5 +533,34 @@ class DatabaseSeeder extends Seeder
                 ]
             );
         }
+    }
+
+    public static function parseCapitalAmount(?string $value): ?int
+    {
+        if ($value === null || trim($value) === '') {
+            return null;
+        }
+        if (! preg_match('/[\d,.]+/', trim($value), $m)) {
+            return null;
+        }
+        $num = (float) str_replace(',', '', $m[0]);
+        $lower = mb_strtolower(trim($value));
+        if (str_contains($lower, 'm')) {
+            $num *= 1000000;
+        } elseif (str_contains($lower, 'k')) {
+            $num *= 1000;
+        }
+        return (int) round($num);
+    }
+
+    public static function parseRoiPercent(?string $value): ?float
+    {
+        if ($value === null || trim($value) === '') {
+            return null;
+        }
+        if (! preg_match('/[\d,.]+/', trim($value), $m)) {
+            return null;
+        }
+        return (float) str_replace(',', '', $m[0]);
     }
 }

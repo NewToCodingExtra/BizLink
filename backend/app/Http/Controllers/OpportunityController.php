@@ -74,14 +74,14 @@ class OpportunityController extends Controller
             'type' => 'required|string|in:Franchise,Wholesale,Resell',
             'category' => 'nullable|string|max:255',
             'headline' => 'required|string|max:255',
-            'capital_required' => 'nullable|string|max:255',
-            'roi' => 'nullable|string|max:255',
+            'capital_amount' => 'required|numeric|min:0|max:100000000000',
+            'roi_percent' => 'required|numeric|min:0|max:1000',
             'description' => 'nullable|string|max:2000',
             'image' => 'nullable|string|max:2048',
             'media_type' => 'sometimes|string|in:image,video',
             'video_url' => 'nullable|string|max:2048',
-            'brand_name' => 'sometimes|string|max:255',
-            'brand_avatar' => 'sometimes|string|max:2048',
+            'brand_name' => 'sometimes|nullable|string|max:255',
+            'brand_avatar' => 'sometimes|nullable|string|max:2048',
         ]);
 
         $user = $request->user();
@@ -94,8 +94,10 @@ class OpportunityController extends Controller
             'type' => $data['type'],
             'category' => $data['category'] ?? 'General',
             'headline' => $data['headline'],
-            'capital_required' => $data['capital_required'] ?? null,
-            'roi' => $data['roi'] ?? null,
+            'capital_amount' => (int) $data['capital_amount'],
+            'capital_required' => self::formatCapital((int) $data['capital_amount']),
+            'roi_percent' => (float) $data['roi_percent'],
+            'roi' => self::formatRoi((float) $data['roi_percent']),
             'description' => $data['description'] ?? null,
             'image' => $data['image'] ?? 'https://images.unsplash.com/photo-1497366216548-37526070297c?w=800&q=80&auto=format&fit=crop',
             'media_type' => $data['media_type'] ?? 'image',
@@ -147,9 +149,13 @@ class OpportunityController extends Controller
             $opportunity->increment('likes_count');
             $liked = true;
             
-            if ($opportunity->user_id !== $user->id) {
+            // Imported opportunities can be public feed content without a
+            // local owner. Do not turn a successful like into a failed
+            // request when there is nobody to receive a notification.
+            $recipientId = $opportunity->user_id;
+            if ($recipientId && (int) $recipientId !== (int) $user->id) {
                 AppNotification::create([
-                    'user_id' => $opportunity->user_id,
+                    'user_id' => $recipientId,
                     'type' => 'like',
                     'message' => "{$user->name} liked your post \"{$opportunity->headline}\"",
                     'link' => "/post/{$opportunity->slug}",
@@ -205,5 +211,27 @@ class OpportunityController extends Controller
         ]);
         
         return response()->json(['hidden' => true]);
+    }
+
+    private static function formatCapital(int $amount): string
+    {
+        if ($amount >= 1000000) {
+            return '₱' . self::trimNumber($amount / 1000000) . 'M';
+        }
+        if ($amount >= 1000) {
+            return '₱' . self::trimNumber($amount / 1000) . 'K';
+        }
+        return '₱' . number_format($amount);
+    }
+
+    /** 1.25 -> "1.25", 1.5 -> "1.5", 2.0 -> "2" (consistent, no trailing zeros). */
+    private static function trimNumber(float $value): string
+    {
+        return rtrim(rtrim(number_format($value, 2, '.', ''), '0'), '.');
+    }
+
+    private static function formatRoi(float $percent): string
+    {
+        return self::trimNumber($percent) . '% ROI';
     }
 }

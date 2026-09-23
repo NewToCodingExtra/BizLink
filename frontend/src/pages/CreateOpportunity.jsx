@@ -3,7 +3,6 @@ import { useForm, Head } from '@inertiajs/react';
 import { useToast } from '../context/ToastContext';
 
 const CATEGORIES = ['Food & Beverage', 'Beauty & Wellness', 'Health & Fitness', 'Services & Logistics', 'Education', 'Fashion & Apparel', 'Home & Living'];
-
 function csrfToken() {
   return document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '';
 }
@@ -41,12 +40,12 @@ function uploadToServer(file, onProgress) {
 export default function CreateOpportunity() {
   const fileRef = useRef(null);
   const toast = useToast();
-  const { data, setData, post, processing, errors } = useForm({
+  const { data, setData, post, processing, errors, setError, clearErrors } = useForm({
     type: 'Franchise',
     category: 'Food & Beverage',
     headline: '',
-    capital_required: '',
-    roi: '',
+    capital_amount: '',
+    roi_percent: '',
     description: '',
     image: '',
     media_type: 'image',
@@ -57,6 +56,21 @@ export default function CreateOpportunity() {
   const [uploading, setUploading] = useState(false);
   const [progress, setProgress] = useState(0);
   const [disk, setDisk] = useState('');
+
+  const handleBlur = (field, e) => {
+    if (!e.target.checkValidity()) {
+      setError(field, e.target.validationMessage);
+    } else {
+      clearErrors(field);
+    }
+  };
+
+  const getInputClass = (field, extraClass = "") => {
+    const base = `mt-1 w-full border outline-none rounded-lg px-3 py-2.5 text-sm transition-colors ${extraClass}`;
+    return errors[field]
+      ? `${base} border-error focus:border-error focus:ring-2 focus:ring-error/20 bg-error/5`
+      : `${base} border-border focus:border-[#2563EB] focus:ring-2 focus:ring-blue-100 bg-transparent`;
+  };
 
   const preview = data.media_type === 'video' ? data.video_url : data.image;
 
@@ -103,7 +117,7 @@ export default function CreateOpportunity() {
 
   const submit = (e) => {
     e.preventDefault();
-    if (!data.headline.trim() || !data.capital_required.trim() || !data.roi.trim() || !data.description.trim()) {
+    if (!data.headline.trim() || String(data.capital_amount ?? '').trim() === '' || String(data.roi_percent ?? '').trim() === '' || !data.description.trim()) {
       toast.error('Please fill required fields.');
       return;
     }
@@ -127,7 +141,7 @@ export default function CreateOpportunity() {
   return (
     <div className="max-w-2xl mx-auto px-4 sm:px-6 py-6">
       <Head title="Post an Opportunity" />
-      <h1 className="text-2xl font-semibold text-primary">Post an Opportunity</h1>
+      <h1 className="text-2xl font-semibold text-text-primary">Post an Opportunity</h1>
       <p className="text-sm text-text-secondary mt-1">Saved to MySQL via Laravel. Images and videos go to Google Cloud Storage when configured, otherwise the app server.</p>
 
       <form onSubmit={submit} className="mt-6 bg-surface rounded-xl border border-border shadow-sm p-6 space-y-4">
@@ -140,33 +154,33 @@ export default function CreateOpportunity() {
 
         <div>
           <label className="text-sm font-medium text-text-primary">Headline *</label>
-          <input value={data.headline} onChange={(e) => setData('headline', e.target.value)} placeholder="e.g. Premium Coffee Franchise — High Foot Traffic" className="mt-1 w-full border border-border focus:border-[#2563EB] focus:ring-2 focus:ring-blue-100 outline-none rounded-lg px-3 py-2.5 text-sm" />
+          <input value={data.headline} onChange={(e) => setData('headline', e.target.value)} onBlur={(e) => handleBlur('headline', e)} required placeholder="e.g. Premium Coffee Franchise — High Foot Traffic" className={getInputClass('headline')} />
           {errors.headline && <p className="mt-1 text-xs text-error">{errors.headline}</p>}
         </div>
         <div className="grid grid-cols-2 gap-4">
           <div>
-            <label className="text-sm font-medium text-text-primary">Capital Required *</label>
-            <input value={data.capital_required} onChange={(e) => setData('capital_required', e.target.value)} placeholder="₱850K" className="mt-1 w-full border border-border rounded-lg px-3 py-2.5 text-sm" />
-            {errors.capital_required && <p className="mt-1 text-xs text-error">{errors.capital_required}</p>}
+            <label className="text-sm font-medium text-text-primary">Capital Required (₱) *</label>
+            <input type="number" min="0" step="1" value={data.capital_amount} onChange={(e) => setData('capital_amount', e.target.value)} onBlur={(e) => handleBlur('capital_amount', e)} required placeholder="850000" className={getInputClass('capital_amount')} />
+            {errors.capital_amount && <p className="mt-1 text-xs text-error">{errors.capital_amount}</p>}
           </div>
           <div>
-            <label className="text-sm font-medium text-text-primary">ROI / Margin *</label>
-            <input value={data.roi} onChange={(e) => setData('roi', e.target.value)} placeholder="28% ROI" className="mt-1 w-full border border-border rounded-lg px-3 py-2.5 text-sm" />
-            {errors.roi && <p className="mt-1 text-xs text-error">{errors.roi}</p>}
+            <label className="text-sm font-medium text-text-primary">ROI / Margin (%) *</label>
+            <input type="number" min="0" max="1000" step="0.1" value={data.roi_percent} onChange={(e) => setData('roi_percent', e.target.value)} onBlur={(e) => handleBlur('roi_percent', e)} required placeholder="28" className={getInputClass('roi_percent')} />
+            {errors.roi_percent && <p className="mt-1 text-xs text-error">{errors.roi_percent}</p>}
           </div>
         </div>
 
         <div>
           <label className="text-sm font-medium text-text-primary">Category</label>
-          <select value={data.category} onChange={(e) => setData('category', e.target.value)} className="mt-1 w-full border border-border rounded-lg px-3 py-2.5 text-sm bg-surface">
-            {CATEGORIES.map((c) => <option key={c}>{c}</option>)}
+          <select value={data.category} onChange={(e) => setData('category', e.target.value)} className={getInputClass('category', 'bg-surface text-text-primary')}>
+            {CATEGORIES.map((c) => <option key={c} value={c} className="bg-surface text-text-primary">{c}</option>)}
           </select>
           {errors.category && <p className="mt-1 text-xs text-error">{errors.category}</p>}
         </div>
 
         <div>
           <label className="text-sm font-medium text-text-primary">Description * ({data.description.length}/2000)</label>
-          <textarea value={data.description} onChange={(e) => setData('description', e.target.value)} maxLength={2000} rows={4} placeholder="Describe support, location, payback..." className="mt-1 w-full border border-border rounded-lg px-3 py-2.5 text-sm resize-none" />
+          <textarea value={data.description} onChange={(e) => setData('description', e.target.value)} onBlur={(e) => handleBlur('description', e)} required maxLength={2000} rows={4} placeholder="Describe support, location, payback..." className={getInputClass('description', 'resize-none')} />
           {errors.description && <p className="mt-1 text-xs text-error">{errors.description}</p>}
         </div>
 
@@ -189,7 +203,7 @@ export default function CreateOpportunity() {
 
         <div>
           <label className="text-sm font-medium text-text-primary">...or paste a media URL</label>
-          <input value={preview || ''} onChange={(e) => onPasteUrl(e.target.value)} placeholder="https://... image or mp4" className="mt-1 w-full border border-border rounded-lg px-3 py-2.5 text-sm" />
+          <input value={preview || ''} onChange={(e) => onPasteUrl(e.target.value)} onBlur={(e) => handleBlur(data.media_type === 'video' ? 'video_url' : 'image', e)} placeholder="https://... image or mp4" className={getInputClass(data.media_type === 'video' ? 'video_url' : 'image')} />
           {(errors.image || errors.video_url) && <p className="mt-1 text-xs text-error">{errors.image || errors.video_url}</p>}
           {preview && data.media_type === 'image' && <img src={preview} alt="preview" className="mt-3 w-full h-48 object-cover rounded-lg border border-border" onError={(e) => { e.target.style.display = 'none'; }} />}
           {preview && data.media_type === 'video' && <video src={preview} controls className="mt-3 w-full h-48 object-cover rounded-lg border border-border" />}

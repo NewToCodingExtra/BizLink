@@ -19,7 +19,9 @@ class Opportunity extends Model
         'category',
         'headline',
         'capital_required',
+        'capital_amount',
         'roi',
+        'roi_percent',
         'description',
         'image',
         'media_type',
@@ -48,7 +50,20 @@ class Opportunity extends Model
         'is_new' => 'boolean',
         'likes_count' => 'integer',
         'saves_count' => 'integer',
+        'capital_amount' => 'integer',
+        'roi_percent' => 'float',
     ];
+
+    protected static function booted(): void
+    {
+        // Posts must always have a real owner — the column is NOT NULL +
+        // RESTRICT at the DB level, this is the app-level second net.
+        static::saving(function (Opportunity $opp) {
+            if (empty($opp->user_id) || ! User::whereKey($opp->user_id)->exists()) {
+                throw new \RuntimeException('Opportunity requires a valid user_id owner.');
+            }
+        });
+    }
 
     public function user()
     {

@@ -1,19 +1,25 @@
 import { useState } from "react";
 
-export default function PasswordInput({ value, onChange, placeholder = "••••••••", required = true, minLength, autoComplete = "current-password" }) {
+export default function PasswordInput({ value, onChange, onBlur, error, placeholder = "••••••••", required = true, minLength, autoComplete = "current-password" }) {
   const [visible, setVisible] = useState(false);
+
+  const baseClass = "w-full border outline-none rounded-lg px-3 py-2.5 pr-11 text-sm transition-colors";
+  const inputClass = error 
+    ? `${baseClass} border-error focus:border-error focus:ring-2 focus:ring-error/20 bg-error/5`
+    : `${baseClass} border-border focus:border-[#2563EB] focus:ring-2 focus:ring-blue-100 bg-transparent`;
 
   return (
     <div className="relative">
       <input
         value={value}
         onChange={onChange}
+        onBlur={onBlur}
         type={visible ? "text" : "password"}
         required={required}
         minLength={minLength}
         placeholder={placeholder}
         autoComplete={autoComplete}
-        className="w-full border border-border focus:border-[#2563EB] focus:ring-2 focus:ring-blue-100 outline-none rounded-lg px-3 py-2.5 pr-11 text-sm"
+        className={inputClass}
       />
       <button
         type="button"

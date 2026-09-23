@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Link } from '@inertiajs/react';
 import Modal from './Modal';
 import Button from './Button';
+import { SparkleIcon } from './icons';
 import { httpApi } from '../utils/http';
 import { useToast } from '../context/ToastContext';
 
@@ -36,8 +37,7 @@ export default function PreferenceOnboardingModal({ user, onComplete, forceOpen 
   const [selectedCategories, setSelectedCategories] = useState([]);
   const [budgetMin, setBudgetMin] = useState('');
   const [budgetMax, setBudgetMax] = useState('');
-  const [error, setError] = useState('');
-
+  const [fieldErrors, setFieldErrors] = useState({});
   useEffect(() => {
     if (!user) return;
     if (forceOpen) {
@@ -114,9 +114,21 @@ export default function PreferenceOnboardingModal({ user, onComplete, forceOpen 
     };
   }, [isOpen, brands.length]);
 
+  const validateBudgets = () => {
+    const min = parseFloat(budgetMin);
+    const max = parseFloat(budgetMax);
+    if (!isNaN(min) && !isNaN(max) && min > max) {
+      setFieldErrors({ budgetMin: true, budgetMax: true });
+      toast.error("Min budget cannot be greater than max budget");
+      return false;
+    }
+    setFieldErrors({});
+    return true;
+  };
+
   const completeOnboarding = async () => {
+    if (step === 3 && !validateBudgets()) return;
     setLoading(true);
-    setError('');
     try {
       await Promise.all(
         selectedAuthors.map((authorId) => httpApi.post('/follows/toggle', { brand_id: `brand-${authorId}` }).catch(() => null))
@@ -133,14 +145,14 @@ export default function PreferenceOnboardingModal({ user, onComplete, forceOpen 
       setIsOpen(false);
       toast.info(
         <span>
-          ✦ Personalized for you
+          <SparkleIcon className="w-3.5 h-3.5 inline-block -mt-0.5" /> Personalized for you
           {selectedCategories.length > 0 ? ` · ${selectedCategories.join(", ")}` : ""}
           {" · "}<Link href="/settings/preferences" className="text-action font-medium hover:underline">Edit preferences</Link>
         </span>
       );
       if (onComplete) onComplete();
     } catch (e) {
-      setError(e?.data?.message || e.message || 'Could not save your preferences. Please try again.');
+      toast.error(e?.data?.message || e.message || 'Could not save your preferences. Please try again.');
     } finally {
       setLoading(false);
     }
@@ -260,19 +272,18 @@ export default function PreferenceOnboardingModal({ user, onComplete, forceOpen 
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-[1fr_auto_1fr] sm:items-end">
             <label className="block text-sm font-medium text-[var(--color-text-primary)]">
               Minimum budget (₱)
-              <input type="number" min="0" inputMode="decimal" value={budgetMin} onChange={(e) => setBudgetMin(e.target.value)} placeholder="e.g. 10000" className="mt-2 w-full rounded-lg border border-[var(--color-border)] bg-[var(--color-surface)] px-3 py-2.5 text-[var(--color-text-primary)] outline-none focus:border-[var(--color-action)] focus:ring-2 focus:ring-[var(--color-action)]/20" />
+              <input type="number" min="0" inputMode="decimal" onBlur={validateBudgets} value={budgetMin} onChange={(e) => setBudgetMin(e.target.value)} placeholder="e.g. 10000" className={`mt-2 w-full rounded-lg border bg-[var(--color-surface)] px-3 py-2.5 text-[var(--color-text-primary)] outline-none focus:ring-2 ${fieldErrors.budgetMin ? 'border-error focus:border-error focus:ring-error/20 bg-error/5' : 'border-[var(--color-border)] focus:border-[var(--color-action)] focus:ring-[var(--color-action)]/20'}`} />
             </label>
             <span className="hidden pb-3 text-[var(--color-text-secondary)] sm:block">to</span>
             <label className="block text-sm font-medium text-[var(--color-text-primary)]">
               Maximum budget (₱)
-              <input type="number" min="0" inputMode="decimal" value={budgetMax} onChange={(e) => setBudgetMax(e.target.value)} placeholder="e.g. 50000" className="mt-2 w-full rounded-lg border border-[var(--color-border)] bg-[var(--color-surface)] px-3 py-2.5 text-[var(--color-text-primary)] outline-none focus:border-[var(--color-action)] focus:ring-2 focus:ring-[var(--color-action)]/20" />
+              <input type="number" min="0" inputMode="decimal" onBlur={validateBudgets} value={budgetMax} onChange={(e) => setBudgetMax(e.target.value)} placeholder="e.g. 50000" className={`mt-2 w-full rounded-lg border bg-[var(--color-surface)] px-3 py-2.5 text-[var(--color-text-primary)] outline-none focus:ring-2 ${fieldErrors.budgetMax ? 'border-error focus:border-error focus:ring-error/20 bg-error/5' : 'border-[var(--color-border)] focus:border-[var(--color-action)] focus:ring-[var(--color-action)]/20'}`} />
             </label>
           </div>
           <p className="mt-3 text-xs text-[var(--color-text-secondary)]">You can leave either field empty and update this anytime in Preferences.</p>
         </div>
       )}
 
-      {error && <p role="alert" className="mt-5 rounded-lg border border-red-500/30 bg-red-500/10 px-3 py-2 text-sm text-red-600">{error}</p>}
     </Modal>
   );
 }

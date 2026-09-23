@@ -54,6 +54,16 @@ class OpportunityService
         $total = (clone $base)->count();
         $ids = (clone $final)->forPage($page, $perPage)->pluck('id')->map(fn($v) => (int) $v)->all();
 
+        // Deep-link priority: the requested slug is surfaced on page 1 so the
+        // profile-grid → /reels?slug=... jump lands on the video you clicked
+        // instead of whatever happened to rank #1.
+        if ($page === 1 && ($slug = (string) $request->query('slug', '')) !== '') {
+            $targetId = (int) \App\Models\Opportunity::where('slug', $slug)->value('id');
+            if ($targetId && (clone $base)->where('opportunities.id', $targetId)->exists()) {
+                $ids = array_slice(array_values(array_unique(array_merge([$targetId], $ids))), 0, $perPage);
+            }
+        }
+
         $models = empty($ids)
             ? collect()
             : Opportunity::with(['user:id,name,username,avatar', 'comments.user:id,username'])
@@ -231,11 +241,9 @@ class OpportunityService
         if ($min === null && $max === null) {
             return '0';
         }
-        // Parse "₱850K" / "₱1.2M" / plain numbers into pesos.
-        $cap = "CAST(NULLIF(REGEXP_REPLACE(capital_required, '[^0-9.]', ''), '') AS DECIMAL(14,2))"
-            . " * CASE WHEN capital_required LIKE '%m%' THEN 1000000"
-            . " WHEN capital_required LIKE '%k%' THEN 1000 ELSE 1 END";
-        $hasCap = "capital_required IS NOT NULL AND REGEXP_REPLACE(capital_required, '[^0-9.]', '') <> ''";
+        // Numeric source of truth (backfilled from legacy "₱850K" strings).
+        $cap = 'capital_amount';
+        $hasCap = 'capital_amount IS NOT NULL';
 
         if ($min !== null && $max !== null) {
             [$lo, $hi] = $min <= $max ? [$min, $max] : [$max, $min];
@@ -307,6 +315,16 @@ class OpportunityService
             $query->where('media_type', $mediaType);
         }
 
+        if ($min = $request->query('capitalMin', $request->query('capital_min'))) {
+            $query->where('capital_amount', '>=', (int) $min);
+        }
+        if ($max = $request->query('capitalMax', $request->query('capital_max'))) {
+            $query->where('capital_amount', '<=', (int) $max);
+        }
+        if ($minRoi = $request->query('roiMin', $request->query('roi_min'))) {
+            $query->where('roi_percent', '>=', (float) $minRoi);
+        }
+
         if ($viewer) {
             $hiddenIds = HiddenOpportunity::where('user_id', $viewer->id)->pluck('opportunity_id')->toArray();
             if (!empty($hiddenIds)) {
@@ -371,7 +389,7 @@ class OpportunityService
         if ($catNorm !== '' && in_array($catNorm, $signals['preferredCategoriesNorm'], true)) {
             $reasons[] = 'Preferred category';
         }
-        if ($this->budgetFits($o->capital_required ?? null, $signals['budgetMin'], $signals['budgetMax'])) {
+        if ($this->budgetFits($o->capital_amount ?? null, $signals['budgetMin'], $signals['budgetMax'])) {
             $reasons[] = 'Budget fit';
         }
         if (in_array((int) $o->user_id, $signals['implicitUserIds'], true)
@@ -383,15 +401,15 @@ class OpportunityService
         return array_values(array_unique($reasons));
     }
 
-    private function budgetFits(?string $capital, ?float $min, ?float $max): bool
+    private function budgetFits(?int $capital, ?float $min, ?float $max): bool
     {
         if ($min === null && $max === null) {
             return false;
         }
-        $cap = self::parseCapital($capital);
-        if ($cap === null) {
+        if ($capital === null) {
             return false;
         }
+        $cap = (float) $capital;
         if ($min !== null && $max !== null) {
             [$lo, $hi] = $min <= $max ? [$min, $max] : [$max, $min];
             return $cap >= $lo && $cap <= $hi;

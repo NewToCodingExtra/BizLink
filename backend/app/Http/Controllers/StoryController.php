@@ -23,19 +23,20 @@ class StoryController extends Controller
     public function store(Request $request)
     {
         $data = $request->validate([
-            'brand_name' => 'sometimes|string|max:255',
+            'brand_name' => 'sometimes|nullable|string|max:255',
             'media_url' => 'required|string|max:2048',
             'caption' => 'nullable|string|max:1024',
             'duration' => 'nullable|numeric|max:60', // max 60 seconds
         ]);
 
         $user = $request->user();
+        abort_if(! $user, 401, 'Log in to post a story.');
 
         $story = Story::create([
-            'user_id' => $user?->id,
-            'brand_id' => 'brand-' . ($user?->id ?? 'guest'),
-            'brand_name' => $data['brand_name'] ?? ($user?->name ?? 'Brand'),
-            'avatar' => $user?->avatar ?? 'https://i.pravatar.cc/100?u=story',
+            'user_id' => $user->id,
+            'brand_id' => 'brand-' . $user->id,
+            'brand_name' => $data['brand_name'] ?? ($user->name ?? 'Brand'),
+            'avatar' => $user->avatar ?? 'https://i.pravatar.cc/100?u=story',
             'media_url' => $data['media_url'],
             'caption' => $data['caption'] ?? null,
             'expires_at' => now()->addHours(24),

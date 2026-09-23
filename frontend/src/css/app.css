@@ -1,19 +1,19 @@
 @import "tailwindcss";
 
 @theme {
-  --color-primary: #0B1F3A;
-  --color-primary-light: #1E3A5F;
-  --color-accent: #C9A24B;
-  --color-action: #2563EB;
-  --color-action-hover: #1D4ED8;
-  --color-bg: #F8FAFC;
-  --color-surface: #FFFFFF;
-  --color-border: #E2E8F0;
-  --color-text-primary: #0F172A;
-  --color-text-secondary: #64748B;
-  --color-success: #16A34A;
-  --color-warning: #D97706;
-  --color-error: #DC2626;
+  --color-primary: var(--color-primary);
+  --color-primary-light: var(--color-primary-light);
+  --color-accent: var(--color-accent);
+  --color-action: var(--color-action);
+  --color-action-hover: var(--color-action-hover);
+  --color-bg: var(--color-bg);
+  --color-surface: var(--color-surface);
+  --color-border: var(--color-border);
+  --color-text-primary: var(--color-text-primary);
+  --color-text-secondary: var(--color-text-secondary);
+  --color-success: var(--color-success);
+  --color-warning: var(--color-warning);
+  --color-error: var(--color-error);
 }
 
 :root {
@@ -74,6 +74,17 @@
 /* Hidden-scrollbar regions (e.g. story tray): scroll still works via
    touch, wheel and keyboard — only the bar itself is gone. */
 .no-scrollbar { scrollbar-width: none; -ms-overflow-style: none; }
+/* Native <select> popups render with the OS palette, not our CSS variables,
+   so a dark card gets a white list with washed-out text. Tie the widget
+   palette to the active theme and theme the options explicitly. */
+select { color-scheme: light; }
+select option { background-color: var(--color-surface); color: var(--color-text-primary); }
+.dark select { color-scheme: dark; }
+@media (prefers-color-scheme: dark) {
+  :root:not(.light) select { color-scheme: dark; }
+}
+
+
 .no-scrollbar::-webkit-scrollbar { display: none; }
 
 html { scroll-behavior: smooth; }
@@ -121,4 +132,15 @@ body { background: var(--color-bg); color: var(--color-text-primary); -webkit-fo
 
 .animate-float {
   animation: float 4s ease-in-out infinite;
+}
+
+/* Hide spin buttons on number inputs */
+input[type="number"]::-webkit-inner-spin-button,
+input[type="number"]::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+  background: transparent;
+}
+input[type="number"] {
+  -moz-appearance: textfield;
 }

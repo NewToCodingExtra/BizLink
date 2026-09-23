@@ -8,8 +8,7 @@ import AppLayout from './Layouts/AppLayout';
 
 createInertiaApp({
   resolve: (name) => {
-    // Glob both upper and lower case to handle Windows/Git casing quirks safely
-    const pages = import.meta.glob(['./Pages/**/*.jsx', './pages/**/*.jsx'], { eager: true });
+    const pages = import.meta.glob('./Pages/**/*.jsx', { eager: true });
     
     // Find the page regardless of case in the key
     const pageKey = Object.keys(pages).find(key => 

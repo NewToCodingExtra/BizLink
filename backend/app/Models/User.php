@@ -44,6 +44,16 @@ class User extends Authenticatable
                 $user->username = static::makeUsername($user->name ?? '');
             }
         });
+
+        // Never silently orphan posts/stories: deleting a user that still owns
+        // content is blocked. Reassign or delete their posts first.
+        static::deleting(function (User $user) {
+            if ($user->opportunities()->exists() || Story::where('user_id', $user->id)->exists()) {
+                throw new \RuntimeException(
+                    "Cannot delete user {$user->id} ({$user->email}): they still own posts/stories. Reassign or delete them first."
+                );
+            }
+        });
     }
 
     public static function makeUsername(string $name, ?int $ignoreId = null): string

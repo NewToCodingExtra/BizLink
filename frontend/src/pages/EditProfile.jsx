@@ -1,8 +1,11 @@
 import { useRef, useState } from "react";
 import { Head, Link, router } from "@inertiajs/react";
+import { ArrowLeftIcon } from "../Components/icons";
 import { httpApi } from "../utils/http";
+import { useToast } from '../context/ToastContext';
 
 export default function EditProfile({ user }) {
+  const toast = useToast();
   const fileRef = useRef(null);
   const [name, setName] = useState(user?.name || "");
   const [avatar, setAvatar] = useState(user?.avatar || "");
@@ -10,17 +13,33 @@ export default function EditProfile({ user }) {
   const [uploading, setUploading] = useState(false);
   const [progress, setProgress] = useState(0);
   const [saving, setSaving] = useState(false);
-  const [error, setError] = useState("");
+  const [fieldErrors, setFieldErrors] = useState({});
   const [saved, setSaved] = useState(false);
+
+  const handleBlur = (e) => {
+    const field = e.target.name;
+    if (!e.target.checkValidity()) {
+      setFieldErrors((prev) => ({ ...prev, [field]: true }));
+      toast.error(e.target.validationMessage);
+    } else {
+      setFieldErrors((prev) => ({ ...prev, [field]: false }));
+    }
+  };
+
+  const getInputClass = (field) => {
+    const base = "mt-1 w-full border outline-none rounded-lg px-3 py-2.5 text-sm transition-colors";
+    return fieldErrors[field]
+      ? `${base} border-error focus:border-error focus:ring-2 focus:ring-error/20 bg-error/5`
+      : `${base} border-border focus:border-[#2563EB] focus:ring-2 focus:ring-blue-100 bg-transparent`;
+  };
 
   const onPickFile = async (e) => {
     const file = e.target.files?.[0];
     if (!file) return;
     if (!file.type.startsWith("image/")) {
-      setError("Profile photos must be images.");
+      toast.error("Profile photos must be images.");
       return;
     }
-    setError("");
     setUploading(true);
     setProgress(0);
     try {
@@ -43,7 +62,7 @@ export default function EditProfile({ user }) {
       setProgress(100);
       setSaved(false);
     } catch (err) {
-      setError(err.message || "Photo upload failed");
+      toast.error(err.message || "Photo upload failed");
     } finally {
       setUploading(false);
       if (fileRef.current) fileRef.current.value = "";
@@ -52,10 +71,9 @@ export default function EditProfile({ user }) {
 
   const submit = async (e) => {
     e.preventDefault();
-    setError("");
     setSaved(false);
     if (!name.trim()) {
-      setError("Name is required.");
+      setFieldErrors(prev => ({ ...prev, name: "Name is required." }));
       return;
     }
     setSaving(true);
@@ -66,7 +84,7 @@ export default function EditProfile({ user }) {
     } catch (err) {
       const errors = err?.data?.errors;
       const first = errors ? Object.values(errors).flat()[0] : null;
-      setError(first || err.message || "Save failed");
+      toast.error(first || err.message || "Save failed");
     } finally {
       setSaving(false);
     }
@@ -75,11 +93,10 @@ export default function EditProfile({ user }) {
   return (
     <div className="max-w-2xl mx-auto px-4 sm:px-6 py-6">
       <Head title="Edit profile" />
-      <Link href="/profile/me" className="text-sm text-text-secondary hover:text-text-primary">← Back to profile</Link>
-      <h1 className="text-2xl font-semibold text-primary mt-2">Edit profile</h1>
+      <Link href="/profile/me" className="inline-flex items-center gap-1 text-sm text-text-secondary hover:text-text-primary"><ArrowLeftIcon /> Back to profile</Link>
+      <h1 className="text-2xl font-semibold text-text-primary mt-2">Edit profile</h1>
       <p className="text-sm text-text-secondary mt-1">How brands and entrepreneurs see you across BizLink.</p>
 
-      {error && <p className="mt-4 text-sm text-error bg-error/10 border border-error/20 rounded-lg px-3 py-2">{error}</p>}
       {saved && <p className="mt-4 text-sm text-success bg-success/10 border border-success/20 rounded-lg px-3 py-2">Profile saved.</p>}
 
       <form onSubmit={submit} className="mt-6 bg-surface rounded-xl border border-border shadow-sm p-6 space-y-5">
@@ -101,17 +118,17 @@ export default function EditProfile({ user }) {
 
         <div>
           <label className="text-sm font-medium text-text-primary">Display name *</label>
-          <input value={name} onChange={(e) => setName(e.target.value)} required maxLength={255} placeholder="Juan Dela Cruz" className="mt-1 w-full border border-border focus:border-[#2563EB] focus:ring-2 focus:ring-blue-100 outline-none rounded-lg px-3 py-2.5 text-sm" />
+          <input name="name" value={name} onChange={(e) => setName(e.target.value)} onBlur={handleBlur} required maxLength={255} placeholder="Juan Dela Cruz" className={getInputClass('name')} />
         </div>
 
         <div>
           <label className="text-sm font-medium text-text-primary">Photo URL</label>
-          <input value={avatar} onChange={(e) => setAvatar(e.target.value)} placeholder="https://..." className="mt-1 w-full border border-border focus:border-[#2563EB] focus:ring-2 focus:ring-blue-100 outline-none rounded-lg px-3 py-2.5 text-sm" />
+          <input name="avatar" value={avatar} onChange={(e) => setAvatar(e.target.value)} onBlur={handleBlur} placeholder="https://..." className={getInputClass('avatar')} />
         </div>
 
         <div>
           <label className="text-sm font-medium text-text-primary">Bio ({bio.length}/500)</label>
-          <textarea value={bio} onChange={(e) => setBio(e.target.value)} maxLength={500} rows={3} placeholder="What do you do, and what are you looking for?" className="mt-1 w-full border border-border focus:border-[#2563EB] focus:ring-2 focus:ring-blue-100 outline-none rounded-lg px-3 py-2.5 text-sm resize-none" />
+          <textarea name="bio" value={bio} onChange={(e) => setBio(e.target.value)} onBlur={handleBlur} maxLength={500} rows={3} placeholder="What do you do, and what are you looking for?" className={`${getInputClass('bio')} resize-none`} />
         </div>
 
         <div className="flex items-center gap-3">

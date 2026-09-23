@@ -1,6 +1,8 @@
 import { useRef, useState } from "react";
 import { Link, usePage } from "@inertiajs/react";
+import { HeartIcon, CommentIcon, VolumeOnIcon, VolumeOffIcon } from "./icons";
 import { profilePath } from "../utils/profilePath";
+import { displayCapital, displayRoi } from "../utils/money";
 import { useToast } from "../context/ToastContext";
 
 export default function ReelCard({ opp, onToggleLike, onInquire, onOpenComments }) {
@@ -15,14 +17,18 @@ export default function ReelCard({ opp, onToggleLike, onInquire, onOpenComments 
   const authorProfile = `${profilePath({ username: opp.user?.username || opp.authorUsername, authorId: opp.authorId, brandId: opp.brandId })}?tab=reels`;
   return (
     <div className="snap-start relative h-[100dvh] w-full bg-black flex items-center justify-center overflow-hidden">
-      <video
-        ref={ref}
-        src={opp.videoUrl}
-        poster={opp.image}
-        autoPlay muted={muted} loop playsInline
-        onClick={()=>setMuted(!muted)}
-        className="h-full w-full object-cover max-w-md mx-auto"
-      />
+      {opp.videoUrl ? (
+        <video
+          ref={ref}
+          src={opp.videoUrl}
+          poster={opp.image || undefined}
+          autoPlay muted={muted} loop playsInline
+          onClick={()=>setMuted(!muted)}
+          className="h-full w-full object-cover max-w-md mx-auto"
+        />
+      ) : (
+        <img src={opp.image || opp.brandAvatar} alt={opp.headline} className="h-full w-full object-cover max-w-md mx-auto" />
+      )}
       <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-black/20 pointer-events-none" />
       <div className="absolute bottom-0 left-0 right-0 p-4 flex items-end justify-between gap-4 max-w-md mx-auto w-full">
         <div className="flex-1 min-w-0">
@@ -32,13 +38,13 @@ export default function ReelCard({ opp, onToggleLike, onInquire, onOpenComments 
             <span className="text-[10px] tracking-widest bg-white/20 px-2 py-0.5 rounded-full shrink-0">{opp.type}</span>
           </p>
           <Link href={`/post/${opp.slug}`} className="block text-white text-sm mt-1 line-clamp-2 hover:underline">{opp.headline}</Link>
-          <p className="text-white/70 text-xs mt-1">{opp.capitalRequired} · {opp.roi}</p>
+          <p className="text-white/70 text-xs mt-1">{displayCapital(opp)} · {displayRoi(opp)}</p>
         </div>
         <div className="flex flex-col items-center gap-3">
-          <button onClick={()=>onToggleLike(opp.id)} aria-label="Like" className={`w-10 h-10 rounded-full grid place-items-center text-lg ${opp.liked ? "bg-error text-white" : "bg-white/20 text-white"}`}>{opp.liked?"♥":"♡"}</button>
-          <button onClick={()=>onOpenComments && onOpenComments(opp)} aria-label="Comments" className="w-10 h-10 rounded-full grid place-items-center bg-white/20 text-white text-sm font-semibold">💬{commentCount > 0 ? <span className="text-[10px] ml-0.5">{commentCount}</span> : null}</button>
+          <button onClick={()=>onToggleLike(opp.id)} aria-label="Like" className={`w-10 h-10 rounded-full grid place-items-center ${opp.liked ? "bg-error text-white" : "bg-white/20 text-white"}`}><HeartIcon filled={!!opp.liked} className="w-5 h-5" /></button>
+          <button onClick={()=>onOpenComments && onOpenComments(opp)} aria-label="Comments" className="w-10 h-10 rounded-full grid place-items-center bg-white/20 text-white text-sm font-semibold"><CommentIcon className="w-5 h-5" />{commentCount > 0 ? <span className="text-[10px] ml-0.5">{commentCount}</span> : null}</button>
           <button onClick={()=>onInquire(opp)} className="px-3 py-1.5 rounded-full bg-action text-white text-xs font-semibold">Inquire</button>
-          <button onClick={()=>setMuted(!muted)} aria-label={muted ? "Unmute" : "Mute"} className="w-8 h-8 rounded-full bg-white/20 text-white grid place-items-center text-xs">{muted?"🔇":"🔊"}</button>
+          <button onClick={()=>setMuted(!muted)} aria-label={muted ? "Unmute" : "Mute"} className="w-8 h-8 rounded-full bg-white/20 text-white grid place-items-center">{muted ? <VolumeOffIcon className="w-4 h-4" /> : <VolumeOnIcon className="w-4 h-4" />}</button>
           <div className="relative">
             <button onClick={() => {
               const el = document.getElementById(`menu-reel-${opp.id}`);
