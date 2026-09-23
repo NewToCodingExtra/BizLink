@@ -8,9 +8,18 @@ import AppLayout from './Layouts/AppLayout';
 
 createInertiaApp({
   resolve: (name) => {
-    const pages = import.meta.glob('./Pages/**/*.jsx', { eager: true });
-    const page = pages[`./Pages/${name}.jsx`];
+    // Glob both upper and lower case to handle Windows/Git casing quirks safely
+    const pages = import.meta.glob(['./Pages/**/*.jsx', './pages/**/*.jsx'], { eager: true });
+    
+    // Find the page regardless of case in the key
+    const pageKey = Object.keys(pages).find(key => 
+      key.toLowerCase() === `./pages/${name.toLowerCase()}.jsx` ||
+      key.toLowerCase() === `./pages/${name.toLowerCase()}/index.jsx`
+    );
+    
+    const page = pages[pageKey];
     if (!page) {
+      console.error(`Available pages:`, Object.keys(pages));
       throw new Error(`Inertia page not found: ${name}`);
     }
     // Default shell: Navbar + Footer + flash toasts for every page.

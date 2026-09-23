@@ -39,7 +39,7 @@ Route::prefix('auth')->group(function () {
     Route::post('/reset-password', [PasswordResetController::class, 'reset']);
     Route::get('/{provider}/status', [SocialAuthController::class, 'status'])->where('provider', 'google|facebook');
     Route::get('/{provider}/redirect', [SocialAuthController::class, 'redirect'])->where('provider', 'google|facebook');
-    Route::get('/{provider}/callback', [SocialAuthController::class, 'callback'])->where('provider', 'google|facebook');
+    Route::get('/{provider}/callback', function($provider) { return redirect('/auth/' . $provider . '/callback?' . request()->getQueryString()); })->where('provider', 'google|facebook');
     Route::post('/uploads', [UploadController::class, 'store'])->middleware('auth:sanctum');
     Route::middleware('auth:sanctum')->group(function () {
         Route::post('/logout', [AuthController::class, 'logout']);

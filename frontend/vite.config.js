@@ -40,6 +40,9 @@ export default defineConfig(({ mode }) => {
       host: '127.0.0.1',
       port: 5173,
       strictPort: true,
+      // Never open the Vite URL — that only shows the HMR info page.
+      // The real app is Laravel on APP_URL.
+      open: false,
       watch: {
         ignored: ['**/storage/framework/views/**'],
       },
