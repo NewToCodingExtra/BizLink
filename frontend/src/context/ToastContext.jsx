@@ -70,10 +70,12 @@ function ToastItem({ toast, onRemove }) {
             fill="transparent"
             stroke="var(--color-action)"
             strokeWidth="2.5"
-            strokeDasharray={circumference}
-            strokeDashoffset={circumference}
             strokeLinecap="round"
-            style={{ animation: `toast-progress ${toast.duration}ms linear forwards` }}
+            style={{ 
+              strokeDasharray: circumference,
+              strokeDashoffset: circumference,
+              animation: `toast-progress ${toast.duration}ms linear forwards` 
+            }}
           />
         </svg>
       </button>
