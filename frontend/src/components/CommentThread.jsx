@@ -1,12 +1,12 @@
 import { useState } from "react";
-import { Link } from "react-router-dom";
-import { useAuth } from "../context/AuthContext";
+import { Link, usePage } from "@inertiajs/react";
 import { profilePath } from "../utils/profilePath";
 
 export default function CommentThread({ postId, comments, onAdd }) {
   const [text, setText] = useState("");
   const [busy, setBusy] = useState(false);
-  const { user } = useAuth();
+  const { auth } = usePage().props;
+  const user = auth?.user ?? null;
   const list = (comments || []).filter((c) => String(c.postId) === String(postId));
 
   const submit = async (e) => {
@@ -30,14 +30,14 @@ export default function CommentThread({ postId, comments, onAdd }) {
         {list.map((c) => (
           <div key={c.id} className={`flex gap-3 p-3 rounded-xl border ${c.isSellerReply ? "bg-warning/10 border border-warning/20" : "bg-bg border-border"}`}>
             {c.userId ? (
-              <Link to={profilePath({ username: c.username, authorId: c.userId })} className="shrink-0"><img src={c.avatar} alt={c.author} className="w-8 h-8 rounded-full" /></Link>
+              <Link href={profilePath({ username: c.username, authorId: c.userId })} className="shrink-0"><img src={c.avatar} alt={c.author} className="w-8 h-8 rounded-full" /></Link>
             ) : (
               <img src={c.avatar} alt="" className="w-8 h-8 rounded-full shrink-0" />
             )}
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-2">
                 {c.userId ? (
-                  <Link to={profilePath({ username: c.username, authorId: c.userId })} className="text-sm font-semibold text-text-primary hover:text-action">{c.author}</Link>
+                  <Link href={profilePath({ username: c.username, authorId: c.userId })} className="text-sm font-semibold text-text-primary hover:text-action">{c.author}</Link>
                 ) : (
                   <span className="text-sm font-semibold text-text-primary">{c.author}</span>
                 )}

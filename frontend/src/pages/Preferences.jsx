@@ -1,32 +1,23 @@
-import { useEffect, useState } from "react";
-import { preferencesApi } from "../api/client";
-import CreativeLoader from "../components/CreativeLoader";
+import { useState } from 'react';
+import { Head } from '@inertiajs/react';
+import { httpApi } from '../utils/http';
 
-export default function Preferences() {
-  const categories = ["Food & Beverage", "Beauty & Wellness", "Health & Fitness", "Services & Logistics", "Education", "Fashion & Apparel", "Home & Living"];
-  const [prefs, setPrefs] = useState({ categories: [], budgetMin: "", budgetMax: "" });
-  const [loading, setLoading] = useState(true);
+const CATEGORIES = ['Food & Beverage', 'Beauty & Wellness', 'Health & Fitness', 'Services & Logistics', 'Education', 'Fashion & Apparel', 'Home & Living'];
+
+function normalizePrefs(raw) {
+  const d = raw?.data ?? raw ?? {};
+  return {
+    categories: d.categories || [],
+    budgetMin: d.budgetMin ?? '',
+    budgetMax: d.budgetMax ?? '',
+  };
+}
+
+export default function Preferences({ prefs: initialPrefs }) {
+  const [prefs, setPrefs] = useState(() => normalizePrefs(initialPrefs));
   const [saving, setSaving] = useState(false);
-  const [error, setError] = useState("");
+  const [error, setError] = useState('');
   const [saved, setSaved] = useState(false);
-
-  useEffect(() => {
-    let cancelled = false;
-    preferencesApi
-      .get()
-      .then((res) => {
-        if (!cancelled) setPrefs({ categories: res.data.categories || [], budgetMin: res.data.budgetMin || "", budgetMax: res.data.budgetMax || "" });
-      })
-      .catch((err) => {
-        if (!cancelled) setError(err.message || "Failed to load preferences");
-      })
-      .finally(() => {
-        if (!cancelled) setLoading(false);
-      });
-    return () => {
-      cancelled = true;
-    };
-  }, []);
 
   const toggleCategory = (c) => {
     setPrefs((p) => ({ ...p, categories: p.categories.includes(c) ? p.categories.filter((x) => x !== c) : [...p.categories, c] }));
@@ -35,35 +26,34 @@ export default function Preferences() {
 
   const save = async () => {
     setSaving(true);
-    setError("");
+    setError('');
     try {
-      const res = await preferencesApi.update({ categories: prefs.categories, budgetMin: prefs.budgetMin, budgetMax: prefs.budgetMax });
-      setPrefs({ categories: res.data.categories || [], budgetMin: res.data.budgetMin || "", budgetMax: res.data.budgetMax || "" });
+      const res = await httpApi.put('/preferences', { categories: prefs.categories, budgetMin: prefs.budgetMin, budgetMax: prefs.budgetMax });
+      setPrefs(normalizePrefs(res));
       setSaved(true);
     } catch (err) {
-      setError(err.message || "Save failed");
+      setError(err.message || 'Save failed');
     } finally {
       setSaving(false);
     }
   };
 
   const reset = async () => {
-    setPrefs({ categories: [], budgetMin: "", budgetMax: "" });
+    setPrefs({ categories: [], budgetMin: '', budgetMax: '' });
     setSaving(true);
     try {
-      await preferencesApi.update({ categories: [], budgetMin: "", budgetMax: "" });
+      await httpApi.put('/preferences', { categories: [], budgetMin: '', budgetMax: '' });
       setSaved(true);
     } catch (err) {
-      setError(err.message || "Reset failed");
+      setError(err.message || 'Reset failed');
     } finally {
       setSaving(false);
     }
   };
 
-  if (loading) return <CreativeLoader text="Loading preferences..." fullScreen={true} />;
-
   return (
     <div className="max-w-2xl mx-auto px-4 sm:px-6 py-6">
+      <Head title="Preferences" />
       <h1 className="text-2xl font-semibold text-text-primary">Preferences</h1>
       <p className="text-sm text-text-secondary mt-1">Persisted in MySQL. Drives the auto-sort bonus on the feed.</p>
 
@@ -74,10 +64,10 @@ export default function Preferences() {
         <div>
           <p className="text-sm font-semibold text-text-primary">Preferred categories</p>
           <div className="mt-3 flex flex-wrap gap-2">
-            {categories.map((c) => {
+            {CATEGORIES.map((c) => {
               const active = prefs.categories.includes(c);
               return (
-                <button key={c} onClick={() => toggleCategory(c)} className={`px-3 py-1.5 rounded-full text-sm font-medium border ${active ? "bg-action text-white border-[#2563EB]" : "bg-surface text-text-secondary border-border"}`}>{c}</button>
+                <button key={c} onClick={() => toggleCategory(c)} className={`px-3 py-1.5 rounded-full text-sm font-medium border ${active ? 'bg-action text-white border-[#2563EB]' : 'bg-surface text-text-secondary border-border'}`}>{c}</button>
               );
             })}
           </div>
@@ -94,7 +84,7 @@ export default function Preferences() {
         </div>
 
         <div className="flex gap-2">
-          <button onClick={save} disabled={saving} className="px-5 py-2 rounded-lg bg-action hover:bg-action-hover disabled:bg-blue-300 text-white text-sm font-medium">{saving ? "Saving..." : "Save preferences"}</button>
+          <button onClick={save} disabled={saving} className="px-5 py-2 rounded-lg bg-action hover:bg-action-hover disabled:bg-blue-300 text-white text-sm font-medium">{saving ? 'Saving...' : 'Save preferences'}</button>
           <button onClick={reset} className="px-4 py-2 rounded-lg bg-surface border border-border text-text-secondary text-sm font-medium">Reset</button>
         </div>
       </div>

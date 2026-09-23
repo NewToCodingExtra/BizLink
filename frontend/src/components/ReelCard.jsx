@@ -1,10 +1,14 @@
 import { useRef, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, usePage } from "@inertiajs/react";
 import { profilePath } from "../utils/profilePath";
+import { useToast } from "../context/ToastContext";
 
 export default function ReelCard({ opp, onToggleLike, onInquire, onOpenComments }) {
   const ref = useRef(null);
   const [muted, setMuted] = useState(true);
+  const toast = useToast();
+  const { auth } = usePage().props;
+  void auth;
   const commentCount = typeof opp.commentsCount === "number" ? opp.commentsCount : (opp.comments || []).length;
   return (
     <div className="snap-start relative h-[100dvh] w-full bg-black flex items-center justify-center overflow-hidden">
@@ -20,11 +24,11 @@ export default function ReelCard({ opp, onToggleLike, onInquire, onOpenComments 
       <div className="absolute bottom-0 left-0 right-0 p-4 flex items-end justify-between gap-4 max-w-md mx-auto w-full">
         <div className="flex-1 min-w-0">
           <p className="text-white font-semibold text-sm flex items-center gap-2">
-            <Link to={profilePath({ username: opp.user?.username || opp.authorUsername, authorId: opp.authorId, brandId: opp.brandId })}><img src={opp.brandAvatar} alt={opp.brandName} className="w-7 h-7 rounded-full border border-white/30" /></Link>
-            <Link to={profilePath({ username: opp.user?.username || opp.authorUsername, authorId: opp.authorId, brandId: opp.brandId })} className="hover:underline truncate">{opp.brandName}</Link>
+            <Link href={profilePath({ username: opp.user?.username || opp.authorUsername, authorId: opp.authorId, brandId: opp.brandId })}><img src={opp.brandAvatar} alt={opp.brandName} className="w-7 h-7 rounded-full border border-white/30" /></Link>
+            <Link href={profilePath({ username: opp.user?.username || opp.authorUsername, authorId: opp.authorId, brandId: opp.brandId })} className="hover:underline truncate">{opp.brandName}</Link>
             <span className="text-[10px] tracking-widest bg-white/20 px-2 py-0.5 rounded-full shrink-0">{opp.type}</span>
           </p>
-          <Link to={`/post/${opp.id}`} className="block text-white text-sm mt-1 line-clamp-2 hover:underline">{opp.headline}</Link>
+          <Link href={`/post/${opp.id}`} className="block text-white text-sm mt-1 line-clamp-2 hover:underline">{opp.headline}</Link>
           <p className="text-white/70 text-xs mt-1">{opp.capitalRequired} · {opp.roi}</p>
         </div>
         <div className="flex flex-col items-center gap-3">
@@ -40,21 +44,21 @@ export default function ReelCard({ opp, onToggleLike, onInquire, onOpenComments 
               <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M12 8c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zm0 2c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm0 6c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2z" /></svg>
             </button>
             <div id={`menu-reel-${opp.id}`} className="hidden absolute bottom-full right-0 mb-2 w-48 bg-[var(--color-surface)] rounded-lg shadow-xl border border-[var(--color-border)] z-20 py-1">
-              <button 
+              <button
                 onClick={() => {
                   document.getElementById(`menu-reel-${opp.id}`).classList.add('hidden');
                   if (window.onHideOpp) window.onHideOpp(opp.id);
-                }} 
+                }}
                 className="w-full text-left px-4 py-2 text-sm text-[var(--color-text-primary)] hover:bg-[var(--color-bg)] flex items-center gap-2"
               >
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M18.364 5.636l-12.728 12.728M5.636 5.636l12.728 12.728" /></svg>
                 Not Interested
               </button>
-              <button 
+              <button
                 onClick={() => {
                   document.getElementById(`menu-reel-${opp.id}`).classList.add('hidden');
-                  alert("Reported.");
-                }} 
+                  toast.success("Reported successfully.");
+                }}
                 className="w-full text-left px-4 py-2 text-sm text-error hover:bg-error/10 flex items-center gap-2"
               >
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>

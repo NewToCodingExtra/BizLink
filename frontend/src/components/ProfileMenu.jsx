@@ -1,7 +1,6 @@
-import { useContext, useEffect, useRef, useState } from "react";
-import { Link, useLocation, useNavigate } from "react-router-dom";
-import { useAuth } from "../context/AuthContext";
-import { ThemeContext } from "../App";
+import { useEffect, useRef, useState } from "react";
+import { Link, router, usePage } from "@inertiajs/react";
+import { useTheme } from "../context/ThemeContext";
 import Modal from "./Modal";
 import Button from "./Button";
 
@@ -41,10 +40,10 @@ function SavedIcon() {
 }
 
 export default function ProfileMenu({ onAction }) {
-  const { user, logout } = useAuth();
-  const { isDark, setIsDark } = useContext(ThemeContext);
-  const navigate = useNavigate();
-  const location = useLocation();
+  const { auth } = usePage().props;
+  const user = auth?.user ?? null;
+  const { isDark, setIsDark } = useTheme();
+  const url = usePage().url;
   const [open, setOpen] = useState(false);
   const [busy, setBusy] = useState(false);
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
@@ -52,7 +51,7 @@ export default function ProfileMenu({ onAction }) {
 
   useEffect(() => {
     setOpen(false);
-  }, [location.pathname]);
+  }, [url]);
 
   useEffect(() => {
     if (!open) return;
@@ -65,17 +64,16 @@ export default function ProfileMenu({ onAction }) {
 
   if (!user) return null;
 
-  const handleConfirmLogout = async () => {
+  const handleConfirmLogout = () => {
     setBusy(true);
-    try {
-      await logout();
-    } finally {
-      setBusy(false);
-      setShowLogoutConfirm(false);
-      setOpen(false);
-      if (onAction) onAction();
-      navigate("/", { replace: true });
-    }
+    router.post("/logout", {}, {
+      onFinish: () => {
+        setBusy(false);
+        setShowLogoutConfirm(false);
+        setOpen(false);
+        if (onAction) onAction();
+      },
+    });
   };
 
   const itemClass =
@@ -110,7 +108,7 @@ export default function ProfileMenu({ onAction }) {
               </div>
               <div className="py-1.5">
                 <Link
-                  to="/profile/me"
+                  href="/profile/me"
                   role="menuitem"
                   onClick={() => {
                     setOpen(false);
@@ -121,7 +119,7 @@ export default function ProfileMenu({ onAction }) {
                   <span className="text-[var(--color-text-secondary)]"><UserIcon /></span> Profile
                 </Link>
                 <Link
-                  to="/profile/edit"
+                  href="/profile/edit"
                   role="menuitem"
                   onClick={() => {
                     setOpen(false);
@@ -132,7 +130,7 @@ export default function ProfileMenu({ onAction }) {
                   <span className="text-[var(--color-text-secondary)]"><PencilIcon /></span> Edit profile
                 </Link>
                 <Link
-                  to="/saved"
+                  href="/saved"
                   role="menuitem"
                   onClick={() => {
                     setOpen(false);
@@ -144,9 +142,9 @@ export default function ProfileMenu({ onAction }) {
                 </Link>
               </div>
               <div className="border-t border-[var(--color-border)] py-1.5">
-                <button 
-                  role="menuitem" 
-                  onClick={() => setIsDark(!isDark)} 
+                <button
+                  role="menuitem"
+                  onClick={() => setIsDark(!isDark)}
                   className={itemClass}
                 >
                   <span className="text-[var(--color-text-secondary)]">
@@ -167,7 +165,7 @@ export default function ProfileMenu({ onAction }) {
                         <path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z" />
                       </svg>
                     )}
-                  </span> 
+                  </span>
                   {isDark ? "Light Mode" : "Dark Mode"}
                 </button>
               </div>
@@ -181,8 +179,8 @@ export default function ProfileMenu({ onAction }) {
         )}
       </div>
 
-      <Modal 
-        isOpen={showLogoutConfirm} 
+      <Modal
+        isOpen={showLogoutConfirm}
         onClose={() => setShowLogoutConfirm(false)}
         title="Leaving so soon?"
         footer={

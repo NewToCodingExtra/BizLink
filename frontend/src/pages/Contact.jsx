@@ -1,12 +1,14 @@
 import { useState } from "react";
-import ContactForm from "../components/ContactForm";
-import { contactApi } from "../api/client";
+import { Head } from "@inertiajs/react";
+import ContactForm from "../Components/ContactForm";
+import { httpApi } from "../utils/http";
 
 export default function Contact() {
   const [status, setStatus] = useState("");
 
   return (
     <div className="max-w-2xl mx-auto px-4 sm:px-6 py-6">
+      <Head title="Contact" />
       <h1 className="text-2xl font-semibold text-primary">Contact / Contact Information</h1>
       <p className="text-sm text-text-secondary mt-1">Messages are stored via Laravel and logged on the backend.</p>
 
@@ -23,7 +25,7 @@ export default function Contact() {
         </div>
         <ContactForm
           onSubmit={async ({ name, email, message }) => {
-            await contactApi.submit({ name, email, message });
+            await httpApi.post("/contact", { name, email, message });
             setStatus("Message received. We will reply shortly.");
           }}
         />

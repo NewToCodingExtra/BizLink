@@ -10,7 +10,7 @@ export default function BusinessFeatures() {
     <section className="py-12 md:py-20 bg-[#F8FAFC]">
       <div className="max-w-6xl mx-auto px-4 sm:px-6">
         <p className="text-center text-[11px] tracking-[0.2em] font-semibold text-text-secondary">WHY CHOOSE US</p>
-        <h2 className="text-center text-2xl md:text-3xl font-semibold text-primary mt-2">Built for trust, scale and clarity</h2>
+        <h2 className="text-center text-2xl md:text-3xl font-semibold text-text-primary mt-2">Built for trust, scale and clarity</h2>
         <div className="mt-8 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
           {features.map(f => (
             <div key={f.title} className="bg-surface rounded-xl border border-border shadow-sm p-6 hover:shadow-md transition-shadow duration-150">

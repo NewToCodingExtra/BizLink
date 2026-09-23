@@ -1,20 +1,18 @@
-import { Link } from "react-router-dom";
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { Link, router } from '@inertiajs/react';
 
 export default function BusinessOverview() {
   const [q, setQ] = useState("");
-  const navigate = useNavigate();
   return (
     <section className="bg-surface border-b border-border">
       <div className="max-w-6xl mx-auto px-4 sm:px-6 py-12 md:py-20 grid lg:grid-cols-2 gap-10 items-center">
         <div>
-          <span className="inline-flex items-center gap-2 text-[11px] tracking-[0.16em] font-semibold text-primary-light bg-bg border border-border rounded-full px-3 py-1">BUSINESS DIRECTORY · PHILIPPINES</span>
-          <h1 className="mt-4 text-4xl md:text-5xl font-bold tracking-tight text-primary leading-[1.05]">Bridging Brands<br />and Business<br /><span className="text-accent">Owners</span></h1>
+          <span className="inline-flex items-center gap-2 text-[11px] tracking-[0.16em] font-semibold text-text-primary bg-bg border border-border rounded-full px-3 py-1">BUSINESS DIRECTORY · PHILIPPINES</span>
+          <h1 className="mt-4 text-4xl md:text-5xl font-bold tracking-tight text-text-primary leading-[1.05]">Bridging Brands<br />and Business<br /><span className="text-accent">Owners</span></h1>
           <p className="mt-4 text-base text-text-secondary leading-relaxed max-w-xl">BizLink connects franchisers and wholesalers with aspiring buyers. Discover verified franchise directories, wholesale hubs and direct matching — all in one trusted feed.</p>
           <p className="mt-3 text-sm text-text-secondary">Dual-role explained: <span className="font-semibold text-text-primary">Brands publish opportunities</span> — <span className="font-semibold text-text-primary">Entrepreneurs discover, inquire and launch.</span></p>
 
-          <form onSubmit={(e)=>{e.preventDefault(); navigate(`/search?q=${encodeURIComponent(q)}`);}} className="mt-6 flex gap-2 max-w-md">
+          <form onSubmit={(e) => { e.preventDefault(); router.get('/search', { q }); }} className="mt-6 flex gap-2 max-w-md">
             <div className="flex-1 relative">
               <span className="absolute left-3 top-1/2 -translate-y-1/2 text-text-secondary">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><circle cx="11" cy="11" r="7"/><path d="M20 20L16.5 16.5"/></svg>
@@ -25,18 +23,18 @@ export default function BusinessOverview() {
           </form>
 
           <div className="mt-4 flex flex-wrap gap-2">
-            <Link to="/search?q=Franchise" className="px-3 py-1.5 rounded-full bg-warning/10 text-warning border border-warning/20 text-xs font-medium">Franchise</Link>
-            <Link to="/search?q=Wholesale" className="px-3 py-1.5 rounded-full bg-bg text-text-primary border border-border text-xs font-medium">Wholesale</Link>
-            <Link to="/search?q=Resell" className="px-3 py-1.5 rounded-full bg-action/10 text-action border border-action/20 text-xs font-medium">Resell</Link>
-            <Link to="/" className="px-5 py-2 rounded-lg bg-primary text-white text-sm font-medium hover:bg-primary-light transition-colors ml-1">Explore Franchises →</Link>
+            <Link href="/search?q=Franchise" className="px-3 py-1.5 rounded-full bg-warning/10 text-warning border border-warning/20 text-xs font-medium">Franchise</Link>
+            <Link href="/search?q=Wholesale" className="px-3 py-1.5 rounded-full bg-bg text-text-primary border border-border text-xs font-medium">Wholesale</Link>
+            <Link href="/search?q=Resell" className="px-3 py-1.5 rounded-full bg-action/10 text-action border border-action/20 text-xs font-medium">Resell</Link>
+            <Link href="/" className="px-5 py-2 rounded-lg bg-text-primary text-bg text-sm font-medium hover:opacity-90 transition-colors ml-1">Explore Franchises →</Link>
           </div>
 
           <div className="mt-8 flex gap-6 text-center">
-            <div><p className="text-xl font-bold text-primary">500+</p><p className="text-xs text-text-secondary">Verified Brands</p></div>
+            <div><p className="text-xl font-bold text-text-primary">500+</p><p className="text-xs text-text-secondary">Verified Brands</p></div>
             <div className="w-px bg-bg" />
-            <div><p className="text-xl font-bold text-primary">12k</p><p className="text-xs text-text-secondary">Entrepreneurs</p></div>
+            <div><p className="text-xl font-bold text-text-primary">12k</p><p className="text-xs text-text-secondary">Entrepreneurs</p></div>
             <div className="w-px bg-bg" />
-            <div><p className="text-xl font-bold text-primary">18 MO</p><p className="text-xs text-text-secondary">Avg. Payback</p></div>
+            <div><p className="text-xl font-bold text-text-primary">18 MO</p><p className="text-xs text-text-secondary">Avg. Payback</p></div>
           </div>
         </div>
 

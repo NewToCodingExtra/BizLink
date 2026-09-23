@@ -1,10 +1,12 @@
-import MissionVision from "../components/MissionVision";
-import BusinessObjectives from "../components/BusinessObjectives";
-import BusinessFeatures from "../components/BusinessFeatures";
+import { Head } from "@inertiajs/react";
+import MissionVision from "../Components/MissionVision";
+import BusinessObjectives from "../Components/BusinessObjectives";
+import BusinessFeatures from "../Components/BusinessFeatures";
 
 export default function About() {
   return (
     <div>
+      <Head title="About" />
       <section className="bg-primary text-white">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 py-12 md:py-16">
           <p className="text-[11px] tracking-[0.2em] font-semibold text-accent">ABOUT BIZLINK</p>

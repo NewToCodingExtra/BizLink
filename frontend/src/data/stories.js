@@ -1,7 +1,0 @@
-export const storiesSeed = [
-  { id: "st-1", brandId: "brand-1", brandName: "BrewCraft", avatar: "https://i.pravatar.cc/100?img=11", mediaUrl: "https://images.unsplash.com/photo-1509042239860-f550ce710b93?w=1080&q=80&auto=format&fit=crop", caption: "New BGC flagship — 40 seats, opening next month", expiresAt: Date.now() + 1000*60*60*20, seen: false },
-  { id: "st-2", brandId: "brand-2", brandName: "Glow Skin", avatar: "https://i.pravatar.cc/100?img=32", mediaUrl: "https://images.unsplash.com/photo-1556228578-0d85b1a4d571?w=1080&q=80&auto=format&fit=crop", caption: "Fresh K-beauty drop: 30 new SKUs", expiresAt: Date.now() + 1000*60*60*18, seen: false },
-  { id: "st-3", brandId: "brand-3", brandName: "FitForge", avatar: "https://i.pravatar.cc/100?img=15", mediaUrl: "https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=1080&q=80&auto=format&fit=crop", caption: "Founder session live at 6PM", expiresAt: Date.now() + 1000*60*60*22, seen: false },
-  { id: "st-4", brandId: "brand-6", brandName: "EduSpark", avatar: "https://i.pravatar.cc/100?img=48", mediaUrl: "https://images.unsplash.com/photo-1497633762265-9d179a990aa6?w=1080&q=80&auto=format&fit=crop", caption: "New STEM module preview", expiresAt: Date.now() + 1000*60*60*12, seen: true },
-  { id: "st-5", brandId: "brand-7", brandName: "UrbanThread", avatar: "https://i.pravatar.cc/100?img=19", mediaUrl: "https://images.unsplash.com/photo-1490481651871-ab68de25d43d?w=1080&q=80&auto=format&fit=crop", caption: "Limited drop — 12 hours only", expiresAt: Date.now() + 1000*60*60*10, seen: false },
-];

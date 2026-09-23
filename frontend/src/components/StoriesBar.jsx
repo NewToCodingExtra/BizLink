@@ -1,5 +1,5 @@
-import { Link, useLocation } from "react-router-dom";
-import { useAuth } from "../context/AuthContext";
+import { useEffect, useRef, useState } from "react";
+import { Link, usePage } from "@inertiajs/react";
 
 function expiryOf(s) {
   if (!s) return 0;
@@ -13,12 +13,14 @@ function expiryOf(s) {
 }
 
 export default function StoriesBar({ stories }) {
-  const { user } = useAuth();
-  const location = useLocation();
-  
+  const { auth } = usePage().props;
+  const user = auth?.user ?? null;
+
+  const scrollRef = useRef(null);
+  const [edge, setEdge] = useState({ left: false, right: false });
+
   const active = (stories || []).filter((s) => expiryOf(s) > Date.now());
-  if (active.length === 0 && !user) return null;
-  
+
   const grouped = [];
   const seenBrands = new Set();
   for (const s of active) {
@@ -27,17 +29,41 @@ export default function StoriesBar({ stories }) {
       grouped.push(s);
     }
   }
-  
+
+  // Edge fades replace the scrollbar: they whisper "there's more" in palette.
+  // NOTE: never setState inside the ref callback itself — that re-attaches
+  // every render and loops ("Too many re-renders" white-out). Observe instead.
+  useEffect(() => {
+    const el = scrollRef.current;
+    if (!el) return;
+    const check = () => {
+      const next = {
+        left: el.scrollLeft > 8,
+        right: el.scrollLeft + el.clientWidth < el.scrollWidth - 8,
+      };
+      setEdge((prev) => (prev.left === next.left && prev.right === next.right ? prev : next));
+    };
+    check();
+    el.addEventListener("scroll", check, { passive: true });
+    window.addEventListener("resize", check);
+    return () => {
+      el.removeEventListener("scroll", check);
+      window.removeEventListener("resize", check);
+    };
+  }, [grouped.length]);
+
+  if (active.length === 0 && !user) return null;
+
   return (
     <div className="bg-surface border border-border rounded-xl shadow-sm p-4 mb-4 max-w-2xl mx-auto">
       <p className="text-xs font-semibold tracking-widest text-text-secondary">DAILY OPPORTUNITIES</p>
-      <div className="mt-3 flex gap-4 overflow-auto pb-1 items-start">
-        {/* Create Story Button */}
-        <button 
+      <div className="mt-3 flex items-stretch gap-3">
+        {/* Create Story Button — pinned, never scrolls */}
+        <button
           onClick={() => {
             if (window.onOpenCreateStory) window.onOpenCreateStory();
-          }} 
-          className="shrink-0 text-center group flex flex-col items-center"
+          }}
+          className="shrink-0 text-center group flex flex-col items-center self-start"
         >
           <span className="relative flex items-center justify-center w-[68px] h-[68px] rounded-full border border-border bg-bg group-hover:bg-bg transition p-0.5">
             {user ? (
@@ -52,14 +78,44 @@ export default function StoriesBar({ stories }) {
           <span className="block mt-1.5 text-xs font-medium text-text-primary truncate w-[68px]">Create</span>
         </button>
 
-        {grouped.map((s) => (
-          <Link key={s.id} to={`/stories/${s.id}`} state={{ backgroundLocation: location }} className="shrink-0 text-center group flex flex-col items-center">
-            <span className={`block w-[68px] h-[68px] rounded-full p-[3px] ${s.seen ? "bg-bg" : "bg-gradient-to-tr from-amber-400 via-orange-500 to-pink-500"}`}>
-              <img src={s.avatar} alt={s.brandName} className="w-full h-full rounded-full object-cover border-2 border-white group-hover:scale-[1.02] transition" />
-            </span>
-            <span className="block mt-1.5 text-xs font-medium text-text-primary truncate w-[68px]">{s.brandName}</span>
-          </Link>
-        ))}
+        {/* Separator between composer and real stories */}
+        {grouped.length > 0 && (
+          <div className="w-px self-stretch bg-gradient-to-b from-transparent via-border to-transparent" aria-hidden="true" />
+        )}
+
+        {/* Real stories only — the sole scrollable region, scrollbar hidden */}
+        {grouped.length > 0 && (
+          <div className="relative flex-1 min-w-0">
+            <div
+              ref={scrollRef}
+              onWheel={(e) => {
+                const el = scrollRef.current;
+                if (el && Math.abs(e.deltaY) > Math.abs(e.deltaX)) {
+                  el.scrollLeft += e.deltaY;
+                }
+              }}
+              className="no-scrollbar flex gap-4 overflow-x-auto pb-1 pt-0.5 px-0.5 items-start"
+            >
+              {grouped.map((s) => (
+                <Link key={s.id} href={`/stories/${s.id}`} className="shrink-0 text-center group flex flex-col items-center">
+                  <span className={`block w-[68px] h-[68px] rounded-full p-[3px] ${s.seen ? "bg-bg" : "bg-gradient-to-tr from-amber-400 via-orange-500 to-pink-500"}`}>
+                    <img src={s.avatar} alt={s.brandName} className="w-full h-full rounded-full object-cover border-2 border-white group-hover:scale-[1.02] transition" />
+                  </span>
+                  <span className="block mt-1.5 text-xs font-medium text-text-primary truncate w-[68px]">{s.brandName}</span>
+                </Link>
+              ))}
+            </div>
+            {/* Edge fades in card palette instead of a scrollbar */}
+            <div
+              aria-hidden="true"
+              className={`pointer-events-none absolute inset-y-0 left-0 w-8 bg-gradient-to-r from-[var(--color-surface)] to-transparent transition-opacity duration-200 ${edge.left ? "opacity-100" : "opacity-0"}`}
+            />
+            <div
+              aria-hidden="true"
+              className={`pointer-events-none absolute inset-y-0 right-0 w-8 bg-gradient-to-l from-[var(--color-surface)] to-transparent transition-opacity duration-200 ${edge.right ? "opacity-100" : "opacity-0"}`}
+            />
+          </div>
+        )}
       </div>
     </div>
   );

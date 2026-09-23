@@ -8,12 +8,12 @@
 **Philippines' verified franchise & wholesale matchmaking platform — curated, transparent, nationwide.**
 
 [![React](https://img.shields.io/badge/React-19-61DAFB?style=flat-square&logo=react&logoColor=white)](https://react.dev)
-[![Vite](https://img.shields.io/badge/Vite-8-646CFF?style=flat-square&logo=vite&logoColor=white)](https://vitejs.dev)
+[![Vite](https://img.shields.io/badge/Vite-7-646CFF?style=flat-square&logo=vite&logoColor=white)](https://vitejs.dev)
 [![Tailwind CSS](https://img.shields.io/badge/Tailwind-4-06B6D4?style=flat-square&logo=tailwindcss&logoColor=white)](https://tailwindcss.com)
-[![React Router](https://img.shields.io/badge/Router-7-CA4245?style=flat-square&logo=reactrouter&logoColor=white)](https://reactrouter.com)
+[![Inertia](https://img.shields.io/badge/Inertia-React-9553E9?style=flat-square)](https://inertiajs.com)
 [![Laravel](https://img.shields.io/badge/Laravel-12-FF2D20?style=flat-square&logo=laravel&logoColor=white)](https://laravel.com)
 [![MySQL](https://img.shields.io/badge/MySQL-8.0-4479A1?style=flat-square&logo=mysql&logoColor=white)](https://www.mysql.com)
-[![Sanctum](https://img.shields.io/badge/Sanctum-Token_Auth-0B1F3A?style=flat-square)](#auth)
+[![Sanctum](https://img.shields.io/badge/Sanctum-Session_+_Token-0B1F3A?style=flat-square)](#auth)
 [![License: MIT](https://img.shields.io/badge/License-MIT-C9A24B?style=flat-square)](#license)
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-2563EB?style=flat-square)](#contributing)
 
@@ -125,40 +125,23 @@ Locked via CSS variables + Tailwind — no hardcoded hex in components.
 
 ```
 BizLink/
-├── backend/
-│   ├── app/
-│   │   ├── Http/Controllers/  Auth, SocialAuth, PasswordReset, Upload, Opportunity,
-│   │   │                       Comment, Story, Conversation, Notification, Preference,
-│   │   │                       Follow, Contact, User
-│   │   └── Models/            User, Opportunity, Comment, Story, Conversation,
-│   │                           Message, AppNotification, Preference
-│   ├── database/
-│   │   ├── migrations/        users, opportunities, comments, stories,
-│   │   │                       conversations, messages, notifications, likes/saves/follows/preferences
-│   │   └── seeders/           DatabaseSeeder (16 opps, 10 comments, 8 stories, inbox + notes)
-│   ├── routes/api.php         auth, social, uploads, opportunities, users, stories, inbox, notifications, preferences, follows, contact
-│   ├── config/cors.php        allows http://localhost:5173 with credentials
-│   └── .env.example           MySQL 3307 + Google/Facebook OAuth + GCS placeholders
-├── frontend/
+├── backend/                 Laravel: routes, controllers, Inertia props, Blade shell
+│   ├── app/Http/Controllers/  PageController, SessionAuth, API controllers…
+│   ├── routes/web.php         Inertia pages + session auth + JSON mutations
+│   ├── routes/api.php         JSON API (still available)
+│   ├── resources/views/app.blade.php   Inertia root (@vite src/app.jsx)
+│   └── public/build|hot       Written by frontend Vite
+├── frontend/                React + Inertia + Vite (UI only)
 │   ├── src/
-│   │   ├── api/           client.js (Bearer tokens, VITE_API_URL)
-│   │   ├── context/       AuthContext.jsx (login/register/logout/social)
-│   │   │   ├── hooks/         useInfiniteFeed.js (sentinel pagination)
-│   │   ├── components/    Navbar, Footer, BusinessOverview, MissionVision,
-│   │   │                  BusinessObjectives, BusinessFeatures, ContactForm,
-│   │   │                  OpportunityFeed, OpportunityCard, FilterBar,
-│   │   │                  CommentThread, StoriesBar, ReelCard, NotificationBell,
-│   │   │                  SearchBar, RequireAuth, PasswordInput, Skeleton
-│   │   ├── pages/         Landing, Login, Register, SocialCallback, ForgotPassword,
-│   │   │                  ResetPassword, HomeFeed, About, Reels, StoryViewer, Search,
-│   │   │                  OpportunityDetail, CreateOpportunity, MessagesInbox,
-│   │   │                  MessageThread, Notifications, Saved, Profile, Preferences, Contact
-│   │   ├── App.jsx        AuthProvider + routing (guest landing vs feed)
-│   │   ├── main.jsx
-│   │   └── index.css      Design tokens + Tailwind import + Inter
-│   ├── .env.example       VITE_API_URL=http://localhost:8000/api
-│   └── vite.config.js     /api proxy to :8000
-└── start-bizlink.ps1     starts MySQL:3307 + API:8000
+│   │   ├── app.jsx          Inertia entry + AppLayout
+│   │   ├── Pages/           Landing, HomeFeed, Login, …, Legal/*
+│   │   ├── Components/      Navbar, Footer, feeds, forms, …
+│   │   ├── Layouts/         AppLayout
+│   │   ├── context/         Theme + Toast
+│   │   ├── utils/           http.js (session + CSRF), profilePath
+│   │   └── css/app.css      Design tokens + Tailwind
+│   └── vite.config.js       laravel-vite-plugin → ../backend/public
+└── start-bizlink.ps1        MySQL:3307 + Laravel:8000 + frontend Vite
 ```
 
 **Activity 4 → Rubric Mapping**
@@ -203,16 +186,17 @@ C:\xampp\php\php.exe artisan serve --host=127.0.0.1 --port=8000
 
 Or one shot: `.\start-bizlink.ps1` from the repo root.
 
-**2) Frontend (`http://localhost:5173`):**
+**2) Frontend Vite (assets for Laravel — open `http://localhost:8000`, not :5173):**
 
 ```powershell
 cd frontend
-copy .env.example .env   # VITE_API_URL=http://localhost:8000/api
 npm install
-npm run dev      # http://localhost:5173
-npm run build    # production → frontend/dist
+npm run dev      # writes backend/public/hot for HMR
+npm run build    # production → backend/public/build
 npm run lint     # oxlint
 ```
+
+Or one shot from repo root: `.\start-bizlink.ps1` (MySQL + Laravel + Vite).
 
 **Demo accounts (seeded):**
 

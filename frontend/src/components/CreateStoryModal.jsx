@@ -1,8 +1,36 @@
 import React, { useState } from 'react';
 import Modal from './Modal';
 import Button from './Button';
-import { api } from '../api/client';
+import { httpApi } from '../utils/http';
 import { useToast } from '../context/ToastContext';
+
+function csrfToken() {
+  return document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '';
+}
+
+// Multipart upload to /uploads (expects { url, media_type }).
+async function uploadToServer(file) {
+  const fd = new FormData();
+  fd.append('file', file);
+  const res = await fetch('/uploads', {
+    method: 'POST',
+    credentials: 'same-origin',
+    headers: {
+      'X-CSRF-TOKEN': csrfToken(),
+      'X-Requested-With': 'XMLHttpRequest',
+      Accept: 'application/json',
+    },
+    body: fd,
+  });
+  let json = null;
+  try {
+    json = await res.json();
+  } catch {
+    json = null;
+  }
+  if (!res.ok) throw new Error(json?.message || `Upload failed (${res.status})`);
+  return json || {};
+}
 
 export default function CreateStoryModal({ isOpen, onClose, onComplete }) {
   const [loading, setLoading] = useState(false);
@@ -14,7 +42,6 @@ export default function CreateStoryModal({ isOpen, onClose, onComplete }) {
     if (!files.length) return;
 
     const newItems = [];
-    let errorCount = 0;
 
     files.forEach((file) => {
       const isVideo = file.type.startsWith('video/');
@@ -26,7 +53,7 @@ export default function CreateStoryModal({ isOpen, onClose, onComplete }) {
         video.onloadedmetadata = () => {
           if (video.duration > 60) {
             toast.error(`Video "${file.name}" must be 60 seconds or less.`);
-            errorCount++;
+            URL.revokeObjectURL(url);
           } else {
             setItems((prev) => [...prev, { file, url, type: 'video', duration: video.duration, caption: '' }]);
           }
@@ -40,10 +67,15 @@ export default function CreateStoryModal({ isOpen, onClose, onComplete }) {
     if (newItems.length > 0) {
       setItems((prev) => [...prev, ...newItems]);
     }
+    e.target.value = '';
   };
 
   const removeItem = (index) => {
-    setItems((prev) => prev.filter((_, i) => i !== index));
+    setItems((prev) => {
+      const removed = prev[index];
+      if (removed) URL.revokeObjectURL(removed.url);
+      return prev.filter((_, i) => i !== index);
+    });
   };
 
   const updateCaption = (index, text) => {
@@ -56,28 +88,25 @@ export default function CreateStoryModal({ isOpen, onClose, onComplete }) {
 
   const handleSave = async () => {
     if (items.length === 0) {
-      toast.error("Please select at least one media.");
+      toast.error('Please select at least one media.');
       return;
     }
     setLoading(true);
     let successCount = 0;
     try {
       for (const item of items) {
-        // Upload logic should handle file upload, here we simulate with dummy URL or createObjectURL
-        // In real app, you'd upload item.file to storage and get a URL back.
-        // We'll just pass item.url for demo purposes or hardcode video url if video
-        const finalUrl = item.type === 'video' ? "https://www.w3schools.com/html/mov_bbb.mp4" : item.url;
-        await api('/stories', {
-          method: 'POST',
-          body: JSON.stringify({
-            media_url: finalUrl,
-            caption: item.caption,
-            duration: item.duration || null,
-          })
+        // Real upload: file → /uploads → hosted URL (CSRF session auth).
+        const uploaded = await uploadToServer(item.file);
+        const finalUrl = uploaded.url || item.url;
+        await httpApi.post('/stories', {
+          media_url: finalUrl,
+          caption: item.caption,
+          duration: item.duration || null,
         });
         successCount++;
       }
       toast.success(`Successfully posted ${successCount} stor${successCount === 1 ? 'y' : 'ies'}.`);
+      // Parent refreshes via router.reload({ only: ['stories'] }) inside onComplete.
       onClose();
       if (onComplete) onComplete();
     } catch (e) {
@@ -108,8 +137,8 @@ export default function CreateStoryModal({ isOpen, onClose, onComplete }) {
           <label className="block text-sm font-medium text-[var(--color-text-primary)] mb-1">
             Media (Images or Videos)
           </label>
-          <input 
-            type="file" 
+          <input
+            type="file"
             accept="image/*,video/*"
             multiple
             onChange={handleMediaCheck}
@@ -128,7 +157,7 @@ export default function CreateStoryModal({ isOpen, onClose, onComplete }) {
                   ) : (
                     <img src={item.url} alt="Preview" className="w-full h-full object-cover" />
                   )}
-                  <button 
+                  <button
                     onClick={() => removeItem(index)}
                     className="absolute top-2 right-2 w-8 h-8 rounded-full bg-black/60 text-[var(--color-text-primary)] flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
                   >

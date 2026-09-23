@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link } from "@inertiajs/react";
 import CommentThread from "./CommentThread";
 import { profilePath } from "../utils/profilePath";
 import { useToast } from "../context/ToastContext";
@@ -33,10 +33,10 @@ export default function OpportunityCard({ opp, comments, onToggleLike, onToggleS
   return (
     <article className="bg-surface rounded-xl border border-border shadow-sm hover:shadow-md transition-shadow duration-150 overflow-hidden">
       <div className="p-4 flex items-center gap-3">
-        <Link to={profilePath({ username: opp.user?.username || opp.authorUsername, authorId: opp.authorId, brandId: opp.brandId })}><img src={opp.brandAvatar} alt={opp.brandName} className="w-9 h-9 rounded-full object-cover" /></Link>
+        <Link href={profilePath({ username: opp.user?.username || opp.authorUsername, authorId: opp.authorId, brandId: opp.brandId })}><img src={opp.brandAvatar} alt={opp.brandName} className="w-9 h-9 rounded-full object-cover" /></Link>
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2">
-            <Link to={profilePath({ username: opp.user?.username || opp.authorUsername, authorId: opp.authorId, brandId: opp.brandId })} className="text-sm font-semibold text-text-primary hover:text-action">{opp.brandName}</Link>
+            <Link href={profilePath({ username: opp.user?.username || opp.authorUsername, authorId: opp.authorId, brandId: opp.brandId })} className="text-sm font-semibold text-text-primary hover:text-action">{opp.brandName}</Link>
             {opp.verified && <span className="inline-flex items-center gap-1 text-[11px] font-bold text-success bg-success/10 border border-success/20 rounded-full px-2 py-0.5">✓ Verified</span>}
             {fresh && <span className="text-[10px] font-bold tracking-widest bg-primary text-white px-2 py-0.5 rounded-full">NEW</span>}
             {opp.featured && <span className="text-[10px] font-bold tracking-widest bg-accent text-[#0B1F3A] px-2 py-0.5 rounded-full">FEATURED</span>}
@@ -45,9 +45,9 @@ export default function OpportunityCard({ opp, comments, onToggleLike, onToggleS
           <p className="text-xs text-text-secondary">{opp.category} · {formatDate(opp.createdAt)}</p>
         </div>
         <span className={`text-xs font-medium border rounded-full px-2.5 py-1 ${badgeClasses(opp.type)}`}>{opp.type}</span>
-        
+
         <div className="relative ml-2">
-          <button 
+          <button
             onClick={() => {
               const el = document.getElementById(`menu-${opp.id}`);
               el.classList.toggle('hidden');
@@ -59,21 +59,21 @@ export default function OpportunityCard({ opp, comments, onToggleLike, onToggleS
             </svg>
           </button>
           <div id={`menu-${opp.id}`} className="hidden absolute right-0 mt-1 w-48 bg-surface rounded-lg shadow-lg border border-border z-10 py-1">
-            <button 
+            <button
               onClick={() => {
                 document.getElementById(`menu-${opp.id}`).classList.add('hidden');
                 if (window.onHideOpp) window.onHideOpp(opp.id);
-              }} 
+              }}
               className="w-full text-left px-4 py-2 text-sm text-text-primary hover:bg-bg flex items-center gap-2"
             >
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M18.364 5.636l-12.728 12.728M5.636 5.636l12.728 12.728" /></svg>
               Not Interested
             </button>
-            <button 
+            <button
               onClick={() => {
                 document.getElementById(`menu-${opp.id}`).classList.add('hidden');
                 toast.success("Reported successfully.");
-              }} 
+              }}
               className="w-full text-left px-4 py-2 text-sm text-error hover:bg-error/10 flex items-center gap-2"
             >
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>
@@ -83,7 +83,7 @@ export default function OpportunityCard({ opp, comments, onToggleLike, onToggleS
         </div>
       </div>
 
-      <Link to={`/post/${opp.id}`} className="block bg-bg">
+      <Link href={`/post/${opp.id}`} className="block bg-bg">
         {opp.mediaType === "video" && opp.videoUrl ? (
           <video src={opp.videoUrl} muted loop playsInline poster={opp.image} className="w-full h-[280px] object-cover" />
         ) : (
@@ -92,7 +92,7 @@ export default function OpportunityCard({ opp, comments, onToggleLike, onToggleS
       </Link>
 
       <div className="p-4">
-        <Link to={`/post/${opp.id}`} className="text-lg font-semibold text-text-primary leading-tight hover:text-action line-clamp-2">{opp.headline}</Link>
+        <Link href={`/post/${opp.id}`} className="text-lg font-semibold text-text-primary leading-tight hover:text-action line-clamp-2">{opp.headline}</Link>
         <p className="text-sm text-text-secondary mt-2 line-clamp-2 leading-relaxed">{opp.description}</p>
 
         <div className="mt-3 flex flex-wrap gap-2">

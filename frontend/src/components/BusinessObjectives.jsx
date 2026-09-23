@@ -9,7 +9,7 @@ export default function BusinessObjectives() {
     <section className="py-12 md:py-20 bg-surface border-y border-border">
       <div className="max-w-6xl mx-auto px-4 sm:px-6">
         <p className="text-center text-[11px] tracking-[0.2em] font-semibold text-text-secondary">BUSINESS OBJECTIVES</p>
-        <h2 className="text-center text-2xl md:text-3xl font-semibold text-primary mt-2">What we aim to achieve</h2>
+        <h2 className="text-center text-2xl md:text-3xl font-semibold text-text-primary mt-2">What we aim to achieve</h2>
         <div className="mt-8 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
           {objectives.map(o => (
             <div key={o.n} className="rounded-xl border border-border shadow-sm bg-surface p-6 hover:shadow-md transition-shadow duration-150">

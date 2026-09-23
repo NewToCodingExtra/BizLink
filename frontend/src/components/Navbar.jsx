@@ -1,41 +1,40 @@
-import { useEffect, useState, useContext } from "react";
-import { useLocation, useNavigate } from "react-router-dom";
+import { useEffect, useState } from "react";
+import { Link, router, usePage } from "@inertiajs/react";
 import NotificationBell from "./NotificationBell";
 import SearchBar from "./SearchBar";
-import SmartLink from "./SmartLink";
 import ProfileMenu from "./ProfileMenu";
 import markUrl from "../assets/bizlink-mark.svg";
-import { useAuth } from "../context/AuthContext";
-import { notificationsApi } from "../api/client";
+import { httpApi } from "../utils/http";
+import { useTheme } from "../context/ThemeContext";
 import Modal from "./Modal";
 import Button from "./Button";
-import { ThemeContext } from "../App";
 
 export default function Navbar() {
+  const { auth, flash } = usePage().props;
+  const user = auth?.user ?? null;
   const [mobileOpen, setMobileOpen] = useState(false);
   const [showBell, setShowBell] = useState(false);
   const [notifications, setNotifications] = useState([]);
-  const navigate = useNavigate();
-  const location = useLocation();
-  const { user, logout } = useAuth();
-  const { isDark, setIsDark } = useContext(ThemeContext);
+  const url = usePage().url;
+  const pathname = url.split("?")[0];
+  const { isDark, setIsDark } = useTheme();
 
   useEffect(() => {
     if (!user) {
       setNotifications([]);
       return;
     }
-    notificationsApi
-      .list()
+    httpApi
+      .get("/notifications")
       .then((res) => setNotifications(res.data || []))
       .catch(() => setNotifications([]));
-  }, [user, location.pathname]);
+  }, [user, url]);
 
   const unread = notifications.filter((n) => !n.read).length;
 
   const markRead = async (id) => {
     try {
-      await notificationsApi.markRead(id);
+      await httpApi.post(`/notifications/${id}/read`);
       setNotifications((prev) => prev.map((n) => (String(n.id) === String(id) ? { ...n, read: true } : n)));
     } catch {
       // keep local state unchanged on failure
@@ -44,44 +43,39 @@ export default function Navbar() {
 
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
 
-  const confirmLogout = async () => {
-    await logout();
+  const confirmLogout = () => {
     setShowBell(false);
     setMobileOpen(false);
     setShowLogoutConfirm(false);
-    navigate("/", { replace: true });
-  };
-
-  const handleLogout = () => {
-    setShowLogoutConfirm(true);
+    router.post("/logout");
   };
 
   const linkClass = (path) =>
-    `text-sm font-medium transition-colors duration-150 ${location.pathname === path ? "text-white" : "text-slate-300 hover:text-white"}`;
+    `text-sm font-medium transition-colors duration-150 ${pathname === path ? "text-white" : "text-slate-300 hover:text-white"}`;
 
   return (
     <header className="sticky top-0 z-40 bg-primary border-b border-white/10">
       <div className="max-w-6xl mx-auto px-4 sm:px-6 h-[64px] flex items-center gap-4">
-        <SmartLink to={user ? "/feed" : "/"} className="flex items-center gap-2 shrink-0">
+        <Link href={user ? "/feed" : "/"} className="flex items-center gap-2 shrink-0">
           <img src={markUrl} alt="BizLink" className="w-8 h-8 rounded-lg" />
           <span className="font-bold tracking-tight text-[18px]"><span className="text-white">Biz</span><span className="text-accent">Link</span></span>
           <span className="hidden sm:inline text-[10px] tracking-[0.18em] text-accent font-semibold ml-1">BRIDGING BRANDS</span>
-        </SmartLink>
+        </Link>
 
         <nav className="hidden md:flex items-center gap-6 ml-6">
-          {!user && <SmartLink to="/" className={linkClass("/")}>Home</SmartLink>}
-          <SmartLink to="/feed" className={linkClass("/feed")}>Feed</SmartLink>
-          <SmartLink to="/about" className={linkClass("/about")}>About</SmartLink>
-          <SmartLink to="/reels" className={linkClass("/reels")}>Reels</SmartLink>
-          {user && <SmartLink to="/messages" className={linkClass("/messages")}>Messages</SmartLink>}
+          {!user && <Link href="/" className={linkClass("/")}>Home</Link>}
+          <Link href="/feed" className={linkClass("/feed")}>Feed</Link>
+          <Link href="/about" className={linkClass("/about")}>About</Link>
+          <Link href="/reels" className={linkClass("/reels")}>Reels</Link>
+          {user && <Link href="/messages" className={linkClass("/messages")}>Messages</Link>}
         </nav>
 
         <div className="hidden md:block flex-1 max-w-[360px] ml-auto">
-          <SearchBar onSearch={(q) => navigate(`/search?q=${encodeURIComponent(q)}`)} />
+          <SearchBar onSearch={(q) => router.visit(`/search?q=${encodeURIComponent(q)}`)} />
         </div>
 
         <div className="flex items-center gap-2 ml-auto md:ml-0">
-          <button 
+          <button
             onClick={() => setIsDark(!isDark)}
             className="w-9 h-9 grid place-items-center rounded-lg text-slate-300 hover:text-white hover:bg-surface/10 transition-colors mr-2"
             aria-label="Toggle Dark Mode"
@@ -92,15 +86,15 @@ export default function Navbar() {
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" /></svg>
             )}
           </button>
-          
+
           {user ? (
-            <SmartLink to="/create" className="hidden sm:inline-flex items-center gap-1.5 bg-action hover:bg-action-hover active:bg-[#1E40AF] text-white text-sm font-medium px-4 py-2 rounded-lg transition-colors duration-150 focus-visible:ring-2 focus-visible:ring-blue-300 focus-visible:ring-offset-2 focus-visible:ring-offset-[#0B1F3A]">
+            <Link href="/create" className="hidden sm:inline-flex items-center gap-1.5 bg-action hover:bg-action-hover active:bg-[#1E40AF] text-white text-sm font-medium px-4 py-2 rounded-lg transition-colors duration-150 focus-visible:ring-2 focus-visible:ring-blue-300 focus-visible:ring-offset-2 focus-visible:ring-offset-[#0B1F3A]">
               <span className="text-lg leading-none -mt-0.5">+</span> Post
-            </SmartLink>
+            </Link>
           ) : (
             <>
-              <SmartLink to="/login" className="hidden sm:inline-flex text-sm font-medium text-slate-200 hover:text-white px-3 py-2">Log in</SmartLink>
-              <SmartLink to="/register" className="hidden sm:inline-flex items-center bg-action hover:bg-action-hover text-white text-sm font-medium px-4 py-2 rounded-lg transition-colors">Sign up</SmartLink>
+              <Link href="/login" className="hidden sm:inline-flex text-sm font-medium text-slate-200 hover:text-white px-3 py-2">Log in</Link>
+              <Link href="/register" className="hidden sm:inline-flex items-center bg-action hover:bg-action-hover text-white text-sm font-medium px-4 py-2 rounded-lg transition-colors">Sign up</Link>
             </>
           )}
 
@@ -111,7 +105,7 @@ export default function Navbar() {
                 <div className="absolute right-0 mt-3 w-[340px] bg-surface rounded-xl shadow-md border border-border overflow-hidden z-50">
                   <div className="px-4 py-3 flex items-center justify-between border-b border-border">
                     <p className="text-sm font-semibold text-text-primary">Notifications{unread > 0 ? ` (${unread})` : ""}</p>
-                    <SmartLink to="/notifications" onClick={() => setShowBell(false)} className="text-xs font-medium text-action hover:text-[#1D4ED8]">View all</SmartLink>
+                    <Link href="/notifications" onClick={() => setShowBell(false)} className="text-xs font-medium text-action hover:text-[#1D4ED8]">View all</Link>
                   </div>
                   <div className="max-h-[320px] overflow-auto divide-y divide-slate-50">
                     {notifications.length === 0 && <p className="p-6 text-sm text-text-secondary text-center">No notifications</p>}
@@ -121,8 +115,7 @@ export default function Navbar() {
                         onClick={() => {
                           markRead(n.id);
                           setShowBell(false);
-                          if (n.link) navigate(n.link);
-                          else navigate("/notifications");
+                          router.visit(n.link || "/notifications");
                         }}
                         className={`w-full text-left px-4 py-3 flex gap-3 hover:bg-bg transition-colors ${!n.read ? "bg-action/10" : ""}`}
                       >
@@ -149,7 +142,7 @@ export default function Navbar() {
 
       {mobileOpen && (
         <div className="md:hidden border-t border-white/10 bg-primary px-4 py-4 space-y-3">
-          <SearchBar onSearch={(q) => { setMobileOpen(false); navigate(`/search?q=${encodeURIComponent(q)}`); }} />
+          <SearchBar onSearch={(q) => { setMobileOpen(false); router.visit(`/search?q=${encodeURIComponent(q)}`); }} />
           {user && (
             <div className="flex items-center gap-3 rounded-xl bg-surface/5 border border-white/10 px-3 py-2.5">
               <img src={user.avatar || "https://i.pravatar.cc/100?img=12"} alt="" className="w-9 h-9 rounded-full object-cover shrink-0" />
@@ -157,25 +150,25 @@ export default function Navbar() {
                 <p className="text-sm font-semibold text-white truncate">{user.name}</p>
                 <p className="text-xs text-text-secondary truncate">{user.email}</p>
               </div>
-              <SmartLink to="/profile/edit" onClick={() => setMobileOpen(false)} className="text-xs font-medium text-accent hover:text-white shrink-0">Edit</SmartLink>
+              <Link href="/profile/edit" onClick={() => setMobileOpen(false)} className="text-xs font-medium text-accent hover:text-white shrink-0">Edit</Link>
             </div>
           )}
           <div className="flex flex-wrap gap-2 pt-1">
-            {!user && <SmartLink to="/" onClick={() => setMobileOpen(false)} className="px-3 py-1.5 rounded-full bg-surface text-primary text-sm font-medium">Home</SmartLink>}
-            <SmartLink to="/feed" onClick={() => setMobileOpen(false)} className="px-3 py-1.5 rounded-full border border-white/20 text-white text-sm">Feed</SmartLink>
-            <SmartLink to="/about" onClick={() => setMobileOpen(false)} className="px-3 py-1.5 rounded-full border border-white/20 text-white text-sm">About</SmartLink>
-            <SmartLink to="/reels" onClick={() => setMobileOpen(false)} className="px-3 py-1.5 rounded-full border border-white/20 text-white text-sm">Reels</SmartLink>
-            {user && <SmartLink to="/messages" onClick={() => setMobileOpen(false)} className="px-3 py-1.5 rounded-full border border-white/20 text-white text-sm">Messages</SmartLink>}
-            <SmartLink to="/contact" onClick={() => setMobileOpen(false)} className="px-3 py-1.5 rounded-full border border-white/20 text-white text-sm">Contact</SmartLink>
-            {!user && <SmartLink to="/login" onClick={() => setMobileOpen(false)} className="px-3 py-1.5 rounded-full border border-white/20 text-white text-sm">Log in</SmartLink>}
-            {!user && <SmartLink to="/register" onClick={() => setMobileOpen(false)} className="px-3 py-1.5 rounded-full bg-action text-white text-sm">Sign up</SmartLink>}
+            {!user && <Link href="/" onClick={() => setMobileOpen(false)} className="px-3 py-1.5 rounded-full bg-surface text-primary text-sm font-medium">Home</Link>}
+            <Link href="/feed" onClick={() => setMobileOpen(false)} className="px-3 py-1.5 rounded-full border border-white/20 text-white text-sm">Feed</Link>
+            <Link href="/about" onClick={() => setMobileOpen(false)} className="px-3 py-1.5 rounded-full border border-white/20 text-white text-sm">About</Link>
+            <Link href="/reels" onClick={() => setMobileOpen(false)} className="px-3 py-1.5 rounded-full border border-white/20 text-white text-sm">Reels</Link>
+            {user && <Link href="/messages" onClick={() => setMobileOpen(false)} className="px-3 py-1.5 rounded-full border border-white/20 text-white text-sm">Messages</Link>}
+            <Link href="/contact" onClick={() => setMobileOpen(false)} className="px-3 py-1.5 rounded-full border border-white/20 text-white text-sm">Contact</Link>
+            {!user && <Link href="/login" onClick={() => setMobileOpen(false)} className="px-3 py-1.5 rounded-full border border-white/20 text-white text-sm">Log in</Link>}
+            {!user && <Link href="/register" onClick={() => setMobileOpen(false)} className="px-3 py-1.5 rounded-full bg-action text-white text-sm">Sign up</Link>}
           </div>
           {user ? (
             <>
-              <SmartLink to="/create" onClick={() => setMobileOpen(false)} className="block text-center bg-action text-white rounded-lg py-2.5 text-sm font-medium">+ Post Opportunity</SmartLink>
+              <Link href="/create" onClick={() => setMobileOpen(false)} className="block text-center bg-action text-white rounded-lg py-2.5 text-sm font-medium">+ Post Opportunity</Link>
               <div className="grid grid-cols-2 gap-2">
-                <SmartLink to="/profile/me" onClick={() => setMobileOpen(false)} className="block text-center border border-white/20 text-white rounded-lg py-2.5 text-sm">Profile</SmartLink>
-                <button onClick={handleLogout} className="block w-full text-center bg-error/10 border border-error/20 text-error rounded-lg py-2.5 text-sm font-medium">Logout</button>
+                <Link href="/profile/me" onClick={() => setMobileOpen(false)} className="block text-center border border-white/20 text-white rounded-lg py-2.5 text-sm">Profile</Link>
+                <button onClick={() => setShowLogoutConfirm(true)} className="block w-full text-center bg-error/10 border border-error/20 text-error rounded-lg py-2.5 text-sm font-medium">Logout</button>
               </div>
             </>
           ) : null}

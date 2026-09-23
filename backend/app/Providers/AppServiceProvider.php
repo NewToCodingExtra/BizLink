@@ -2,6 +2,7 @@
 
 namespace App\Providers;
 
+use Illuminate\Support\Facades\Vite;
 use Illuminate\Support\ServiceProvider;
 
 class AppServiceProvider extends ServiceProvider
@@ -19,6 +20,8 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
-        //
+        // Frontend Vite lives in ../frontend and writes into public/build + public/hot.
+        Vite::useHotFile(public_path('hot'))
+            ->useBuildDirectory('build');
     }
 }

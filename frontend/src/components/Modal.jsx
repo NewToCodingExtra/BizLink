@@ -1,13 +1,13 @@
 import React, { useEffect, useRef } from 'react';
 
-export default function Modal({ 
-  isOpen, 
-  onClose, 
-  title, 
-  children, 
-  footer, 
+export default function Modal({
+  isOpen,
+  onClose,
+  title,
+  children,
+  footer,
   maxWidth = 'max-w-md',
-  closeOnClickOutside = true 
+  closeOnClickOutside = true
 }) {
   const modalRef = useRef(null);
 
@@ -36,11 +36,11 @@ export default function Modal({
   };
 
   return (
-    <div 
+    <div
       className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 bg-black/60 backdrop-blur-sm"
       onClick={handleBackdropClick}
     >
-      <div 
+      <div
         ref={modalRef}
         className={`bg-[var(--color-surface)] w-full ${maxWidth} rounded-2xl shadow-xl border border-[var(--color-border)] flex flex-col max-h-[90vh] overflow-hidden animate-in fade-in zoom-in-95 duration-200`}
       >
@@ -49,7 +49,7 @@ export default function Modal({
           <div className="flex items-center justify-between p-4 border-b border-[var(--color-border)]">
             <h2 className="text-lg font-semibold text-[var(--color-text-primary)]">{title}</h2>
             {onClose && (
-              <button 
+              <button
                 onClick={onClose}
                 className="p-2 -mr-2 text-text-secondary hover:text-text-secondary rounded-full hover:bg-bg transition-colors"
                 aria-label="Close"
@@ -61,7 +61,7 @@ export default function Modal({
             )}
           </div>
         )}
-        
+
         {/* Body */}
         <div className="p-4 sm:p-6 overflow-y-auto custom-scrollbar">
           {children}

@@ -1,11 +1,28 @@
 import React, { useState, useEffect } from 'react';
 import Modal from './Modal';
 import Button from './Button';
-import { followsApi, opportunitiesApi, preferencesApi } from '../api/client';
+import { httpApi } from '../utils/http';
 
-const REAL_CATEGORIES = ["Food & Beverage", "Beauty & Wellness", "Health & Fitness", "Services & Logistics", "Education", "Fashion & Apparel", "Home & Living"];
+const REAL_CATEGORIES = ['Food & Beverage', 'Beauty & Wellness', 'Health & Fitness', 'Services & Logistics', 'Education', 'Fashion & Apparel', 'Home & Living'];
 
-export default function PreferenceOnboardingModal({ user, onComplete }) {
+// Defensive unwrappers — endpoints may return { data } or raw payloads.
+function asList(res) {
+  if (Array.isArray(res)) return res;
+  if (Array.isArray(res?.data)) return res.data;
+  if (Array.isArray(res?.data?.data)) return res.data.data;
+  return [];
+}
+
+function asPrefs(res) {
+  const d = res?.data ?? res ?? {};
+  return {
+    categories: d.categories || [],
+    budgetMin: d.budgetMin ?? '',
+    budgetMax: d.budgetMax ?? '',
+  };
+}
+
+export default function PreferenceOnboardingModal({ user, onComplete, forceOpen = false }) {
   const [isOpen, setIsOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const [loadingBrands, setLoadingBrands] = useState(false);
@@ -13,7 +30,7 @@ export default function PreferenceOnboardingModal({ user, onComplete }) {
   const [step, setStep] = useState(1);
   const [selectedAuthors, setSelectedAuthors] = useState([]);
   const [selectedCategories, setSelectedCategories] = useState([]);
-  const [existingPrefs, setExistingPrefs] = useState({ categories: [], budgetMin: "", budgetMax: "" });
+  const [existingPrefs, setExistingPrefs] = useState({ categories: [], budgetMin: '', budgetMax: '' });
 
   useEffect(() => {
     if (!user) return;
@@ -23,20 +40,16 @@ export default function PreferenceOnboardingModal({ user, onComplete }) {
     const checkPreferences = async () => {
       try {
         const [prefsRes, followsRes] = await Promise.all([
-          preferencesApi.get().catch(() => ({ data: {} })),
-          followsApi.list().catch(() => ({ data: [] })),
+          httpApi.get('/preferences').catch(() => ({ data: {} })),
+          httpApi.get('/follows').catch(() => ({ data: [] })),
         ]);
-        const prefs = {
-          categories: prefsRes.data.categories || [],
-          budgetMin: prefsRes.data.budgetMin || "",
-          budgetMax: prefsRes.data.budgetMax || "",
-        };
+        const prefs = asPrefs(prefsRes);
         setExistingPrefs(prefs);
-        const hasFollows = (followsRes.data || []).length > 0;
+        const hasFollows = asList(followsRes).length > 0;
         const hasPrefs = (prefs.categories || []).length > 0 || prefs.budgetMin || prefs.budgetMax;
-        if (!hasFollows && !hasPrefs) {
+        if (forceOpen || (!hasFollows && !hasPrefs)) {
           // Add a small delay so it doesn't pop up too aggressively
-          setTimeout(() => setIsOpen(true), 1500);
+          setTimeout(() => setIsOpen(true), forceOpen ? 0 : 1500);
         }
       } catch (e) {
         console.error('Failed to fetch preferences', e);
@@ -44,19 +57,19 @@ export default function PreferenceOnboardingModal({ user, onComplete }) {
     };
 
     checkPreferences();
-  }, [user]);
+  }, [user, forceOpen]);
 
   // Real brands from the live feed (deduped by author), so follows actually match posts.
   useEffect(() => {
     if (!isOpen || brands.length > 0) return;
     let cancelled = false;
     setLoadingBrands(true);
-    opportunitiesApi
-      .list({ per_page: 50 })
+    httpApi
+      .get('/opportunities?per_page=50')
       .then((res) => {
         if (cancelled) return;
         const seen = new Map();
-        for (const o of res.data || []) {
+        for (const o of asList(res)) {
           const key = String(o.authorId ?? o.brandId);
           if (!seen.has(key)) {
             seen.set(key, {
@@ -82,15 +95,23 @@ export default function PreferenceOnboardingModal({ user, onComplete }) {
   const handleSave = async () => {
     setLoading(true);
     try {
+      // Preserve an existing budget range: re-read prefs and merge.
+      let budget = { budgetMin: existingPrefs.budgetMin || '', budgetMax: existingPrefs.budgetMax || '' };
+      try {
+        const fresh = asPrefs(await httpApi.get('/preferences'));
+        budget = { budgetMin: fresh.budgetMin || '', budgetMax: fresh.budgetMax || '' };
+      } catch {
+        // fall back to the snapshot we already have
+      }
       // Follows drive connected-reach ranking; merge categories into prefs
       // without wiping an existing budget range.
       await Promise.all(
-        selectedAuthors.map((authorId) => followsApi.toggle(`brand-${authorId}`).catch(() => null))
+        selectedAuthors.map((authorId) => httpApi.post('/follows/toggle', { brand_id: `brand-${authorId}` }).catch(() => null))
       );
-      await preferencesApi.update({
+      await httpApi.put('/preferences', {
         categories: selectedCategories,
-        budgetMin: existingPrefs.budgetMin || "",
-        budgetMax: existingPrefs.budgetMax || "",
+        budgetMin: budget.budgetMin,
+        budgetMax: budget.budgetMax,
       });
       setIsOpen(false);
       if (onComplete) onComplete();
@@ -138,7 +159,7 @@ export default function PreferenceOnboardingModal({ user, onComplete }) {
       {step === 1 && (
         <div>
           <p className="text-[var(--color-text-secondary)] mb-6">
-            Select brands you want to follow. We'll prioritize their opportunities in your feed.
+            Select brands you want to follow. We&apos;ll prioritize their opportunities in your feed.
           </p>
           {loadingBrands ? (
             <p className="text-sm text-[var(--color-text-secondary)] text-center py-6">Loading brands…</p>

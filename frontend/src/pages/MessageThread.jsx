@@ -1,47 +1,25 @@
-import { useParams, Link } from "react-router-dom";
-import { useEffect, useState } from "react";
-import CreativeLoader from "../components/CreativeLoader";
-import { inboxApi } from "../api/client";
+import { useState } from "react";
+import { Head, Link } from "@inertiajs/react";
+import { httpApi } from "../utils/http";
 import { profilePath } from "../utils/profilePath";
 
-export default function MessageThread() {
-  const { conversationId } = useParams();
-  const [conv, setConv] = useState(null);
-  const [messages, setMessages] = useState([]);
+export default function MessageThread({ conv: initialConv }) {
+  const [conv, setConv] = useState(initialConv || null);
+  const [messages, setMessages] = useState(initialConv?.messages || []);
   const [text, setText] = useState("");
-  const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [sending, setSending] = useState(false);
-
-  useEffect(() => {
-    let cancelled = false;
-    setLoading(true);
-    inboxApi
-      .conversation(conversationId)
-      .then((res) => {
-        if (cancelled) return;
-        setConv(res.data);
-        setMessages(res.data.messages || []);
-      })
-      .catch((err) => {
-        if (!cancelled) setError(err.message || "Failed to load conversation");
-      })
-      .finally(() => {
-        if (!cancelled) setLoading(false);
-      });
-    return () => {
-      cancelled = true;
-    };
-  }, [conversationId]);
 
   const send = async (e) => {
     e.preventDefault();
     if (!text.trim() || sending) return;
     setSending(true);
     try {
-      const res = await inboxApi.send(conversationId, text.trim());
-      setMessages((prev) => [...prev, res.data]);
-      setConv((prev) => (prev ? { ...prev, lastMessage: text.trim() } : prev));
+      const sentText = text.trim();
+      const res = await httpApi.post(`/conversations/${conv.id}/messages`, { text: sentText });
+      const msg = res.data ?? res;
+      setMessages((prev) => [...prev, msg]);
+      setConv((c) => (c ? { ...c, lastMessage: sentText } : c));
       setText("");
     } catch (err) {
       setError(err.message || "Send failed");
@@ -50,16 +28,16 @@ export default function MessageThread() {
     }
   };
 
-  if (loading) return <CreativeLoader text="Loading thread..." fullScreen={true} />;
-  if (error && !conv) return <div className="max-w-2xl mx-auto min-h-[calc(100vh-64px)] flex flex-col items-center justify-center text-center"><p className="text-text-secondary mb-2">{error}</p><Link to="/messages" className="text-action text-sm font-medium">Back to inbox</Link></div>;
-  if (!conv) return <div className="max-w-2xl mx-auto min-h-[calc(100vh-64px)] flex flex-col items-center justify-center text-center"><p className="text-text-secondary mb-2">Conversation not found.</p><Link to="/messages" className="text-action text-sm font-medium">Back to inbox</Link></div>;
+  if (error && !conv) return <div className="max-w-2xl mx-auto min-h-[calc(100vh-64px)] flex flex-col items-center justify-center text-center"><p className="text-text-secondary mb-2">{error}</p><Link href="/messages" className="text-action text-sm font-medium">Back to inbox</Link></div>;
+  if (!conv) return <div className="max-w-2xl mx-auto min-h-[calc(100vh-64px)] flex flex-col items-center justify-center text-center"><Head title="Conversation" /><p className="text-text-secondary mb-2">Conversation not found.</p><Link href="/messages" className="text-action text-sm font-medium">Back to inbox</Link></div>;
 
   return (
     <div className="max-w-2xl mx-auto flex flex-col h-[calc(100dvh-64px)]">
+      <Head title={conv.with || "Conversation"} />
       <div className="px-4 sm:px-6 py-4 border-b border-border bg-surface flex items-center gap-3">
-        <Link to="/messages" className="text-text-secondary hover:text-text-primary">←</Link>
-        <Link to={profilePath({ username: conv.withUsername, authorId: conv.withId, brandId: conv.brandId })}><img src={conv.avatar} alt={conv.with} className="w-8 h-8 rounded-full" /></Link>
-        <Link to={profilePath({ username: conv.withUsername, authorId: conv.withId, brandId: conv.brandId })} className="text-sm font-semibold text-text-primary hover:text-action">{conv.with}</Link>
+        <Link href="/messages" className="text-text-secondary hover:text-text-primary">←</Link>
+        <Link href={profilePath({ username: conv.withUsername, authorId: conv.withId, brandId: conv.brandId })}><img src={conv.avatar} alt={conv.with} className="w-8 h-8 rounded-full" /></Link>
+        <Link href={profilePath({ username: conv.withUsername, authorId: conv.withId, brandId: conv.brandId })} className="text-sm font-semibold text-text-primary hover:text-action">{conv.with}</Link>
         <span className="text-xs text-text-secondary">Private consultation</span>
       </div>
       {error && <p className="mx-4 mt-3 text-sm text-error bg-error/10 border border-error/20 rounded-lg px-3 py-2">{error}</p>}

@@ -1,19 +1,19 @@
 import React from 'react';
-import { Link } from 'react-router-dom';
+import { Link } from '@inertiajs/react';
 
-export default function Button({ 
-  children, 
-  variant = 'primary', 
-  size = 'md', 
-  className = '', 
-  to, 
+export default function Button({
+  children,
+  variant = 'primary',
+  size = 'md',
+  className = '',
+  to,
   onClick,
   disabled,
   type = 'button',
-  ...props 
+  ...props
 }) {
   const baseClasses = 'inline-flex items-center justify-center font-medium rounded-full transition-all focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-action disabled:opacity-50 disabled:cursor-not-allowed';
-  
+
   const variants = {
     primary: 'bg-[var(--color-primary)] text-white hover:bg-[var(--color-primary-light)]',
     secondary: 'bg-surface text-text-primary border border-border hover:bg-bg',
@@ -22,7 +22,7 @@ export default function Button({
     ghost: 'text-text-secondary hover:bg-bg hover:text-text-primary',
     white: 'bg-surface text-text-primary hover:bg-bg shadow-sm',
   };
-  
+
   const sizes = {
     sm: 'text-xs px-3 py-1.5',
     md: 'text-sm px-4 py-2',
@@ -34,17 +34,17 @@ export default function Button({
 
   if (to) {
     return (
-      <Link to={to} className={classes} {...props}>
+      <Link href={to} className={classes} {...props}>
         {children}
       </Link>
     );
   }
 
   return (
-    <button 
-      type={type} 
-      className={classes} 
-      onClick={onClick} 
+    <button
+      type={type}
+      className={classes}
+      onClick={onClick}
       disabled={disabled}
       {...props}
     >

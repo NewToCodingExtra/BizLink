@@ -3,7 +3,7 @@ export default function MissionVision() {
     <section className="py-12 md:py-20 bg-[#F8FAFC]">
       <div className="max-w-6xl mx-auto px-4 sm:px-6">
         <p className="text-center text-[11px] tracking-[0.2em] font-semibold text-text-secondary">MISSION & VISION</p>
-        <h2 className="text-center text-2xl md:text-3xl font-semibold text-primary mt-2 tracking-tight">What guides us</h2>
+        <h2 className="text-center text-2xl md:text-3xl font-semibold text-text-primary mt-2 tracking-tight">What guides us</h2>
         <div className="mt-8 grid md:grid-cols-2 gap-6">
           <div className="bg-surface rounded-xl border border-border shadow-sm p-6 md:p-8">
             <span className="w-10 h-10 rounded-full bg-primary text-white grid place-items-center text-sm font-bold">M</span>

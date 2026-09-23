@@ -28,7 +28,7 @@ export function ToastProvider({ children }) {
 
 export function useToast() {
   const ctx = useContext(ToastContext);
-  if (!ctx) return { error: () => {}, success: () => {} };
+  if (!ctx) return { error: () => {}, success: () => {}, info: () => {} };
   return ctx.toast;
 }
 
@@ -40,8 +40,7 @@ function ToastItem({ toast, onRemove }) {
 
   const circleRadius = 14;
   const circumference = 2 * Math.PI * circleRadius;
-  
-  // Format message just in case an object/array is passed.
+
   // React nodes (e.g. messages with links) render directly.
   const displayMessage = typeof toast.message === 'string' || React.isValidElement(toast.message)
     ? toast.message
@@ -53,27 +52,27 @@ function ToastItem({ toast, onRemove }) {
       {toast.type === 'error' && <div className="absolute left-0 top-0 bottom-0 w-1.5 bg-error/80" />}
       {toast.type === 'success' && <div className="absolute left-0 top-0 bottom-0 w-1.5 bg-success/80" />}
       {toast.type === 'info' && <div className="absolute left-0 top-0 bottom-0 w-1.5 bg-action/80" />}
-      
+
       <p className="flex-1 text-sm font-medium text-[var(--color-text-primary)] pl-2">
         {displayMessage}
       </p>
 
       {/* Close button with circular progress */}
-      <button 
-        onClick={() => onRemove(toast.id)} 
+      <button
+        onClick={() => onRemove(toast.id)}
         className="relative flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] transition-colors group"
       >
         <svg className="w-4 h-4 z-10" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" /></svg>
         <svg className="absolute inset-0 w-full h-full -rotate-90 z-0" viewBox="0 0 36 36">
           <circle cx="18" cy="18" r={circleRadius} fill="transparent" stroke="var(--color-border)" strokeWidth="2" className="opacity-50" />
-          <circle 
-            cx="18" cy="18" r={circleRadius} 
-            fill="transparent" 
-            stroke="var(--color-action)" 
-            strokeWidth="2.5" 
-            strokeDasharray={circumference} 
+          <circle
+            cx="18" cy="18" r={circleRadius}
+            fill="transparent"
+            stroke="var(--color-action)"
+            strokeWidth="2.5"
+            strokeDasharray={circumference}
             strokeDashoffset={circumference}
-            strokeLinecap="round" 
+            strokeLinecap="round"
             style={{ animation: `toast-progress ${toast.duration}ms linear forwards` }}
           />
         </svg>

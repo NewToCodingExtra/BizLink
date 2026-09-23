@@ -1,10 +1,9 @@
-import { useLocation } from "react-router-dom";
-import SmartLink from "./SmartLink";
-import markUrl from "../assets/bizlink-mark.svg";
+import { Link, usePage } from '@inertiajs/react';
+import markUrl from '../assets/bizlink-mark.svg';
 
 export default function Footer() {
-  const { pathname } = useLocation();
-  const flush = pathname === "/reels" || pathname.startsWith("/stories/");
+  const { url } = usePage();
+  const flush = url === '/reels' || url.startsWith('/stories/');
   return (
     <footer className={`bg-primary text-slate-300 ${flush ? "mt-0" : "mt-16"}`}>
       <div className="max-w-6xl mx-auto px-4 sm:px-6 py-10">
@@ -25,19 +24,19 @@ export default function Footer() {
           <div>
             <p className="text-white text-sm font-semibold">Explore</p>
             <ul className="mt-3 space-y-2 text-sm">
-              <li><SmartLink to="/" className="hover:text-white transition-colors">Feed</SmartLink></li>
-              <li><SmartLink to="/about" className="hover:text-white transition-colors">About</SmartLink></li>
-              <li><SmartLink to="/reels" className="hover:text-white transition-colors">Reels</SmartLink></li>
-              <li><SmartLink to="/search" className="hover:text-white transition-colors">Search</SmartLink></li>
+              <li><Link href="/" className="hover:text-white transition-colors">Feed</Link></li>
+              <li><Link href="/about" className="hover:text-white transition-colors">About</Link></li>
+              <li><Link href="/reels" className="hover:text-white transition-colors">Reels</Link></li>
+              <li><Link href="/search" className="hover:text-white transition-colors">Search</Link></li>
             </ul>
           </div>
           <div>
             <p className="text-white text-sm font-semibold">Support</p>
             <ul className="mt-3 space-y-2 text-sm">
-              <li><SmartLink to="/contact" className="hover:text-white transition-colors">Contact</SmartLink></li>
-              <li><SmartLink to="/settings/preferences" className="hover:text-white transition-colors">Preferences</SmartLink></li>
-              <li><SmartLink to="/saved" className="hover:text-white transition-colors">Saved Opportunities</SmartLink></li>
-              <li><SmartLink to="/messages" className="hover:text-white transition-colors">Consultation Inbox</SmartLink></li>
+              <li><Link href="/contact" className="hover:text-white transition-colors">Contact</Link></li>
+              <li><Link href="/settings/preferences" className="hover:text-white transition-colors">Preferences</Link></li>
+              <li><Link href="/saved" className="hover:text-white transition-colors">Saved Opportunities</Link></li>
+              <li><Link href="/messages" className="hover:text-white transition-colors">Consultation Inbox</Link></li>
             </ul>
           </div>
         </div>

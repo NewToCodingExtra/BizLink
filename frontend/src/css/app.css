@@ -71,6 +71,11 @@
 ::-webkit-scrollbar { width: 6px; height: 6px; }
 ::-webkit-scrollbar-thumb { background: var(--color-border); border-radius: 9999px; }
 
+/* Hidden-scrollbar regions (e.g. story tray): scroll still works via
+   touch, wheel and keyboard — only the bar itself is gone. */
+.no-scrollbar { scrollbar-width: none; -ms-overflow-style: none; }
+.no-scrollbar::-webkit-scrollbar { display: none; }
+
 html { scroll-behavior: smooth; }
 body { background: var(--color-bg); color: var(--color-text-primary); -webkit-font-smoothing: antialiased; }
 

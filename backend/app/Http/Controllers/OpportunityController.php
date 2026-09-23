@@ -169,7 +169,7 @@ class OpportunityController extends Controller
     public function saved(Request $request)
     {
         $user = $request->user();
-        $opps = $user->savedOpportunities()->with(['user:id,name,avatar', 'comments'])->latest('opportunity_user_saves.created_at')->paginate(20);
+        $opps = $user->savedOpportunities()->with(['user:id,name,username,avatar', 'comments.user:id,username'])->latest('opportunity_user_saves.created_at')->paginate(20);
         $likedIds = $user->likedOpportunities()->pluck('opportunities.id')->toArray();
         $savedIds = $user->savedOpportunities()->pluck('opportunities.id')->toArray();
         

@@ -1,10 +1,8 @@
-import { useEffect, useRef, useState } from "react";
-import { Link } from "react-router-dom";
-import { useAuth } from "../context/AuthContext";
-import { authApi, uploadFile } from "../api/client";
+import { useRef, useState } from "react";
+import { Head, Link, router } from "@inertiajs/react";
+import { httpApi } from "../utils/http";
 
-export default function EditProfile() {
-  const { user, setUser } = useAuth();
+export default function EditProfile({ user }) {
   const fileRef = useRef(null);
   const [name, setName] = useState(user?.name || "");
   const [avatar, setAvatar] = useState(user?.avatar || "");
@@ -14,18 +12,6 @@ export default function EditProfile() {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
   const [saved, setSaved] = useState(false);
-
-  useEffect(() => {
-    authApi
-      .me()
-      .then((res) => {
-        setUser(res.user);
-        setName(res.user.name || "");
-        setAvatar(res.user.avatar || "");
-        setBio(res.user.bio || "");
-      })
-      .catch(() => {});
-  }, [setUser]);
 
   const onPickFile = async (e) => {
     const file = e.target.files?.[0];
@@ -38,8 +24,23 @@ export default function EditProfile() {
     setUploading(true);
     setProgress(0);
     try {
-      const res = await uploadFile(file, setProgress);
-      setAvatar(res.url);
+      const csrf = document.querySelector('meta[name="csrf-token"]')?.getAttribute("content") || "";
+      const form = new FormData();
+      form.append("file", file);
+      const res = await fetch("/uploads", {
+        method: "POST",
+        credentials: "same-origin",
+        headers: {
+          Accept: "application/json",
+          "X-Requested-With": "XMLHttpRequest",
+          "X-CSRF-TOKEN": csrf,
+        },
+        body: form,
+      });
+      const data = await res.json().catch(() => null);
+      if (!res.ok) throw new Error(data?.message || "Photo upload failed");
+      setAvatar(data.url);
+      setProgress(100);
       setSaved(false);
     } catch (err) {
       setError(err.message || "Photo upload failed");
@@ -59,9 +60,9 @@ export default function EditProfile() {
     }
     setSaving(true);
     try {
-      const res = await authApi.updateProfile({ name: name.trim(), avatar: avatar.trim() || null, bio: bio.trim() || null });
-      setUser(res.user);
+      const res = await httpApi.put("/profile", { name: name.trim(), avatar: avatar.trim() || null, bio: bio.trim() || null });
       setSaved(true);
+      router.visit(`/profile/${res.user?.username || "me"}`);
     } catch (err) {
       const errors = err?.data?.errors;
       const first = errors ? Object.values(errors).flat()[0] : null;
@@ -73,7 +74,8 @@ export default function EditProfile() {
 
   return (
     <div className="max-w-2xl mx-auto px-4 sm:px-6 py-6">
-      <Link to="/profile/me" className="text-sm text-text-secondary hover:text-text-primary">← Back to profile</Link>
+      <Head title="Edit profile" />
+      <Link href="/profile/me" className="text-sm text-text-secondary hover:text-text-primary">← Back to profile</Link>
       <h1 className="text-2xl font-semibold text-primary mt-2">Edit profile</h1>
       <p className="text-sm text-text-secondary mt-1">How brands and entrepreneurs see you across BizLink.</p>
 
