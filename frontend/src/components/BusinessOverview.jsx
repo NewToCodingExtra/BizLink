@@ -25,9 +25,9 @@ export default function BusinessOverview() {
           </form>
 
           <div className="mt-4 flex flex-wrap gap-2">
-            <Link to="/search?q=Franchise" className="px-3 py-1.5 rounded-full bg-amber-50 text-amber-700 border border-amber-100 text-xs font-medium">Franchise</Link>
+            <Link to="/search?q=Franchise" className="px-3 py-1.5 rounded-full bg-warning/10 text-warning border border-warning/20 text-xs font-medium">Franchise</Link>
             <Link to="/search?q=Wholesale" className="px-3 py-1.5 rounded-full bg-bg text-text-primary border border-border text-xs font-medium">Wholesale</Link>
-            <Link to="/search?q=Resell" className="px-3 py-1.5 rounded-full bg-blue-50 text-blue-700 border border-blue-100 text-xs font-medium">Resell</Link>
+            <Link to="/search?q=Resell" className="px-3 py-1.5 rounded-full bg-action/10 text-action border border-action/20 text-xs font-medium">Resell</Link>
             <Link to="/" className="px-5 py-2 rounded-lg bg-primary text-white text-sm font-medium hover:bg-primary-light transition-colors ml-1">Explore Franchises →</Link>
           </div>
 
@@ -48,7 +48,7 @@ export default function BusinessOverview() {
             <p className="text-xs font-semibold tracking-widest text-accent">FEATURED</p>
             <p className="text-sm font-semibold text-text-primary mt-1">BrewCraft Coffee — BGC Flagship</p>
             <p className="text-xs text-text-secondary mt-1">₱850K · 28% ROI · Franchise</p>
-            <span className="inline-flex mt-2 text-xs font-medium bg-[#16A34A]/10 text-[#16A34A] px-2 py-1 rounded-full">● Verified</span>
+            <span className="inline-flex mt-2 text-xs font-medium bg-[#16A34A]/10 text-success px-2 py-1 rounded-full">● Verified</span>
           </div>
         </div>
       </div>

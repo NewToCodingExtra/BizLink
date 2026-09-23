@@ -1,24 +1,40 @@
 import React, { useState, useEffect } from 'react';
 import Modal from './Modal';
 import Button from './Button';
-import { api } from '../api/client';
+import { followsApi, opportunitiesApi, preferencesApi } from '../api/client';
+
+const REAL_CATEGORIES = ["Food & Beverage", "Beauty & Wellness", "Health & Fitness", "Services & Logistics", "Education", "Fashion & Apparel", "Home & Living"];
 
 export default function PreferenceOnboardingModal({ user, onComplete }) {
   const [isOpen, setIsOpen] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [preferences, setPreferences] = useState({ brands: [], categories: [] });
+  const [loadingBrands, setLoadingBrands] = useState(false);
+  const [brands, setBrands] = useState([]);
   const [step, setStep] = useState(1);
-  const [selectedBrands, setSelectedBrands] = useState([]);
+  const [selectedAuthors, setSelectedAuthors] = useState([]);
   const [selectedCategories, setSelectedCategories] = useState([]);
+  const [existingPrefs, setExistingPrefs] = useState({ categories: [], budgetMin: "", budgetMax: "" });
 
   useEffect(() => {
     if (!user) return;
 
-    // Check if user has preferences
+    // Only nag users with genuinely empty personalization: no follows,
+    // no categories, no budget range.
     const checkPreferences = async () => {
       try {
-        const res = await api('/preferences');
-        if (!res.data.brands?.length && !res.data.categories?.length) {
+        const [prefsRes, followsRes] = await Promise.all([
+          preferencesApi.get().catch(() => ({ data: {} })),
+          followsApi.list().catch(() => ({ data: [] })),
+        ]);
+        const prefs = {
+          categories: prefsRes.data.categories || [],
+          budgetMin: prefsRes.data.budgetMin || "",
+          budgetMax: prefsRes.data.budgetMax || "",
+        };
+        setExistingPrefs(prefs);
+        const hasFollows = (followsRes.data || []).length > 0;
+        const hasPrefs = (prefs.categories || []).length > 0 || prefs.budgetMin || prefs.budgetMax;
+        if (!hasFollows && !hasPrefs) {
           // Add a small delay so it doesn't pop up too aggressively
           setTimeout(() => setIsOpen(true), 1500);
         }
@@ -30,28 +46,51 @@ export default function PreferenceOnboardingModal({ user, onComplete }) {
     checkPreferences();
   }, [user]);
 
-  const availableBrands = [
-    { id: 'brand-1', name: 'Jollibee', category: 'Franchise' },
-    { id: 'brand-2', name: 'McDonalds', category: 'Franchise' },
-    { id: 'brand-3', name: 'Potato Corner', category: 'Franchise' },
-    { id: 'brand-4', name: '7-Eleven', category: 'Franchise' },
-    { id: 'brand-5', name: 'Unilever', category: 'Wholesale' },
-    { id: 'brand-6', name: 'Procter & Gamble', category: 'Wholesale' },
-    { id: 'brand-7', name: 'Nestle', category: 'Wholesale' },
-    { id: 'brand-8', name: 'Avon', category: 'Resell' },
-  ];
-
-  const availableCategories = ['Food & Beverage', 'Retail', 'Health & Beauty', 'Services', 'Technology', 'Real Estate'];
+  // Real brands from the live feed (deduped by author), so follows actually match posts.
+  useEffect(() => {
+    if (!isOpen || brands.length > 0) return;
+    let cancelled = false;
+    setLoadingBrands(true);
+    opportunitiesApi
+      .list({ per_page: 50 })
+      .then((res) => {
+        if (cancelled) return;
+        const seen = new Map();
+        for (const o of res.data || []) {
+          const key = String(o.authorId ?? o.brandId);
+          if (!seen.has(key)) {
+            seen.set(key, {
+              authorId: o.authorId,
+              name: o.brandName,
+              avatar: o.brandAvatar,
+              type: o.type,
+            });
+          }
+          if (seen.size >= 8) break;
+        }
+        setBrands([...seen.values()]);
+      })
+      .catch(() => {})
+      .finally(() => {
+        if (!cancelled) setLoadingBrands(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [isOpen, brands.length]);
 
   const handleSave = async () => {
     setLoading(true);
     try {
-      await api('/preferences', {
-        method: 'PUT',
-        body: JSON.stringify({
-          brands: selectedBrands,
-          categories: selectedCategories
-        })
+      // Follows drive connected-reach ranking; merge categories into prefs
+      // without wiping an existing budget range.
+      await Promise.all(
+        selectedAuthors.map((authorId) => followsApi.toggle(`brand-${authorId}`).catch(() => null))
+      );
+      await preferencesApi.update({
+        categories: selectedCategories,
+        budgetMin: existingPrefs.budgetMin || "",
+        budgetMax: existingPrefs.budgetMax || "",
       });
       setIsOpen(false);
       if (onComplete) onComplete();
@@ -62,9 +101,9 @@ export default function PreferenceOnboardingModal({ user, onComplete }) {
     }
   };
 
-  const toggleBrand = (id) => {
-    setSelectedBrands(prev =>
-      prev.includes(id) ? prev.filter(b => b !== id) : [...prev, id]
+  const toggleAuthor = (authorId) => {
+    setSelectedAuthors(prev =>
+      prev.includes(authorId) ? prev.filter(a => a !== authorId) : [...prev, authorId]
     );
   };
 
@@ -101,24 +140,28 @@ export default function PreferenceOnboardingModal({ user, onComplete }) {
           <p className="text-[var(--color-text-secondary)] mb-6">
             Select brands you want to follow. We'll prioritize their opportunities in your feed.
           </p>
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-            {availableBrands.map(brand => (
-              <div
-                key={brand.id}
-                onClick={() => toggleBrand(brand.id)}
-                className={`cursor-pointer border rounded-xl p-4 text-center transition-all ${selectedBrands.includes(brand.id)
-                    ? 'border-[var(--color-action)] bg-[var(--color-action)]/5 ring-2 ring-[var(--color-action)]/20'
-                    : 'border-[var(--color-border)] hover:border-[var(--color-action)]/50'
-                  }`}
-              >
-                <div className="w-12 h-12 rounded-full bg-bg mx-auto mb-2 flex items-center justify-center text-xl font-bold text-text-secondary overflow-hidden">
-                  {brand.name[0]}
+          {loadingBrands ? (
+            <p className="text-sm text-[var(--color-text-secondary)] text-center py-6">Loading brands…</p>
+          ) : (
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+              {brands.map(brand => (
+                <div
+                  key={String(brand.authorId)}
+                  onClick={() => toggleAuthor(brand.authorId)}
+                  className={`cursor-pointer border rounded-xl p-4 text-center transition-all ${selectedAuthors.includes(brand.authorId)
+                      ? 'border-[var(--color-action)] bg-[var(--color-action)]/5 ring-2 ring-[var(--color-action)]/20'
+                      : 'border-[var(--color-border)] hover:border-[var(--color-action)]/50'
+                    }`}
+                >
+                  <div className="w-12 h-12 rounded-full bg-bg mx-auto mb-2 flex items-center justify-center text-xl font-bold text-text-secondary overflow-hidden">
+                    {brand.avatar ? <img src={brand.avatar} alt={brand.name} className="w-full h-full object-cover" /> : brand.name?.[0]}
+                  </div>
+                  <div className="font-medium text-sm text-[var(--color-text-primary)] truncate">{brand.name}</div>
+                  <div className="text-xs text-[var(--color-text-secondary)]">{brand.type}</div>
                 </div>
-                <div className="font-medium text-sm text-[var(--color-text-primary)]">{brand.name}</div>
-                <div className="text-xs text-[var(--color-text-secondary)]">{brand.category}</div>
-              </div>
-            ))}
-          </div>
+              ))}
+            </div>
+          )}
         </div>
       )}
 
@@ -128,7 +171,7 @@ export default function PreferenceOnboardingModal({ user, onComplete }) {
             Select categories that match your business interests.
           </p>
           <div className="flex flex-wrap gap-3">
-            {availableCategories.map(cat => (
+            {REAL_CATEGORIES.map(cat => (
               <button
                 key={cat}
                 onClick={() => toggleCategory(cat)}

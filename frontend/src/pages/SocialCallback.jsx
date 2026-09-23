@@ -21,6 +21,7 @@ export default function SocialCallback() {
   const navigate = useNavigate();
   const { loginWithToken } = useAuth();
   const [error, setError] = useState("");
+  const [welcomeName, setWelcomeName] = useState(null);
 
   const provider = params.get("provider") || "google";
 
@@ -38,8 +39,11 @@ export default function SocialCallback() {
         return;
       }
       try {
-        await loginWithToken(token);
-        navigate("/feed", { replace: true });
+        const user = await loginWithToken(token);
+        setWelcomeName(user?.name || 'User');
+        setTimeout(() => {
+          navigate("/feed", { replace: true });
+        }, 2000);
       } catch {
         setError("Invalid session. Try again.");
       }
@@ -51,8 +55,23 @@ export default function SocialCallback() {
     return (
       <div className="max-w-md mx-auto px-4 py-12">
         <div className="bg-surface rounded-xl border border-border shadow-sm p-6 text-center">
-          <p className="text-sm text-[#DC2626] bg-red-50 border border-red-100 rounded-lg px-3 py-2">{error}</p>
+          <p className="text-sm text-error bg-error/10 border border-error/20 rounded-lg px-3 py-2">{error}</p>
           <Link to="/login" className="inline-block mt-4 px-5 py-2.5 rounded-lg bg-primary text-white text-sm font-medium">Back to login</Link>
+        </div>
+      </div>
+    );
+  }
+
+  if (welcomeName) {
+    return (
+      <div className="fixed inset-0 z-[100] bg-[var(--color-primary)] flex flex-col items-center justify-center overflow-hidden">
+        <div className="absolute inset-0 bg-gradient-to-tr from-[var(--color-action)]/20 to-transparent opacity-50" />
+        <div className="relative z-10 flex flex-col items-center animate-toast-slide-up">
+          <div className="w-20 h-20 bg-[var(--color-surface)] rounded-full border border-[var(--color-border)] shadow-2xl flex items-center justify-center mb-6">
+            <svg className="w-10 h-10 text-[var(--color-action)]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" /></svg>
+          </div>
+          <h2 className="text-3xl font-bold text-[var(--color-text-primary)] mb-2 tracking-tight">Welcome back!</h2>
+          <p className="text-lg text-[var(--color-text-secondary)]">{welcomeName}</p>
         </div>
       </div>
     );
@@ -60,7 +79,8 @@ export default function SocialCallback() {
 
   return (
     <div className="max-w-md mx-auto px-4 py-16 text-center">
-      <p className="text-sm text-text-secondary">Finishing {provider === "facebook" ? "Facebook" : "Google"} sign-in...</p>
+      <div className="inline-block w-8 h-8 border-2 border-[var(--color-action)] border-t-transparent rounded-full animate-spin mb-4" />
+      <p className="text-sm font-medium text-[var(--color-text-primary)]">Finishing {provider === "facebook" ? "Facebook" : "Google"} sign-in...</p>
     </div>
   );
 }

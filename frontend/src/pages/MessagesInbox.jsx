@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { inboxApi } from "../api/client";
+import { profilePath } from "../utils/profilePath";
 import { ListCardSkeleton } from "../components/Skeleton";
 
 export default function MessagesInbox() {
@@ -27,10 +28,10 @@ export default function MessagesInbox() {
   }, []);
 
   return (
-    <div className="max-w-2xl mx-auto px-4 sm:px-6 py-6">
+    <div className="max-w-2xl mx-auto px-4 sm:px-6 py-6 min-h-[calc(100vh-64px)]">
       <h1 className="text-2xl font-semibold text-primary">Consultation Inbox</h1>
       <p className="text-sm text-text-secondary mt-1">Private buyer ↔ seller threads from MySQL. Separate from public comments.</p>
-      {error && <p className="mt-4 text-sm text-[#DC2626] bg-red-50 border border-red-100 rounded-lg px-3 py-2">{error}</p>}
+      {error && <p className="mt-4 text-sm text-error bg-error/10 border border-error/20 rounded-lg px-3 py-2">{error}</p>}
       {loading ? (
         <div className="mt-6"><ListCardSkeleton rows={4} /></div>
       ) : (
@@ -38,7 +39,7 @@ export default function MessagesInbox() {
           {conversations.length === 0 && <p className="p-8 text-center text-sm text-text-secondary">No conversations yet — tap Inquire on any card.</p>}
           {conversations.map((c) => (
             <div key={c.id} className="flex items-center gap-3 p-4 hover:bg-bg transition-colors">
-              <Link to={`/profile/${c.brandId}`} className="shrink-0" title={`View ${c.with}`}>
+              <Link to={profilePath({ username: c.withUsername, authorId: c.withId, brandId: c.brandId })} className="shrink-0" title={`View ${c.with}`}>
                 <img src={c.avatar} alt={c.with} className="w-10 h-10 rounded-full" />
               </Link>
               <Link to={`/messages/${c.id}`} className="flex-1 min-w-0 flex items-center gap-3">

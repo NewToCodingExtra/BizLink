@@ -1,4 +1,4 @@
-import { Link } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 
 function expiryOf(s) {
@@ -14,6 +14,7 @@ function expiryOf(s) {
 
 export default function StoriesBar({ stories }) {
   const { user } = useAuth();
+  const location = useLocation();
   
   const active = (stories || []).filter((s) => expiryOf(s) > Date.now());
   if (active.length === 0 && !user) return null;
@@ -52,7 +53,7 @@ export default function StoriesBar({ stories }) {
         </button>
 
         {grouped.map((s) => (
-          <Link key={s.id} to={`/stories/${s.id}`} className="shrink-0 text-center group flex flex-col items-center">
+          <Link key={s.id} to={`/stories/${s.id}`} state={{ backgroundLocation: location }} className="shrink-0 text-center group flex flex-col items-center">
             <span className={`block w-[68px] h-[68px] rounded-full p-[3px] ${s.seen ? "bg-bg" : "bg-gradient-to-tr from-amber-400 via-orange-500 to-pink-500"}`}>
               <img src={s.avatar} alt={s.brandName} className="w-full h-full rounded-full object-cover border-2 border-white group-hover:scale-[1.02] transition" />
             </span>

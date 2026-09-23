@@ -1,13 +1,15 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import StoriesBar from "../components/StoriesBar";
 import OpportunityFeed from "../components/OpportunityFeed";
 import ContactForm from "../components/ContactForm";
 import Modal from "../components/Modal";
+import CreateStoryModal from "../components/CreateStoryModal";
 import { FeedSkeleton, StoriesBarSkeleton } from "../components/Skeleton";
 import { inboxApi, opportunitiesApi, preferencesApi, storiesApi } from "../api/client";
 import { useInfiniteFeed } from "../hooks/useInfiniteFeed";
 import { useAuth } from "../context/AuthContext";
+import { useToast } from "../context/ToastContext";
 
 export default function HomeFeed() {
   const { user } = useAuth();
@@ -28,48 +30,69 @@ export default function HomeFeed() {
   const [stories, setStories] = useState([]);
   const [storiesLoading, setStoriesLoading] = useState(true);
   const [preferences, setPreferences] = useState({ categories: [], budgetMin: "", budgetMax: "" });
+  const [isCreateStoryOpen, setIsCreateStoryOpen] = useState(false);
   const [selectedPost, setSelectedPost] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const toast = useToast();
+  const personalizedToastShown = useRef(false);
+
+  const loadStories = async (signal) => {
+    setStoriesLoading(true);
+    try {
+      const res = await storiesApi.list();
+      if (signal?.aborted) return;
+      setStories(
+        (res.data || []).map((s) => ({
+          id: s.id,
+          brandId: s.brandId,
+          brandName: s.brandName,
+          avatar: s.avatar,
+          mediaUrl: s.mediaUrl,
+          caption: s.caption,
+          expiresAt: s.expiresAt ? new Date(s.expiresAt).getTime() : Date.now() + 1000 * 60 * 60 * 20,
+          seen: s.seen,
+        }))
+      );
+    } catch {
+      if (!signal?.aborted) setStories([]);
+    } finally {
+      if (!signal?.aborted) setStoriesLoading(false);
+    }
+  };
 
   useEffect(() => {
-    let cancelled = false;
-    setStoriesLoading(true);
-    storiesApi
-      .list()
-      .then((res) => {
-        if (cancelled) return;
-        setStories(
-          (res.data || []).map((s) => ({
-            id: s.id,
-            brandId: s.brandId,
-            brandName: s.brandName,
-            avatar: s.avatar,
-            mediaUrl: s.mediaUrl,
-            caption: s.caption,
-            expiresAt: s.expiresAt ? new Date(s.expiresAt).getTime() : Date.now() + 1000 * 60 * 60 * 20,
-            seen: s.seen,
-          }))
-        );
-      })
-      .catch(() => {
-        if (!cancelled) setStories([]);
-      })
-      .finally(() => {
-        if (!cancelled) setStoriesLoading(false);
-      });
+    const controller = new AbortController();
+    loadStories(controller.signal);
     if (user) {
       preferencesApi
         .get()
         .then((res) => {
-          if (!cancelled) setPreferences({ categories: res.data.categories || [], budgetMin: res.data.budgetMin || "", budgetMax: res.data.budgetMax || "" });
+          if (!controller.signal.aborted) setPreferences({ categories: res.data.categories || [], budgetMin: res.data.budgetMin || "", budgetMax: res.data.budgetMax || "" });
         })
         .catch(() => {});
     }
+    window.onOpenCreateStory = () => setIsCreateStoryOpen(true);
     return () => {
-      cancelled = true;
+      controller.abort();
       delete window.onHideOpp;
+      delete window.onOpenCreateStory;
     };
   }, [user]);
+
+  useEffect(() => {
+    const hasPrefs = user && (preferences.categories.length > 0 || preferences.budgetMin || preferences.budgetMax);
+    if (hasPrefs && !personalizedToastShown.current) {
+      personalizedToastShown.current = true;
+      toast.info(
+        <span>
+          ✦ Personalized for you
+          {preferences.categories.length > 0 ? ` · ${preferences.categories.join(", ")}` : ""}
+          {(preferences.budgetMin || preferences.budgetMax) ? ` · ₱${preferences.budgetMin || "0"}–₱${preferences.budgetMax || "∞"}` : ""}
+          {" · "}<Link to="/settings/preferences" className="text-action font-medium hover:underline">Edit preferences</Link>
+        </span>
+      );
+    }
+  }, [user, preferences, toast]);
 
   useEffect(() => {
     window.onHideOpp = async (id) => {
@@ -151,13 +174,13 @@ export default function HomeFeed() {
     <div>
       <div className="max-w-6xl mx-auto px-4 sm:px-6 py-6">
         {!user && (
-          <div className="mb-4 bg-amber-50 border border-amber-100 rounded-xl px-4 py-3 flex flex-wrap items-center gap-3">
-            <p className="text-sm text-amber-800 flex-1 min-w-[200px]">Browsing as guest — feed is live from Laravel + MySQL. Log in to like, save, comment and inquire.</p>
+          <div className="mb-4 bg-warning/10 border border-amber-100 rounded-xl px-4 py-3 flex flex-wrap items-center gap-3">
+            <p className="text-sm text-warning flex-1 min-w-[200px]">Browsing as guest — feed is live from Laravel + MySQL. Log in to like, save, comment and inquire.</p>
             <Link to="/login" className="px-4 py-1.5 rounded-lg bg-primary text-white text-sm font-medium">Log in</Link>
-            <Link to="/" className="px-4 py-1.5 rounded-lg bg-surface border border-amber-200 text-amber-800 text-sm font-medium">About BizLink</Link>
+            <Link to="/" className="px-4 py-1.5 rounded-lg bg-surface border border-amber-200 text-warning text-sm font-medium">About BizLink</Link>
           </div>
         )}
-        {error && <p className="mb-4 text-sm text-[#DC2626] bg-red-50 border border-red-100 rounded-lg px-3 py-2">{error}</p>}
+        {error && <p className="mb-4 text-sm text-error bg-error/10 border border-error/20 rounded-lg px-3 py-2">{error}</p>}
         {loading && opportunities.length === 0 ? (
           <>
             <StoriesBarSkeleton />
@@ -165,7 +188,7 @@ export default function HomeFeed() {
           </>
         ) : (
           <>
-            {storiesLoading ? <StoriesBarSkeleton /> : <StoriesBar stories={stories} />}
+            {storiesLoading ? <StoriesBarSkeleton /> : <StoriesBar stories={stories} onOpenCreate={() => setIsCreateStoryOpen(true)} />}
             <OpportunityFeed
               opportunities={opportunities}
               comments={comments}
@@ -194,6 +217,12 @@ export default function HomeFeed() {
       >
         <ContactForm prefill={selectedPost} onClose={() => setIsModalOpen(false)} onSubmit={handleInquirySubmit} compact />
       </Modal>
+
+      <CreateStoryModal 
+        isOpen={isCreateStoryOpen} 
+        onClose={() => setIsCreateStoryOpen(false)} 
+        onComplete={() => loadStories()}
+      />
     </div>
   );
 }

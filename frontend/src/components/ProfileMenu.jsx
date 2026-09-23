@@ -32,6 +32,14 @@ function LogoutIcon() {
   );
 }
 
+function SavedIcon() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"></path>
+    </svg>
+  );
+}
+
 export default function ProfileMenu({ onAction }) {
   const { user, logout } = useAuth();
   const { isDark, setIsDark } = useContext(ThemeContext);
@@ -123,6 +131,17 @@ export default function ProfileMenu({ onAction }) {
                 >
                   <span className="text-[var(--color-text-secondary)]"><PencilIcon /></span> Edit profile
                 </Link>
+                <Link
+                  to="/saved"
+                  role="menuitem"
+                  onClick={() => {
+                    setOpen(false);
+                    if (onAction) onAction();
+                  }}
+                  className={itemClass}
+                >
+                  <span className="text-[var(--color-text-secondary)]"><SavedIcon /></span> Saved
+                </Link>
               </div>
               <div className="border-t border-[var(--color-border)] py-1.5">
                 <button 
@@ -153,7 +172,7 @@ export default function ProfileMenu({ onAction }) {
                 </button>
               </div>
               <div className="border-t border-[var(--color-border)] py-1.5">
-                <button role="menuitem" onClick={() => setShowLogoutConfirm(true)} disabled={busy} className="w-full flex items-center gap-3 px-4 py-2.5 text-sm font-medium text-[#DC2626] hover:bg-red-50/10 disabled:opacity-60 transition-colors text-left">
+                <button role="menuitem" onClick={() => setShowLogoutConfirm(true)} disabled={busy} className="w-full flex items-center gap-3 px-4 py-2.5 text-sm font-medium text-error hover:bg-red-50/10 disabled:opacity-60 transition-colors text-left">
                   <span><LogoutIcon /></span> {busy ? "Logging out..." : "Logout"}
                 </button>
               </div>
@@ -162,10 +181,10 @@ export default function ProfileMenu({ onAction }) {
         )}
       </div>
 
-      <Modal
-        isOpen={showLogoutConfirm}
+      <Modal 
+        isOpen={showLogoutConfirm} 
         onClose={() => setShowLogoutConfirm(false)}
-        title="Confirm Logout"
+        title="Leaving so soon?"
         footer={
           <>
             <Button variant="ghost" onClick={() => setShowLogoutConfirm(false)} disabled={busy}>Cancel</Button>
@@ -175,9 +194,21 @@ export default function ProfileMenu({ onAction }) {
           </>
         }
       >
-        <p className="text-[var(--color-text-secondary)] text-sm">
-          Are you sure you want to log out of your account? You will need to log in again to access your dashboard.
-        </p>
+        <div className="flex flex-col items-center text-center pb-2">
+          {user?.avatar ? (
+            <img src={user.avatar} alt={user.name} className="w-20 h-20 rounded-full object-cover mb-4 border-2 border-[var(--color-border)]" />
+          ) : (
+            <svg className="w-20 h-20 text-[var(--color-text-secondary)] mb-4 opacity-80" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 3c1.66 0 3 1.34 3 3s-1.34 3-3 3-3-1.34-3-3 1.34-3 3-3zm0 14.2c-2.5 0-4.71-1.28-6-3.22.03-1.99 4-3.08 6-3.08 1.99 0 5.97 1.09 6 3.08-1.29 1.94-3.5 3.22-6 3.22z" />
+            </svg>
+          )}
+          <p className="text-[var(--color-text-primary)] text-base font-medium">
+            Are you sure you want to log out?
+          </p>
+          <p className="text-[var(--color-text-secondary)] text-sm mt-2">
+            You will need to log in again to access your dashboard.
+          </p>
+        </div>
       </Modal>
     </>
   );

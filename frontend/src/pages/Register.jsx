@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
+import { useToast } from "../context/ToastContext";
 import { authApi, checkSocialConfigured } from "../api/client";
 import PasswordInput from "../components/PasswordInput";
 import { FacebookIcon, GoogleIcon } from "../components/SocialIcons";
@@ -8,20 +9,24 @@ import { FacebookIcon, GoogleIcon } from "../components/SocialIcons";
 export default function Register() {
   const navigate = useNavigate();
   const { register } = useAuth();
+  const toast = useToast();
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirm, setConfirm] = useState("");
   const [role, setRole] = useState("entrepreneur");
-  const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
   const [socialBusy, setSocialBusy] = useState(null);
+  const [welcomeName, setWelcomeName] = useState(null);
 
-  const submit = async (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    setError("");
+    if (!name.trim() || !email.trim() || !password) {
+      toast.error("All fields required");
+      return;
+    }
     if (password !== confirm) {
-      setError("Passwords do not match.");
+      toast.error("Passwords do not match.");
       return;
     }
     setBusy(true);
@@ -33,37 +38,52 @@ export default function Register() {
         password_confirmation: confirm,
         role,
       });
-      navigate("/feed", { replace: true });
+      toast.success("Registration successful!");
+      setWelcomeName(name.trim());
+      setTimeout(() => {
+        navigate("/feed", { replace: true });
+      }, 2500);
     } catch (err) {
       const errors = err?.data?.errors;
       const first = errors ? Object.values(errors).flat()[0] : null;
-      setError(first || err.message || "Registration failed");
+      toast.error(first || err.message || "Registration failed");
     } finally {
       setBusy(false);
     }
   };
 
   const social = async (provider) => {
-    setError("");
     setSocialBusy(provider);
     try {
       await checkSocialConfigured(provider);
       authApi.socialRedirect(provider);
     } catch (err) {
-      setError(err.message || `${provider} redirect failed`);
+      toast.error(err.message || `${provider} redirect failed`);
     } finally {
       setSocialBusy(null);
     }
   };
+
+  if (welcomeName) {
+    return (
+      <div className="max-w-md mx-auto px-4 sm:px-6 py-20 text-center">
+        <div className="bg-surface rounded-2xl border border-border shadow-sm p-8">
+          <div className="w-16 h-16 bg-action/10 rounded-full flex items-center justify-center mx-auto mb-4 text-action text-2xl font-bold">
+            {welcomeName.charAt(0).toUpperCase()}
+          </div>
+          <h1 className="text-2xl font-bold text-primary">Welcome, {welcomeName}!</h1>
+          <p className="text-sm text-text-secondary mt-2">Redirecting you to your feed...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="max-w-md mx-auto px-4 sm:px-6 py-10">
       <div className="bg-surface rounded-2xl border border-border shadow-sm p-6 md:p-8">
         <p className="text-[11px] tracking-[0.16em] font-semibold text-primary-light">BIZLINK · REGISTER</p>
         <h1 className="text-2xl font-bold text-primary mt-2">Create account</h1>
-        <p className="text-sm text-text-secondary mt-1">Join as entrepreneur or brand. Stored in MySQL via Laravel.</p>
-
-        {error && <p className="mt-4 text-sm text-[#DC2626] bg-red-50 border border-red-100 rounded-lg px-3 py-2">{error}</p>}
+        <p className="text-sm text-text-secondary mt-1">Join the BizLink community.</p>
 
         <div className="mt-6 grid grid-cols-2 gap-3">
           <button onClick={() => social("google")} disabled={socialBusy !== null} className="bg-surface border border-border hover:bg-bg disabled:opacity-60 text-text-primary text-sm font-medium py-2.5 rounded-lg transition-colors flex items-center justify-center gap-2">
@@ -82,7 +102,7 @@ export default function Register() {
           <div className="flex-1 h-px bg-bg" />
         </div>
 
-        <form onSubmit={submit} className="space-y-4">
+        <form onSubmit={handleSubmit} className="space-y-4">
           <div>
             <label className="text-sm font-medium text-text-primary">Full name</label>
             <input value={name} onChange={(e) => setName(e.target.value)} required placeholder="Juan Dela Cruz" className="mt-1 w-full border border-border focus:border-[#2563EB] focus:ring-2 focus:ring-blue-100 outline-none rounded-lg px-3 py-2.5 text-sm" />

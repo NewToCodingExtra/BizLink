@@ -1,6 +1,8 @@
 import { useParams, Link } from "react-router-dom";
 import { useEffect, useState } from "react";
+import CreativeLoader from "../components/CreativeLoader";
 import { inboxApi } from "../api/client";
+import { profilePath } from "../utils/profilePath";
 
 export default function MessageThread() {
   const { conversationId } = useParams();
@@ -48,20 +50,20 @@ export default function MessageThread() {
     }
   };
 
-  if (loading) return <div className="max-w-2xl mx-auto py-12 text-center"><p className="text-text-secondary">Loading thread...</p></div>;
-  if (error && !conv) return <div className="max-w-2xl mx-auto py-12 text-center"><p className="text-text-secondary">{error}</p><Link to="/messages" className="text-action text-sm">Back to inbox</Link></div>;
-  if (!conv) return <div className="max-w-2xl mx-auto py-12 text-center"><p className="text-text-secondary">Conversation not found.</p><Link to="/messages" className="text-action text-sm">Back to inbox</Link></div>;
+  if (loading) return <CreativeLoader text="Loading thread..." fullScreen={true} />;
+  if (error && !conv) return <div className="max-w-2xl mx-auto min-h-[calc(100vh-64px)] flex flex-col items-center justify-center text-center"><p className="text-text-secondary mb-2">{error}</p><Link to="/messages" className="text-action text-sm font-medium">Back to inbox</Link></div>;
+  if (!conv) return <div className="max-w-2xl mx-auto min-h-[calc(100vh-64px)] flex flex-col items-center justify-center text-center"><p className="text-text-secondary mb-2">Conversation not found.</p><Link to="/messages" className="text-action text-sm font-medium">Back to inbox</Link></div>;
 
   return (
     <div className="max-w-2xl mx-auto flex flex-col h-[calc(100dvh-64px)]">
       <div className="px-4 sm:px-6 py-4 border-b border-border bg-surface flex items-center gap-3">
         <Link to="/messages" className="text-text-secondary hover:text-text-primary">←</Link>
-        <Link to={`/profile/${conv.brandId}`}><img src={conv.avatar} alt={conv.with} className="w-8 h-8 rounded-full" /></Link>
-        <Link to={`/profile/${conv.brandId}`} className="text-sm font-semibold text-text-primary hover:text-action">{conv.with}</Link>
+        <Link to={profilePath({ username: conv.withUsername, authorId: conv.withId, brandId: conv.brandId })}><img src={conv.avatar} alt={conv.with} className="w-8 h-8 rounded-full" /></Link>
+        <Link to={profilePath({ username: conv.withUsername, authorId: conv.withId, brandId: conv.brandId })} className="text-sm font-semibold text-text-primary hover:text-action">{conv.with}</Link>
         <span className="text-xs text-text-secondary">Private consultation</span>
       </div>
-      {error && <p className="mx-4 mt-3 text-sm text-[#DC2626] bg-red-50 border border-red-100 rounded-lg px-3 py-2">{error}</p>}
-      <div className="flex-1 overflow-auto p-4 space-y-3 bg-[#F8FAFC]">
+      {error && <p className="mx-4 mt-3 text-sm text-error bg-error/10 border border-error/20 rounded-lg px-3 py-2">{error}</p>}
+      <div className="flex-1 overflow-auto p-4 space-y-3 bg-[var(--color-bg)]">
         {messages.map((m) => (
           <div key={m.id} className={`flex ${m.from === "me" ? "justify-end" : "justify-start"}`}>
             <div className={`max-w-[75%] rounded-2xl px-4 py-2.5 text-sm leading-relaxed ${m.from === "me" ? "bg-action text-white rounded-br-md" : "bg-surface border border-border text-text-primary rounded-bl-md shadow-sm"}`}>

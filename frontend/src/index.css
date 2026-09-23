@@ -11,6 +11,9 @@
   --color-border: #E2E8F0;
   --color-text-primary: #0F172A;
   --color-text-secondary: #64748B;
+  --color-success: #16A34A;
+  --color-warning: #D97706;
+  --color-error: #DC2626;
 }
 
 :root {
@@ -39,8 +42,11 @@
   --color-bg: #0B1121;
   --color-surface: #161F33;
   --color-border: #2D3748;
-  --color-text-primary: #F8FAFC;
-  --color-text-secondary: #94A3B8;
+  --color-text-primary: #F1F5F9;
+  --color-text-secondary: #CBD5E1;
+  --color-success: #4ADE80;
+  --color-warning: #FBBF24;
+  --color-error: #F87171;
 }
 
 @media (prefers-color-scheme: dark) {
@@ -53,8 +59,11 @@
     --color-bg: #0B1121;
     --color-surface: #161F33;
     --color-border: #2D3748;
-    --color-text-primary: #F8FAFC;
-    --color-text-secondary: #94A3B8;
+    --color-text-primary: #F1F5F9;
+    --color-text-secondary: #CBD5E1;
+    --color-success: #4ADE80;
+    --color-warning: #FBBF24;
+    --color-error: #F87171;
   }
 }
 
@@ -73,4 +82,28 @@ body { background: var(--color-bg); color: var(--color-text-primary); -webkit-fo
 
 .animate-progress-slide {
   animation: progress-slide 1.5s infinite ease-in-out;
+}
+
+@keyframes spin-reverse {
+  from { transform: rotate(360deg); }
+  to { transform: rotate(0deg); }
+}
+
+.animate-spin-reverse {
+  animation: spin-reverse 1s linear infinite;
+}
+
+@keyframes toast-slide-up {
+  0% { transform: translateY(150%) scale(0.9); opacity: 0; }
+  100% { transform: translateY(0) scale(1); opacity: 1; }
+}
+
+.animate-toast-slide-up {
+  animation: toast-slide-up 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@keyframes toast-progress {
+  to {
+    stroke-dashoffset: 0;
+  }
 }

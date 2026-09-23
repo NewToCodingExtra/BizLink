@@ -18,7 +18,7 @@ export default function Footer() {
             <p className="text-sm text-text-secondary mt-3">Contact: hello@bizlink.ph · +63 917 000 0000</p>
             <div className="flex gap-3 mt-4">
               <a href="#" aria-label="Facebook" className="w-8 h-8 rounded-full bg-surface/10 grid place-items-center hover:bg-surface/15 transition-colors text-white text-sm">f</a>
-              <a href="#" aria-label="Instagram" className="w-8 h-8 rounded-full bg-surface/10 grid place-items-center hover:bg-surface/15 transition-colors text-white text-sm">◎</a>
+              <a href="#" aria-label="Instagram" className="w-8 h-8 rounded-full bg-surface/10 grid place-items-center hover:bg-surface/15 transition-colors text-[var(--color-text-primary)] text-sm">◎</a>
               <a href="#" aria-label="LinkedIn" className="w-8 h-8 rounded-full bg-surface/10 grid place-items-center hover:bg-surface/15 transition-colors text-white text-sm">in</a>
             </div>
           </div>

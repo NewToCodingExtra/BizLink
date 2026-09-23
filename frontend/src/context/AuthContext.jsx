@@ -56,6 +56,7 @@ export function AuthProvider({ children }) {
     try {
       const res = await authApi.me();
       setUser(res.user);
+      return res.user;
     } catch {
       setToken(null);
       setUser(null);

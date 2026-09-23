@@ -37,7 +37,7 @@ export default function Landing() {
                 <Link to="/login" className="px-5 py-2.5 rounded-lg bg-surface/10 hover:bg-surface/15 border border-white/20 text-white text-sm font-medium transition-colors">
                   Log in
                 </Link>
-                <Link to="/feed" className="px-5 py-2.5 rounded-lg bg-surface text-primary text-sm font-medium hover:bg-bg transition-colors">
+                <Link to="/feed" className="px-5 py-2.5 rounded-lg bg-surface text-text-primary text-sm font-medium hover:bg-bg transition-colors">
                   Browse as guest
                 </Link>
               </>

@@ -30,7 +30,7 @@ export default function OpportunityFeed({
 
   return (
     <div className="max-w-2xl mx-auto w-full">
-      <div className="sticky top-[64px] z-20 bg-[#F8FAFC]/80 backdrop-blur supports-[backdrop-filter]:bg-[#F8FAFC]/80 py-3 -mx-4 px-4 sm:mx-0 sm:px-0 border-b border-border mb-4">
+      <div className="sticky top-[64px] z-20 bg-[var(--color-bg)]/80 backdrop-blur supports-[backdrop-filter]:bg-[var(--color-bg)]/80 py-3 -mx-4 px-4 sm:mx-0 sm:px-0 border-b border-border mb-4">
         <FilterBar active={activeFilter} onChange={setActiveFilter} />
       </div>
       {refreshing && <ProgressBar className="mb-4" ariaLabel="Refreshing feed" />}

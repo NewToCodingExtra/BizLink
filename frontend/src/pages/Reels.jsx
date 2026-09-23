@@ -58,7 +58,7 @@ export default function Reels() {
 
   return (
     <div className="relative">
-      {error && <p className="mx-auto max-w-md mt-3 text-sm text-[#DC2626] bg-red-50 border border-red-100 rounded-lg px-3 py-2">{error}</p>}
+      {error && <p className="mx-auto max-w-md mt-3 text-sm text-error bg-error/10 border border-error/20 rounded-lg px-3 py-2">{error}</p>}
       <div className="h-[calc(100dvh-64px)] overflow-y-scroll snap-y snap-mandatory bg-black">
         {reels.map((r) => (
           <ReelCard
@@ -73,7 +73,7 @@ export default function Reels() {
           <div ref={sentinelRef} className="snap-start h-[100dvh] w-full bg-black grid place-items-center">
             <div className="text-center px-6 max-w-md">
               <div className="w-8 h-8 border-4 border-slate-500 border-t-white rounded-full animate-spin mx-auto" />
-              <p className="text-white font-semibold mt-4">Loading more...</p>
+              <p className="text-[var(--color-text-primary)] font-semibold mt-4">Loading more...</p>
             </div>
           </div>
         )}
@@ -81,8 +81,8 @@ export default function Reels() {
           <div className="snap-start h-[100dvh] w-full bg-black grid place-items-center">
             <div className="text-center px-6 max-w-md">
               <span className="mx-auto w-12 h-12 rounded-full bg-surface/10 grid place-items-center text-accent text-xl">✓</span>
-              <p className="text-white font-semibold mt-4">You're all caught up</p>
-              <p className="text-white/60 text-sm mt-1">You watched all {reels.length} pitch reel{reels.length !== 1 ? "s" : ""}. New pitches land here first.</p>
+              <p className="text-[var(--color-text-primary)] font-semibold mt-4">You're all caught up</p>
+              <p className="text-[var(--color-text-primary)]/60 text-sm mt-1">You watched all {reels.length} pitch reel{reels.length !== 1 ? "s" : ""}. New pitches land here first.</p>
               <Link to="/feed" className="inline-block mt-5 px-5 py-2.5 rounded-lg bg-action hover:bg-action-hover text-white text-sm font-medium transition-colors">Back to feed</Link>
             </div>
           </div>

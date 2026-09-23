@@ -24,7 +24,7 @@ export default function SearchBar({ onSearch, placeholder="Search brands, catego
         value={q}
         onChange={(e)=>setQ(e.target.value)}
         placeholder={placeholder}
-        className="w-full bg-surface/10 md:bg-surface border border-white/10 md:border-border focus:border-[#2563EB] focus:ring-2 focus:ring-blue-100 outline-none text-sm md:text-sm text-white md:text-text-primary placeholder:text-text-secondary rounded-full md:rounded-lg pl-9 pr-4 py-2.5 transition"
+        className="w-full bg-surface/10 md:bg-surface border border-white/10 md:border-border focus:border-[#2563EB] focus:ring-2 focus:ring-blue-100 outline-none text-sm md:text-sm text-[var(--color-text-primary)] md:text-text-primary placeholder:text-text-secondary rounded-full md:rounded-lg pl-9 pr-4 py-2.5 transition"
       />
     </form>
   );

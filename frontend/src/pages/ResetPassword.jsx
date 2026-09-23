@@ -45,8 +45,8 @@ export default function ResetPassword() {
         <h1 className="text-2xl font-bold text-primary mt-2">Set new password</h1>
         <p className="text-sm text-text-secondary mt-1">Links expire after 60 minutes.</p>
 
-        {error && <p className="mt-4 text-sm text-[#DC2626] bg-red-50 border border-red-100 rounded-lg px-3 py-2">{error}</p>}
-        {!token && <p className="mt-4 text-sm text-amber-800 bg-amber-50 border border-amber-100 rounded-lg px-3 py-2">No token in this URL — use the link from your email.</p>}
+        {error && <p className="mt-4 text-sm text-error bg-error/10 border border-error/20 rounded-lg px-3 py-2">{error}</p>}
+        {!token && <p className="mt-4 text-sm text-warning bg-warning/10 border border-warning/20 rounded-lg px-3 py-2">No token in this URL — use the link from your email.</p>}
 
         <form onSubmit={submit} className="mt-6 space-y-4">
           <div>

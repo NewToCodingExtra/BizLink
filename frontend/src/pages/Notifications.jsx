@@ -53,9 +53,9 @@ export default function Notifications() {
           <h1 className="text-2xl font-semibold text-primary">Notifications{unread > 0 ? ` (${unread})` : ""}</h1>
           <p className="text-sm text-text-secondary mt-1">Live from Laravel + MySQL.</p>
         </div>
-        {unread > 0 && <button onClick={onMarkAll} className="text-xs font-medium text-action hover:text-[#1D4ED8] border border-blue-100 bg-blue-50 rounded-full px-3 py-1.5">Mark all read</button>}
+        {unread > 0 && <button onClick={onMarkAll} className="text-xs font-medium text-action hover:text-[#1D4ED8] border border-action/20 bg-action/10 rounded-full px-3 py-1.5">Mark all read</button>}
       </div>
-      {error && <p className="mt-4 text-sm text-[#DC2626] bg-red-50 border border-red-100 rounded-lg px-3 py-2">{error}</p>}
+      {error && <p className="mt-4 text-sm text-error bg-error/10 border border-error/20 rounded-lg px-3 py-2">{error}</p>}
       {loading ? (
         <div className="mt-6"><ListCardSkeleton rows={4} /></div>
       ) : (
@@ -73,11 +73,11 @@ export default function Notifications() {
               </>
             );
             return n.link ? (
-              <Link key={n.id} to={n.link} onClick={() => onMarkRead(n.id)} className={`p-4 flex gap-3 hover:bg-bg transition-colors ${!n.read ? "bg-blue-50/50" : ""}`}>
+              <Link key={n.id} to={n.link} onClick={() => onMarkRead(n.id)} className={`p-4 flex gap-3 hover:bg-bg transition-colors ${!n.read ? "bg-action/10" : ""}`}>
                 {body}
               </Link>
             ) : (
-              <button key={n.id} onClick={() => onMarkRead(n.id)} className={`w-full text-left p-4 flex gap-3 ${!n.read ? "bg-blue-50/50" : ""}`}>
+              <button key={n.id} onClick={() => onMarkRead(n.id)} className={`w-full text-left p-4 flex gap-3 ${!n.read ? "bg-action/10" : ""}`}>
                 {body}
               </button>
             );

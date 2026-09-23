@@ -1,5 +1,6 @@
 import { useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { useToast } from "../context/ToastContext";
 import { opportunitiesApi, uploadFile } from "../api/client";
 
 export default function CreateOpportunity() {
@@ -16,13 +17,12 @@ export default function CreateOpportunity() {
   const [uploading, setUploading] = useState(false);
   const [progress, setProgress] = useState(0);
   const [disk, setDisk] = useState("");
-  const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
+  const toast = useToast();
 
   const onPickFile = async (e) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    setError("");
     setUploading(true);
     setProgress(0);
     try {
@@ -31,7 +31,7 @@ export default function CreateOpportunity() {
       setMediaType(res.media_type || (file.type.startsWith("video") ? "video" : "image"));
       setDisk(res.disk === "gcs" ? "Stored in Google Cloud Storage" : "Stored on the app server");
     } catch (err) {
-      setError(err.message || "Upload failed");
+      toast.error(err.message || "Upload failed");
     } finally {
       setUploading(false);
       if (fileRef.current) fileRef.current.value = "";
@@ -40,17 +40,16 @@ export default function CreateOpportunity() {
 
   const submit = async (e) => {
     e.preventDefault();
-    setError("");
     if (!headline.trim() || !capital.trim() || !roi.trim() || !description.trim()) {
-      setError("Please fill required fields.");
+      toast.error("Please fill required fields.");
       return;
     }
     if (description.length > 2000) {
-      setError("Description must be within 2000 characters.");
+      toast.error("Description must be within 2000 characters.");
       return;
     }
     if (uploading) {
-      setError("Wait for the upload to finish.");
+      toast.error("Wait for the upload to finish.");
       return;
     }
     setBusy(true);
@@ -70,7 +69,7 @@ export default function CreateOpportunity() {
     } catch (err) {
       const errors = err?.data?.errors;
       const first = errors ? Object.values(errors).flat()[0] : null;
-      setError(first || err.message || "Publish failed");
+      toast.error(first || err.message || "Publish failed");
     } finally {
       setBusy(false);
     }
@@ -84,8 +83,6 @@ export default function CreateOpportunity() {
     <div className="max-w-2xl mx-auto px-4 sm:px-6 py-6">
       <h1 className="text-2xl font-semibold text-primary">Post an Opportunity</h1>
       <p className="text-sm text-text-secondary mt-1">Saved to MySQL via Laravel. Images and videos go to Google Cloud Storage when configured, otherwise the app server.</p>
-
-      {error && <p className="mt-4 text-sm text-[#DC2626] bg-red-50 border border-red-100 rounded-lg px-3 py-2">{error}</p>}
 
       <form onSubmit={submit} className="mt-6 bg-surface rounded-xl border border-border shadow-sm p-6 space-y-4">
         <div className="flex gap-2">
@@ -135,7 +132,7 @@ export default function CreateOpportunity() {
               <div className="h-full bg-action transition-all" style={{ width: `${progress}%` }} />
             </div>
           )}
-          {disk && !uploading && <p className="mt-2 text-xs text-[#16A34A]">{disk}</p>}
+          {disk && !uploading && <p className="mt-2 text-xs text-success">{disk}</p>}
         </div>
 
         <div>

@@ -1,7 +1,7 @@
 const features = [
-  { icon: "✓", title: "Verified Brands", desc: "Every franchiser and wholesaler passes document and site validation. Look for the green Verified badge.", accent: "text-[#16A34A] bg-green-50 border-green-100" },
-  { icon: "⟡", title: "Direct Matchmaking", desc: "Inquire on any card — opens a private consultation thread, not a generic form queue.", accent: "text-action bg-blue-50 border-blue-100" },
-  { icon: "◈", title: "Transparent ROI Data", desc: "Capital, margins and payback periods are displayed upfront, comparable across opportunities.", accent: "text-amber-700 bg-amber-50 border-amber-100" },
+  { icon: "✓", title: "Verified Brands", desc: "Every franchiser and wholesaler passes document and site validation. Look for the green Verified badge.", accent: "text-success bg-success/10 border-success/20" },
+  { icon: "⟡", title: "Direct Matchmaking", desc: "Inquire on any card — opens a private consultation thread, not a generic form queue.", accent: "text-action bg-action/10 border-action/20" },
+  { icon: "◈", title: "Transparent ROI Data", desc: "Capital, margins and payback periods are displayed upfront, comparable across opportunities.", accent: "text-amber-700 bg-warning/10 border-amber-100" },
   { icon: "◎", title: "Nationwide Reach", desc: "From Metro Manila flagships to VisMin barangay routes — filter by region and launch anywhere.", accent: "text-text-primary bg-bg border-border" },
 ];
 

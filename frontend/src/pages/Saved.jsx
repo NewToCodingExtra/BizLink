@@ -64,7 +64,7 @@ export default function Saved() {
     <div className="max-w-2xl mx-auto px-4 sm:px-6 py-6">
       <h1 className="text-2xl font-semibold text-primary">Saved Opportunities</h1>
       <p className="text-sm text-text-secondary mt-1">Bookmarked posts from MySQL — quick access to your shortlist.</p>
-      {error && <p className="mt-4 text-sm text-[#DC2626] bg-red-50 border border-red-100 rounded-lg px-3 py-2">{error}</p>}
+      {error && <p className="mt-4 text-sm text-error bg-error/10 border border-error/20 rounded-lg px-3 py-2">{error}</p>}
       {loading ? (
         <div className="mt-6"><FeedSkeleton count={2} /></div>
       ) : (

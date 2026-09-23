@@ -30,8 +30,8 @@ export default function ForgotPassword() {
         <h1 className="text-2xl font-bold text-primary mt-2">Forgot password</h1>
         <p className="text-sm text-text-secondary mt-1">Email accounts only — Google/Facebook accounts sign in with those buttons.</p>
 
-        {error && <p className="mt-4 text-sm text-[#DC2626] bg-red-50 border border-red-100 rounded-lg px-3 py-2">{error}</p>}
-        {message && <p className="mt-4 text-sm text-[#16A34A] bg-green-50 border border-green-100 rounded-lg px-3 py-2">{message}</p>}
+        {error && <p className="mt-4 text-sm text-error bg-error/10 border border-error/20 rounded-lg px-3 py-2">{error}</p>}
+        {message && <p className="mt-4 text-sm text-success bg-success/10 border border-success/20 rounded-lg px-3 py-2">{message}</p>}
 
         <form onSubmit={submit} className="mt-6 space-y-4">
           <div>

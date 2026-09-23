@@ -8,9 +8,9 @@ import { inboxApi, opportunitiesApi } from "../api/client";
 import { useAuth } from "../context/AuthContext";
 
 function badgeClasses(type) {
-  if (type === "Franchise") return "bg-amber-50 text-amber-700 border-amber-100";
+  if (type === "Franchise") return "bg-warning/10 text-warning border border-warning/20";
   if (type === "Wholesale") return "bg-bg text-text-primary border-border";
-  return "bg-blue-50 text-blue-700 border-blue-100";
+  return "bg-action/10 text-action border border-action/20";
 }
 
 export default function OpportunityDetail() {
@@ -78,24 +78,24 @@ export default function OpportunityDetail() {
   return (
     <div className="max-w-2xl mx-auto px-4 sm:px-6 py-6">
       <button onClick={() => navigate(-1)} className="text-sm text-text-secondary hover:text-text-primary">← Back</button>
-      {error && <p className="mt-3 text-sm text-[#DC2626] bg-red-50 border border-red-100 rounded-lg px-3 py-2">{error}</p>}
+      {error && <p className="mt-3 text-sm text-error bg-error/10 border border-error/20 rounded-lg px-3 py-2">{error}</p>}
       <article className="mt-4 bg-surface rounded-xl border border-border shadow-sm overflow-hidden">
         <img src={opp.image} alt={opp.headline} className="w-full h-[360px] object-cover" />
         <div className="p-6">
           <div className="flex items-center gap-2">
             <img src={opp.brandAvatar} alt={opp.brandName} className="w-9 h-9 rounded-full" />
             <span className="text-sm font-semibold text-text-primary">{opp.brandName}</span>
-            {opp.verified && <span className="text-xs font-bold text-[#16A34A] bg-green-50 border border-green-100 rounded-full px-2 py-0.5">✓ Verified</span>}
+            {opp.verified && <span className="text-xs font-bold text-success bg-success/10 border border-success/20 rounded-full px-2 py-0.5">✓ Verified</span>}
             <span className={`ml-auto text-xs font-medium border rounded-full px-2.5 py-1 ${badgeClasses(opp.type)}`}>{opp.type}</span>
           </div>
           <h1 className="text-2xl font-semibold text-primary tracking-tight mt-4">{opp.headline}</h1>
           <p className="text-sm text-text-secondary mt-2 leading-relaxed">{opp.description}</p>
           <div className="mt-4 flex gap-2">
-            <span className="text-sm font-semibold bg-slate-900 text-white rounded-full px-3 py-1">{opp.capitalRequired}</span>
-            <span className="text-sm font-medium bg-green-50 text-[#16A34A] border border-green-100 rounded-full px-3 py-1">{opp.roi}</span>
+            <span className="text-sm font-semibold bg-primary-light text-white rounded-full px-3 py-1">{opp.capitalRequired}</span>
+            <span className="text-sm font-medium bg-success/10 text-success border border-success/20 rounded-full px-3 py-1">{opp.roi}</span>
           </div>
           <div className="mt-6 flex gap-2">
-            <button onClick={onToggleLike} className={`px-4 py-2 rounded-lg border text-sm font-medium ${opp.liked ? "bg-red-50 border-red-200 text-red-600" : "bg-surface border-border text-text-secondary"}`}>♥ {opp.likes} Interested</button>
+            <button onClick={onToggleLike} className={`px-4 py-2 rounded-lg border text-sm font-medium ${opp.liked ? "bg-error/10 border border-error/20 text-error" : "bg-surface border-border text-text-secondary"}`}>♥ {opp.likes} Interested</button>
             <button onClick={onToggleSave} className={`px-4 py-2 rounded-lg border text-sm font-medium ${opp.saved ? "bg-primary text-white border-[#0B1F3A]" : "bg-surface border-border text-text-secondary"}`}>{opp.saved ? "★ Saved" : "☆ Save"}</button>
             <button onClick={() => (user ? setIsModalOpen(true) : setError("Log in to inquire."))} className="ml-auto px-5 py-2 rounded-lg bg-action hover:bg-action-hover text-white text-sm font-medium">Inquire</button>
           </div>

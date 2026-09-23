@@ -1,8 +1,9 @@
-import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate, useLocation } from "react-router-dom";
 import Navbar from "./components/Navbar";
 import Footer from "./components/Footer";
 import ScrollToTop from "./components/ScrollToTop";
 import { AuthProvider, useAuth } from "./context/AuthContext";
+import { ToastProvider } from "./context/ToastContext";
 import RequireAuth from "./components/RequireAuth";
 import Landing from "./pages/Landing";
 import HomeFeed from "./pages/HomeFeed";
@@ -25,15 +26,12 @@ import Register from "./pages/Register";
 import SocialCallback from "./pages/SocialCallback";
 import ForgotPassword from "./pages/ForgotPassword";
 import ResetPassword from "./pages/ResetPassword";
+import CreativeLoader from "./components/CreativeLoader";
 
 function HomeOrLanding() {
   const { user, loading } = useAuth();
   if (loading) {
-    return (
-      <div className="max-w-2xl mx-auto py-16 text-center">
-        <p className="text-sm text-text-secondary">Loading BizLink...</p>
-      </div>
-    );
+    return <CreativeLoader text="Loading BizLink..." fullScreen={true} />;
   }
   if (user) {
     return <HomeFeed />;
@@ -43,16 +41,17 @@ function HomeOrLanding() {
 
 function GuestOnly({ children }) {
   const { user, loading } = useAuth();
+  const [initialUser] = React.useState(user);
+
   if (loading) {
-    return (
-      <div className="max-w-2xl mx-auto py-16 text-center">
-        <p className="text-sm text-text-secondary">Loading...</p>
-      </div>
-    );
+    return <CreativeLoader text="Loading..." fullScreen={true} />;
   }
-  if (user) {
+  // Only redirect if they were already logged in when arriving
+  if (initialUser) {
     return <Navigate to="/feed" replace />;
   }
+  // Once mounted without user, don't auto-unmount when user becomes true.
+  // The children (Login, Register, SocialCallback) will handle their own redirect after showing welcome screens.
   return children;
 }
 
@@ -135,47 +134,63 @@ export function ThemeProvider({ children }) {
   );
 }
 
+function MainApp() {
+  const location = useLocation();
+  const background = location.state && location.state.backgroundLocation;
+
+  return (
+    <div className="min-h-screen bg-[var(--color-bg)] text-[var(--color-text-primary)] flex flex-col">
+      <Navbar />
+      <main className="flex-1">
+        <Routes location={background || location}>
+          <Route path="/" element={<HomeOrLanding />} />
+          <Route path="/welcome" element={<Landing />} />
+          <Route path="/feed" element={<HomeFeed />} />
+          <Route path="/login" element={<GuestOnly><Login /></GuestOnly>} />
+          <Route path="/register" element={<GuestOnly><Register /></GuestOnly>} />
+          <Route path="/auth/google/callback" element={<SocialCallback />} />
+          <Route path="/auth/social/callback" element={<SocialCallback />} />
+          <Route path="/forgot-password" element={<GuestOnly><ForgotPassword /></GuestOnly>} />
+          <Route path="/reset-password" element={<GuestOnly><ResetPassword /></GuestOnly>} />
+          <Route path="/about" element={<About />} />
+          <Route path="/reels" element={<Reels />} />
+          <Route path="/stories/:id" element={<StoryViewer />} />
+          <Route path="/search" element={<Search />} />
+          <Route path="/post/:id" element={<OpportunityDetail />} />
+          <Route path="/create" element={<RequireAuth><CreateOpportunity /></RequireAuth>} />
+          <Route path="/messages" element={<RequireAuth><MessagesInbox /></RequireAuth>} />
+          <Route path="/messages/:conversationId" element={<RequireAuth><MessageThread /></RequireAuth>} />
+          <Route path="/notifications" element={<RequireAuth><NotificationsPage /></RequireAuth>} />
+          <Route path="/saved" element={<RequireAuth><Saved /></RequireAuth>} />
+          <Route path="/profile/edit" element={<RequireAuth><EditProfile /></RequireAuth>} />
+          <Route path="/profile/:username" element={<Profile />} />
+          <Route path="/settings/preferences" element={<RequireAuth><Preferences /></RequireAuth>} />
+          <Route path="/contact" element={<Contact />} />
+          <Route path="*" element={<div className="max-w-2xl mx-auto py-16 text-center"><p className="text-text-secondary">Page not found.</p></div>} />
+        </Routes>
+      </main>
+      <Footer />
+      {background && (
+        <Routes>
+          <Route path="/stories/:id" element={<StoryViewer />} />
+        </Routes>
+      )}
+    </div>
+  );
+}
+
 export default function App() {
   return (
-    <AuthProvider>
-      <ThemeProvider>
-        <BrowserRouter>
-          <ScrollToTop />
-          <GlobalModals />
-          <div className="min-h-screen bg-[var(--color-bg)] text-[var(--color-text-primary)] flex flex-col">
-          <Navbar />
-          <main className="flex-1">
-            <Routes>
-              <Route path="/" element={<HomeOrLanding />} />
-              <Route path="/welcome" element={<Landing />} />
-              <Route path="/feed" element={<HomeFeed />} />
-              <Route path="/login" element={<GuestOnly><Login /></GuestOnly>} />
-              <Route path="/register" element={<GuestOnly><Register /></GuestOnly>} />
-              <Route path="/auth/google/callback" element={<SocialCallback />} />
-              <Route path="/auth/social/callback" element={<SocialCallback />} />
-              <Route path="/forgot-password" element={<GuestOnly><ForgotPassword /></GuestOnly>} />
-              <Route path="/reset-password" element={<GuestOnly><ResetPassword /></GuestOnly>} />
-              <Route path="/about" element={<About />} />
-              <Route path="/reels" element={<Reels />} />
-              <Route path="/stories/:id" element={<StoryViewer />} />
-              <Route path="/search" element={<Search />} />
-              <Route path="/post/:id" element={<OpportunityDetail />} />
-              <Route path="/create" element={<RequireAuth><CreateOpportunity /></RequireAuth>} />
-              <Route path="/messages" element={<RequireAuth><MessagesInbox /></RequireAuth>} />
-              <Route path="/messages/:conversationId" element={<RequireAuth><MessageThread /></RequireAuth>} />
-              <Route path="/notifications" element={<RequireAuth><NotificationsPage /></RequireAuth>} />
-              <Route path="/saved" element={<RequireAuth><Saved /></RequireAuth>} />
-              <Route path="/profile/edit" element={<RequireAuth><EditProfile /></RequireAuth>} />
-              <Route path="/profile/:id" element={<Profile />} />
-              <Route path="/settings/preferences" element={<RequireAuth><Preferences /></RequireAuth>} />
-              <Route path="/contact" element={<Contact />} />
-              <Route path="*" element={<div className="max-w-2xl mx-auto py-16 text-center"><p className="text-text-secondary">Page not found.</p></div>} />
-            </Routes>
-          </main>
-          <Footer />
-        </div>
-        </BrowserRouter>
-      </ThemeProvider>
-    </AuthProvider>
+    <ThemeProvider>
+      <ToastProvider>
+        <AuthProvider>
+          <BrowserRouter>
+            <ScrollToTop />
+            <GlobalModals />
+            <MainApp />
+          </BrowserRouter>
+        </AuthProvider>
+      </ToastProvider>
+    </ThemeProvider>
   );
 }

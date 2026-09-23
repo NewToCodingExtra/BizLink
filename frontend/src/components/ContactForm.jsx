@@ -19,7 +19,7 @@ export default function ContactForm({ prefill, onClose, onSubmit, compact=false 
   if (sent) {
     return (
       <div className="bg-surface rounded-xl border border-border shadow-sm p-6 text-center">
-        <span className="w-12 h-12 rounded-full bg-green-50 text-[#16A34A] grid place-items-center mx-auto text-xl">✓</span>
+        <span className="w-12 h-12 rounded-full bg-success/10 text-success grid place-items-center mx-auto text-xl">✓</span>
         <h3 className="text-base font-semibold text-text-primary mt-3">Message sent — (simulated)</h3>
         <p className="text-sm text-text-secondary mt-1">We’ve previewed this as an email-style toast. In production this would notify the brand and open a consultation thread.</p>
         {onClose && <button onClick={onClose} className="mt-4 px-4 py-2 rounded-lg bg-primary text-white text-sm font-medium">Close</button>}
@@ -37,7 +37,7 @@ export default function ContactForm({ prefill, onClose, onSubmit, compact=false 
         {onClose && <button type="button" onClick={onClose} className="w-8 h-8 grid place-items-center rounded-full border border-border text-text-secondary hover:bg-bg text-lg leading-none">×</button>}
       </div>
 
-      {error && <p className="mt-4 text-sm text-[#DC2626] bg-red-50 border border-red-100 rounded-lg px-3 py-2">{error}</p>}
+      {error && <p className="mt-4 text-sm text-error bg-error/10 border border-error/20 rounded-lg px-3 py-2">{error}</p>}
 
       <div className="mt-5 space-y-4">
         <div>

@@ -96,7 +96,7 @@ export default function Search() {
         <input value={input} onChange={(e) => setInput(e.target.value)} placeholder="Search brands, categories..." className="w-full border border-border focus:border-[#2563EB] focus:ring-2 focus:ring-blue-100 outline-none rounded-lg pl-9 pr-4 py-3 text-sm bg-surface" />
       </div>
 
-      {error && <p className="mt-4 text-sm text-[#DC2626] bg-red-50 border border-red-100 rounded-lg px-3 py-2">{error}</p>}
+      {error && <p className="mt-4 text-sm text-error bg-error/10 border border-error/20 rounded-lg px-3 py-2">{error}</p>}
 
       {!q ? (
         <p className="text-sm text-text-secondary mt-6">Type to search franchises, wholesale and resell opportunities.</p>

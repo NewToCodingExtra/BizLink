@@ -1,11 +1,13 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import CommentThread from "./CommentThread";
+import { profilePath } from "../utils/profilePath";
+import { useToast } from "../context/ToastContext";
 
 function badgeClasses(type) {
-  if (type === "Franchise") return "bg-amber-50 text-amber-700 border-amber-100";
-  if (type === "Wholesale") return "bg-bg text-text-primary border-border";
-  return "bg-blue-50 text-blue-700 border-blue-100";
+  if (type === "Franchise") return "bg-warning/10 text-warning border border-warning/20";
+  if (type === "Wholesale") return "bg-bg text-text-primary border border-border";
+  return "bg-action/10 text-action border border-action/20";
 }
 
 function isFresh(createdAt) {
@@ -23,6 +25,7 @@ function formatDate(createdAt) {
 }
 
 export default function OpportunityCard({ opp, comments, onToggleLike, onToggleSave, onAddComment, onInquire, saved }) {
+  const toast = useToast();
   const [showComments, setShowComments] = useState(false);
   const fresh = isFresh(opp.createdAt);
   const commentCount = typeof opp.commentsCount === "number" ? opp.commentsCount : (comments || []).filter((c) => String(c.postId) === String(opp.id)).length;
@@ -30,13 +33,14 @@ export default function OpportunityCard({ opp, comments, onToggleLike, onToggleS
   return (
     <article className="bg-surface rounded-xl border border-border shadow-sm hover:shadow-md transition-shadow duration-150 overflow-hidden">
       <div className="p-4 flex items-center gap-3">
-        <Link to={`/profile/${opp.brandId}`}><img src={opp.brandAvatar} alt={opp.brandName} className="w-9 h-9 rounded-full object-cover" /></Link>
+        <Link to={profilePath({ username: opp.user?.username || opp.authorUsername, authorId: opp.authorId, brandId: opp.brandId })}><img src={opp.brandAvatar} alt={opp.brandName} className="w-9 h-9 rounded-full object-cover" /></Link>
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2">
-            <Link to={`/profile/${opp.brandId}`} className="text-sm font-semibold text-text-primary hover:text-action">{opp.brandName}</Link>
-            {opp.verified && <span className="inline-flex items-center gap-1 text-[11px] font-bold text-[#16A34A] bg-green-50 border border-green-100 rounded-full px-2 py-0.5">✓ Verified</span>}
+            <Link to={profilePath({ username: opp.user?.username || opp.authorUsername, authorId: opp.authorId, brandId: opp.brandId })} className="text-sm font-semibold text-text-primary hover:text-action">{opp.brandName}</Link>
+            {opp.verified && <span className="inline-flex items-center gap-1 text-[11px] font-bold text-success bg-success/10 border border-success/20 rounded-full px-2 py-0.5">✓ Verified</span>}
             {fresh && <span className="text-[10px] font-bold tracking-widest bg-primary text-white px-2 py-0.5 rounded-full">NEW</span>}
-            {opp.featured && <span className="text-[10px] font-bold tracking-widest bg-accent text-white px-2 py-0.5 rounded-full">FEATURED</span>}
+            {opp.featured && <span className="text-[10px] font-bold tracking-widest bg-accent text-[#0B1F3A] px-2 py-0.5 rounded-full">FEATURED</span>}
+            {opp.preferred && <span title={(opp.reasons || []).join(" · ") || "Matches your preferences"} className="text-[10px] font-bold tracking-widest bg-action/10 text-action border border-action/20 px-2 py-0.5 rounded-full">✦ FOR YOU</span>}
           </div>
           <p className="text-xs text-text-secondary">{opp.category} · {formatDate(opp.createdAt)}</p>
         </div>
@@ -48,7 +52,7 @@ export default function OpportunityCard({ opp, comments, onToggleLike, onToggleS
               const el = document.getElementById(`menu-${opp.id}`);
               el.classList.toggle('hidden');
             }}
-            className="p-1.5 text-text-secondary hover:text-text-secondary rounded-full hover:bg-bg transition-colors"
+            className="p-1.5 text-text-secondary hover:text-text-primary rounded-full hover:bg-bg transition-colors"
           >
             <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
               <path d="M12 8c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zm0 2c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm0 6c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2z" />
@@ -68,9 +72,9 @@ export default function OpportunityCard({ opp, comments, onToggleLike, onToggleS
             <button 
               onClick={() => {
                 document.getElementById(`menu-${opp.id}`).classList.add('hidden');
-                alert("Reported.");
+                toast.success("Reported successfully.");
               }} 
-              className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 flex items-center gap-2"
+              className="w-full text-left px-4 py-2 text-sm text-error hover:bg-error/10 flex items-center gap-2"
             >
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>
               Report
@@ -88,17 +92,17 @@ export default function OpportunityCard({ opp, comments, onToggleLike, onToggleS
       </Link>
 
       <div className="p-4">
-        <Link to={`/post/${opp.id}`} className="text-lg font-semibold text-text-primary leading-tight hover:text-primary-light line-clamp-2">{opp.headline}</Link>
+        <Link to={`/post/${opp.id}`} className="text-lg font-semibold text-text-primary leading-tight hover:text-action line-clamp-2">{opp.headline}</Link>
         <p className="text-sm text-text-secondary mt-2 line-clamp-2 leading-relaxed">{opp.description}</p>
 
         <div className="mt-3 flex flex-wrap gap-2">
-          <span className="text-xs font-semibold bg-slate-900 text-white rounded-full px-3 py-1">{opp.capitalRequired}</span>
-          <span className="text-xs font-medium bg-green-50 text-[#16A34A] border border-green-100 rounded-full px-3 py-1">{opp.roi}</span>
+          <span className="text-xs font-semibold bg-primary-light text-white rounded-full px-3 py-1">{opp.capitalRequired}</span>
+          <span className="text-xs font-medium bg-success/10 text-success border border-success/20 rounded-full px-3 py-1">{opp.roi}</span>
           <span className="text-xs text-text-secondary px-2 py-1">{opp.category}</span>
         </div>
 
         <div className="mt-4 flex items-center gap-2">
-          <button onClick={() => onToggleLike(opp.id)} className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full border text-sm font-medium transition-colors ${opp.liked ? "bg-red-50 border-red-200 text-red-600" : "bg-surface border-border text-text-secondary hover:bg-bg"}`}>
+          <button onClick={() => onToggleLike(opp.id)} className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full border text-sm font-medium transition-colors ${opp.liked ? "bg-error/10 border border-error/20 text-error" : "bg-surface border-border text-text-secondary hover:bg-bg"}`}>
             <span>{opp.liked ? "♥" : "♡"}</span> {opp.likes}
           </button>
           <button onClick={() => setShowComments(!showComments)} className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-border bg-surface text-text-secondary hover:bg-bg text-sm font-medium transition-colors">

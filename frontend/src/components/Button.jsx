@@ -16,9 +16,9 @@ export default function Button({
   
   const variants = {
     primary: 'bg-[var(--color-primary)] text-white hover:bg-[var(--color-primary-light)]',
-    secondary: 'bg-surface text-[var(--color-primary)] border border-border hover:bg-bg',
-    accent: 'bg-[var(--color-accent)] text-white hover:brightness-110',
-    danger: 'bg-red-500 text-white hover:bg-red-600',
+    secondary: 'bg-surface text-text-primary border border-border hover:bg-bg',
+    accent: 'bg-[var(--color-accent)] text-[#0B1F3A] hover:brightness-110',
+    danger: 'bg-error text-white hover:bg-red-600',
     ghost: 'text-text-secondary hover:bg-bg hover:text-text-primary',
     white: 'bg-surface text-text-primary hover:bg-bg shadow-sm',
   };

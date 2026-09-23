@@ -69,7 +69,7 @@ export default function Modal({
 
         {/* Footer */}
         {footer && (
-          <div className="p-4 border-t border-[var(--color-border)] bg-bg dark:bg-slate-900/50 flex justify-end gap-3">
+          <div className="p-4 border-t border-[var(--color-border)] bg-bg dark:bg-bg/50 flex justify-end gap-3">
             {footer}
           </div>
         )}
