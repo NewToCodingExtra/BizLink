@@ -14,10 +14,12 @@ class Preference extends Model
         'categories',
         'budget_min',
         'budget_max',
+        'onboarding_completed_at',
     ];
 
     protected $casts = [
         'categories' => 'array',
+        'onboarding_completed_at' => 'datetime',
     ];
 
     public function user()
