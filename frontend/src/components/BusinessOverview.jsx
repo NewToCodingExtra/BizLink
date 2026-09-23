@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Link, router } from '@inertiajs/react';
+import { ArrowRightIcon } from './icons';
 
 export default function BusinessOverview() {
   const [q, setQ] = useState("");
@@ -26,7 +27,7 @@ export default function BusinessOverview() {
             <Link href="/search?q=Franchise" className="px-3 py-1.5 rounded-full bg-warning/10 text-warning border border-warning/20 text-xs font-medium">Franchise</Link>
             <Link href="/search?q=Wholesale" className="px-3 py-1.5 rounded-full bg-bg text-text-primary border border-border text-xs font-medium">Wholesale</Link>
             <Link href="/search?q=Resell" className="px-3 py-1.5 rounded-full bg-action/10 text-action border border-action/20 text-xs font-medium">Resell</Link>
-            <Link href="/" className="px-5 py-2 rounded-lg bg-text-primary text-bg text-sm font-medium hover:opacity-90 transition-colors ml-1">Explore Franchises →</Link>
+            <Link href="/" className="inline-flex items-center gap-1.5 px-5 py-2 rounded-lg bg-text-primary text-bg text-sm font-medium hover:opacity-90 transition-colors ml-1">Explore Franchises <ArrowRightIcon /></Link>
           </div>
 
           <div className="mt-8 flex gap-6 text-center">

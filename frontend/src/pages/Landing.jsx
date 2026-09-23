@@ -1,8 +1,9 @@
 import { Head, Link, usePage } from "@inertiajs/react";
-import BusinessOverview from "../components/BusinessOverview";
-import BusinessFeatures from "../components/BusinessFeatures";
-import BusinessObjectives from "../components/BusinessObjectives";
-import MissionVision from "../components/MissionVision";
+import BusinessOverview from "../Components/BusinessOverview";
+import BusinessFeatures from "../Components/BusinessFeatures";
+import BusinessObjectives from "../Components/BusinessObjectives";
+import MissionVision from "../Components/MissionVision";
+import { ArrowRightIcon } from "../Components/icons";
 
 export default function Landing() {
   const { auth } = usePage().props;
@@ -68,19 +69,19 @@ export default function Landing() {
             <p className="text-xs font-bold tracking-widest text-accent">DEMO LOGIN</p>
             <p className="font-semibold text-text-primary mt-1">Entrepreneur</p>
             <p className="text-text-secondary mt-1">demo@bizlink.ph · password123</p>
-            <Link href="/login" className="text-action text-sm font-medium mt-2 inline-block">Log in →</Link>
+            <Link href="/login" className="text-action text-sm font-medium mt-2 inline-flex items-center gap-1">Log in <ArrowRightIcon className="w-3.5 h-3.5" /></Link>
           </div>
           <div className="bg-surface border border-border rounded-xl p-5 shadow-sm">
             <p className="text-xs font-bold tracking-widest text-accent">DEMO LOGIN</p>
             <p className="font-semibold text-text-primary mt-1">Brand owner</p>
             <p className="text-text-secondary mt-1">brand@bizlink.ph · password123</p>
-            <Link href="/login" className="text-action text-sm font-medium mt-2 inline-block">Log in →</Link>
+            <Link href="/login" className="text-action text-sm font-medium mt-2 inline-flex items-center gap-1">Log in <ArrowRightIcon className="w-3.5 h-3.5" /></Link>
           </div>
           <div className="bg-surface border border-border rounded-xl p-5 shadow-sm">
             <p className="text-xs font-bold tracking-widest text-accent">GOOGLE</p>
             <p className="font-semibold text-text-primary mt-1">Continue with Google</p>
             <p className="text-text-secondary mt-1">Requires GOOGLE_CLIENT_ID in backend/.env</p>
-            <Link href="/login" className="text-action text-sm font-medium mt-2 inline-block">Try Google →</Link>
+            <Link href="/login" className="text-action text-sm font-medium mt-2 inline-flex items-center gap-1">Try Google <ArrowRightIcon className="w-3.5 h-3.5" /></Link>
           </div>
         </div>
       </div>

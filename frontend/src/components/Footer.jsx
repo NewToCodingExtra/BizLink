@@ -1,4 +1,5 @@
 import { Link, usePage } from '@inertiajs/react';
+import { CopyrightIcon } from './icons';
 import markUrl from '../assets/bizlink-mark.svg';
 
 export default function Footer() {
@@ -49,7 +50,7 @@ export default function Footer() {
           </div>
         </div>
         <div className="mt-10 pt-6 border-t border-white/10 flex flex-col sm:flex-row items-center justify-between gap-2">
-          <p className="text-xs text-text-secondary">© {new Date().getFullYear()} BizLink. All rights reserved.</p>
+          <p className="inline-flex items-center gap-1.5 text-xs text-text-secondary"><CopyrightIcon className="w-3.5 h-3.5" /> {new Date().getFullYear()} BizLink. All rights reserved.</p>
           <p className="text-xs text-text-secondary">Verified Brands · Direct Matchmaking · Nationwide Reach</p>
         </div>
       </div>
