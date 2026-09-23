@@ -1,6 +1,6 @@
 export default function MissionVision() {
   return (
-    <section className="py-12 md:py-20 bg-[#F8FAFC]">
+    <section className="py-12 md:py-20 bg-bg">
       <div className="max-w-6xl mx-auto px-4 sm:px-6">
         <p className="text-center text-[11px] tracking-[0.2em] font-semibold text-text-secondary">MISSION & VISION</p>
         <h2 className="text-center text-2xl md:text-3xl font-semibold text-text-primary mt-2 tracking-tight">What guides us</h2>

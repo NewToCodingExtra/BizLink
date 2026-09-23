@@ -42,7 +42,7 @@ export default function BusinessOverview() {
           <div className="rounded-2xl overflow-hidden border border-border shadow-sm bg-bg">
             <img src="https://images.unsplash.com/photo-1497366216548-37526070297c?w=900&q=80&auto=format&fit=crop" alt="BizLink overview" className="w-full h-[380px] md:h-[460px] object-cover" />
           </div>
-          <div className="absolute -bottom-4 -left-4 bg-surface border border-border rounded-xl shadow-md p-4 max-w-[260px] hidden md:block">
+          <div className="absolute -bottom-4 -left-4 bg-surface border border-border rounded-xl shadow-md p-4 max-w-[260px] hidden md:block animate-float">
             <p className="text-xs font-semibold tracking-widest text-accent">FEATURED</p>
             <p className="text-sm font-semibold text-text-primary mt-1">BrewCraft Coffee — BGC Flagship</p>
             <p className="text-xs text-text-secondary mt-1">₱850K · 28% ROI · Franchise</p>

@@ -36,8 +36,8 @@ export default function Register() {
     <div className="max-w-md mx-auto px-4 sm:px-6 py-10">
       <Head title="Register" />
       <div className="bg-surface rounded-2xl border border-border shadow-sm p-6 md:p-8">
-        <p className="text-[11px] tracking-[0.16em] font-semibold text-primary-light">BIZLINK · REGISTER</p>
-        <h1 className="text-2xl font-bold text-primary mt-2">Create account</h1>
+        <p className="text-[11px] tracking-[0.16em] font-semibold text-text-secondary">BIZLINK · REGISTER</p>
+        <h1 className="text-2xl font-bold text-text-primary mt-2">Create account</h1>
         <p className="text-sm text-text-secondary mt-1">Join the BizLink community.</p>
 
         <div className="mt-6 grid grid-cols-2 gap-3">

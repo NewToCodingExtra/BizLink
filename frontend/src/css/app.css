@@ -112,3 +112,13 @@ body { background: var(--color-bg); color: var(--color-text-primary); -webkit-fo
     stroke-dashoffset: 0;
   }
 }
+
+@keyframes float {
+  0% { transform: translateY(0); }
+  50% { transform: translateY(-12px); }
+  100% { transform: translateY(0); }
+}
+
+.animate-float {
+  animation: float 4s ease-in-out infinite;
+}
