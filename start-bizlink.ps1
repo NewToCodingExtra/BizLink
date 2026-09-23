@@ -12,11 +12,17 @@ if (!$listening) {
 }
 netstat -ano | Select-String "3307" | Select-Object -First 3
 
-Write-Host "2) Laravel API on :8000..."
+Write-Host "2) Laravel API on :8000 (multi-worker so feed+stories load in parallel)..."
+$xamppPhp = "C:\xampp\php\php.exe"
 $apiUp = netstat -ano | Select-String "127.0.0.1:8000.*LISTENING"
 if (!$apiUp) {
-  Start-Process -FilePath "C:\xampp\php\php.exe" -ArgumentList "artisan", "serve", "--host=127.0.0.1", "--port=8000" -WorkingDirectory $backend -WindowStyle Hidden -RedirectStandardOutput C:\temp\bizlink-api.log -RedirectStandardError C:\temp\bizlink-api-err.log
+  # PHP_CLI_SERVER_WORKERS lets the built-in server answer concurrent API
+  # calls instead of queueing them one-by-one (was the slow-feed cause).
+  Start-Process -FilePath "cmd.exe" -ArgumentList @('/c', "set PHP_CLI_SERVER_WORKERS=5 && `"$xamppPhp`" artisan serve --host=127.0.0.1 --port=8000") -WorkingDirectory $backend -WindowStyle Hidden -RedirectStandardOutput C:\temp\bizlink-api.log -RedirectStandardError C:\temp\bizlink-api-err.log
   Start-Sleep -Seconds 6
+} else {
+  Write-Host "   API already running - restart it to pick up multi-worker mode:"
+  Write-Host "   Get-Process php | Stop-Process; then re-run this script."
 }
 Invoke-RestMethod http://127.0.0.1:8000/api/health | ConvertTo-Json
 
