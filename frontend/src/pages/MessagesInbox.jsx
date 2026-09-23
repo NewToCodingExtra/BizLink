@@ -1,12 +1,33 @@
-import { Head, Link } from "@inertiajs/react";
+import { useEffect } from "react";
+import { Head, Link, router, usePage } from "@inertiajs/react";
+import { ChevronRightIcon } from "../Components/icons";
+import { getEcho } from "../utils/echo";
 import { profilePath } from "../utils/profilePath";
 
 export default function MessagesInbox({ conversations = [] }) {
+  const { auth } = usePage().props;
+  const user = auth?.user ?? null;
+
+  // Live: refresh previews when a new inquiry/message notification lands.
+  useEffect(() => {
+    if (!user) return;
+    const client = getEcho();
+    if (!client) return;
+    const channel = client.private(`user.${user.id}`);
+    channel.listen(".notification.created", (e) => {
+      const t = e?.notification?.type;
+      if (t === "inquiry" || t === "comment" || t === "comment_reply") {
+        router.reload({ only: ["conversations"] });
+      }
+    });
+    return () => client.leave(`user.${user.id}`);
+  }, [user?.id]);
+
   return (
     <div className="max-w-2xl mx-auto px-4 sm:px-6 py-6 min-h-[calc(100vh-64px)]">
       <Head title="Consultation Inbox" />
-      <h1 className="text-2xl font-semibold text-primary">Consultation Inbox</h1>
-      <p className="text-sm text-text-secondary mt-1">Private buyer ↔ seller threads from MySQL. Separate from public comments.</p>
+      <h1 className="text-2xl font-semibold text-text-primary">Consultation Inbox</h1>
+      <p className="text-sm text-text-secondary mt-1">Private buyer–seller threads from MySQL. Separate from public comments.</p>
       <div className="mt-6 bg-surface rounded-xl border border-border shadow-sm divide-y divide-slate-100 overflow-hidden">
         {conversations.length === 0 && <p className="p-8 text-center text-sm text-text-secondary">No conversations yet — tap Inquire on any card.</p>}
         {conversations.map((c) => (
@@ -22,7 +43,7 @@ export default function MessagesInbox({ conversations = [] }) {
                 </div>
                 <p className="text-sm text-text-secondary truncate">{c.lastMessage}</p>
               </div>
-              <span className="text-xs text-text-secondary">→</span>
+              <span className="text-text-secondary"><ChevronRightIcon className="w-4 h-4" /></span>
             </Link>
           </div>
         ))}

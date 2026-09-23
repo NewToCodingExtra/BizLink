@@ -5,9 +5,11 @@ import SearchBar from "./SearchBar";
 import ProfileMenu from "./ProfileMenu";
 import markUrl from "../assets/bizlink-mark.svg";
 import { httpApi } from "../utils/http";
+import { getEcho } from "../utils/echo";
 import { useTheme } from "../context/ThemeContext";
 import Modal from "./Modal";
 import Button from "./Button";
+import { XIcon, MenuIcon, ArrowRightIcon } from "./icons";
 
 export default function Navbar() {
   const { auth, flash } = usePage().props;
@@ -29,6 +31,24 @@ export default function Navbar() {
       .then((res) => setNotifications(res.data || []))
       .catch(() => setNotifications([]));
   }, [user, url]);
+
+  // Live bell bump on new notifications.
+  useEffect(() => {
+    if (!user) return;
+    const client = getEcho();
+    if (!client) return;
+    const channel = client.private(`user.${user.id}`);
+    channel.listen(".notification.created", (e) => {
+      const n = e?.notification;
+      if (!n || n.read) return;
+      setNotifications((prev) => (
+        prev.some((x) => String(x.id) === String(n.id))
+          ? prev
+          : [{ ...n, read: false }, ...prev].slice(0, 20)
+      ));
+    });
+    return () => client.leave(`user.${user.id}`);
+  }, [user?.id]);
 
   const unread = notifications.filter((n) => !n.read).length;
 
@@ -122,7 +142,7 @@ export default function Navbar() {
                         <span className={`mt-1 w-2 h-2 rounded-full shrink-0 ${n.read ? "bg-bg" : "bg-action"}`}></span>
                         <div className="flex-1 min-w-0">
                           <p className="text-sm text-text-primary leading-snug">{n.message}</p>
-                          <p className="text-xs text-text-secondary mt-1">{n.timestamp}{n.link ? " · Tap to view →" : ""}</p>
+                          <p className="text-xs text-text-secondary mt-1">{n.timestamp}{n.link ? <span> · Tap to view <ArrowRightIcon className="w-3 h-3 inline-block -mt-0.5" /></span> : ""}</p>
                         </div>
                       </button>
                     ))}
@@ -135,7 +155,7 @@ export default function Navbar() {
           {user && <ProfileMenu />}
 
           <button onClick={() => setMobileOpen(!mobileOpen)} className="md:hidden w-9 h-9 grid place-items-center rounded-lg text-slate-300 hover:text-white hover:bg-surface/10 transition-colors" aria-label="Menu">
-            <span className="text-xl leading-none">{mobileOpen ? "×" : "☰"}</span>
+            {mobileOpen ? <XIcon className="w-5 h-5" /> : <MenuIcon className="w-5 h-5" />}
           </button>
         </div>
       </div>

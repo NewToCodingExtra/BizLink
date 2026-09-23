@@ -1,4 +1,4 @@
-# BizLink dev startup: MySQL 3307 + Laravel :8000 + frontend Vite :5173 (Inertia) + Meilisearch
+# BizLink dev startup: MySQL 3307 + Laravel :8000 + Reverb WS :8080 + Vite :5173 (Inertia) + Meilisearch
 $ErrorActionPreference = "Continue"
 $root = Split-Path -Parent $MyInvocation.MyCommand.Path
 $backend = Join-Path $root "backend"
@@ -26,7 +26,7 @@ function Stop-ListenersOnPort {
 }
 
 Write-Host "0) Closing existing Laravel / Vite / Meilisearch runs..."
-Stop-ListenersOnPort -Ports @(8000, 5173, 5174, 5175, 7700)
+Stop-ListenersOnPort -Ports @(8000, 8080, 5173, 5174, 5175, 7700)
 $hot = Join-Path $backend "public\hot"
 if (Test-Path $hot) {
   Remove-Item $hot -Force
@@ -59,6 +59,12 @@ try {
   Write-Host "   Health check skipped (API may still be warming up)."
 }
 
+Write-Host "3b) Reverb WebSocket on :8080 (live chat)..."
+Start-Process -FilePath "C:\xampp\php\php.exe" -ArgumentList "artisan", "reverb:start", "--port=8080" -WorkingDirectory $backend -WindowStyle Hidden -RedirectStandardOutput C:\temp\bizlink-reverb.log -RedirectStandardError C:\temp\bizlink-reverb-err.log
+Start-Sleep -Seconds 5
+$reverbUp = netstat -ano | Select-String "127.0.0.1:8080.*LISTENING"
+if ($reverbUp) { Write-Host "   Reverb listening on :8080" } else { Write-Host "   Reverb may still be starting - check C:\temp\bizlink-reverb-err.log" }
+
 Write-Host "4) Frontend Vite on :5173 (Inertia assets for Laravel)..."
 Start-Process -FilePath "cmd.exe" -ArgumentList @('/c', "npm run dev") -WorkingDirectory $frontend -WindowStyle Hidden -RedirectStandardOutput C:\temp\bizlink-vite.log -RedirectStandardError C:\temp\bizlink-vite-err.log
 Start-Sleep -Seconds 4
@@ -78,6 +84,7 @@ if ($viteUp) {
 
 Write-Host ""
 Write-Host "App URL:  http://localhost:8000   <-- open THIS (not :5173)"
+Write-Host "Reverb WS: ws://127.0.0.1:8080 (live chat + bell)"
 Write-Host "Vite HMR: http://127.0.0.1:5173   (assets only; visiting it shows an info page)"
 Write-Host "Meilisearch: http://127.0.0.1:7700"
 Write-Host "Demo: demo@bizlink.ph / password123, brand@bizlink.ph / password123"
