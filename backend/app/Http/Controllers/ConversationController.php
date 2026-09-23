@@ -2,7 +2,6 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\AppNotification;
 use App\Models\Conversation;
 use App\Models\Message;
 use App\Models\Opportunity;
@@ -127,23 +126,23 @@ class ConversationController extends Controller
         }
 
         // Notify the sender
-        AppNotification::create([
-            'user_id' => $user->id,
-            'type' => 'inquiry',
-            'message' => "You inquired on {$headline}",
-            'link' => "/messages/" . ($ownerUsername ?: $brandId),
-            'read' => false,
-        ]);
+        app(\App\Services\NotificationService::class)->push(
+            $user->id,
+            'inquiry',
+            "You inquired on {$headline}",
+            "/messages/" . ($ownerUsername ?: $brandId)
+        );
 
         if ($ownerId && $ownerId !== $user->id) {
-            AppNotification::create([
-                'user_id' => $ownerId,
-                'type' => 'inquiry',
-                'message' => "{$user->name} inquired about {$headline}",
-                'link' => "/messages/" . ($user->username ?: $user->id),
-                'read' => false,
-            ]);
+            app(\App\Services\NotificationService::class)->push(
+                $ownerId,
+                'inquiry',
+                "{$user->name} inquired about {$headline}",
+                "/messages/" . ($user->username ?: $user->id)
+            );
         }
+
+        broadcast(new \App\Events\MessageSent($message));
 
         return response()->json([
             'conversation' => $this->serialize($convo->fresh('messages')),
@@ -153,13 +152,7 @@ class ConversationController extends Controller
                 'from' => 'me',
                 'text' => $message->text,
                 'time' => $message->created_at?->diffForHumans(),
-                'attachment' => $message->attachment ? [
-                    'id' => $message->attachment->id,
-                    'type' => class_basename($message->attachment_type),
-                    'mediaUrl' => $message->attachment->image ?? $message->attachment->media_url ?? null,
-                    'videoUrl' => $message->attachment->video_url ?? null,
-                    'headline' => $message->attachment->headline ?? $message->attachment->caption ?? 'Story',
-                ] : null,
+                'attachment' => $message->attachment ? $this->attachmentCard($message->attachment, class_basename($message->attachment_type)) : null,
             ],
         ], 201);
     }
@@ -169,7 +162,7 @@ class ConversationController extends Controller
         $user = $request->user();
         $isBuyer = (int) $conversation->user_id === (int) $user->id;
         $isSeller = false;
-        
+
         if (!$isBuyer) {
             $ownerId = Opportunity::where('brand_id', $conversation->brand_id)->value('user_id')
                 ?? \App\Models\Story::where('brand_id', $conversation->brand_id)->value('user_id');
@@ -179,22 +172,107 @@ class ConversationController extends Controller
         if (!$isBuyer && !$isSeller) {
             return response()->json(['message' => 'Forbidden'], 403);
         }
-        $data = $request->validate(['text' => 'required|string|max:2000']);
+        $data = $request->validate([
+            'text' => 'required|string|max:2000',
+            'attachment.type' => 'nullable|in:opportunity,story',
+            'attachment.id' => 'nullable|integer',
+        ]);
+
+        $attachmentId = null;
+        $attachmentType = null;
+        if (!empty($data['attachment']['type']) && !empty($data['attachment']['id'])) {
+            $model = $data['attachment']['type'] === 'opportunity'
+                ? Opportunity::find($data['attachment']['id'])
+                : \App\Models\Story::find($data['attachment']['id']);
+            if (!$model) {
+                return response()->json(['message' => 'Quoted post no longer exists.'], 422);
+            }
+            $attachmentId = $model->id;
+            $attachmentType = $data['attachment']['type'] === 'opportunity' ? Opportunity::class : \App\Models\Story::class;
+        }
+
         $message = Message::create([
             'conversation_id' => $conversation->id,
             'sender_id' => $request->user()->id,
             'from_side' => 'me',
             'text' => $data['text'],
+            'attachment_id' => $attachmentId,
+            'attachment_type' => $attachmentType,
         ]);
         $conversation->update(['last_message' => $data['text']]);
-        return response()->json(['data' => [
+        broadcast(new \App\Events\MessageSent($message));
+        return response()->json(['data' => $this->serializeMessage($message)], 201);
+    }
+
+    /**
+     * Find-or-create the 1:1 thread for an inquire tap WITHOUT posting.
+     * Returns the thread URL (with ?inquiry= quote) for client redirect.
+     */
+    public function resolve(Request $request)
+    {
+        $data = $request->validate([
+            'type' => 'required|in:opportunity,story',
+            'id' => 'required|integer',
+        ]);
+
+        $user = $request->user();
+        $model = $data['type'] === 'opportunity'
+            ? Opportunity::findOrFail($data['id'])
+            : \App\Models\Story::findOrFail($data['id']);
+
+        $convo = Conversation::where('user_id', $user->id)
+            ->where('brand_id', $model->brand_id)
+            ->first();
+
+        if (!$convo) {
+            $convo = Conversation::create([
+                'user_id' => $user->id,
+                'with_name' => $data['type'] === 'opportunity' ? $model->brand_name : $model->brand_name,
+                'avatar' => $data['type'] === 'opportunity' ? $model->brand_avatar : $model->avatar,
+                'last_message' => '',
+                'unread' => 0,
+                'brand_id' => $model->brand_id,
+                'opportunity_id' => $data['type'] === 'opportunity' ? $model->id : null,
+            ]);
+        }
+
+        $ownerUsername = \App\Models\User::find($model->user_id)?->username;
+        $identifier = $ownerUsername ?: $model->brand_id;
+
+        return response()->json(['url' => "/messages/{$identifier}?inquiry={$data['type']}:{$model->id}"]);
+    }
+
+    /**
+     * Clickable quote-card payload shared by thread props, send, and inquire.
+     */
+    public function attachmentCard($model, string $type): array
+    {
+        $isOpp = $type === 'Opportunity';
+        $kind = !$isOpp ? 'story' : (($model->media_type ?? 'image') === 'video' ? 'reel' : 'post');
+        return [
+            'id' => $model->id,
+            'type' => $type,
+            'kind' => $kind,
+            'slug' => $model->slug ?? null,
+            'mediaUrl' => $model->image ?? $model->media_url ?? null,
+            'videoUrl' => $model->video_url ?? null,
+            'headline' => $model->headline ?? $model->caption ?? 'Story',
+        ];
+    }
+
+    private function serializeMessage(Message $message): array
+    {
+        $message->loadMissing('attachment');
+        return [
             'id' => $message->id,
             'conversationId' => $message->conversation_id,
-            'from' => 'me',
+            'from' => (int) $message->sender_id === (int) request()->user()?->id ? 'me' : 'them',
             'text' => $message->text,
             'time' => $message->created_at?->diffForHumans(),
-            'attachment' => null,
-        ]], 201);
+            'attachment' => $message->attachment
+                ? $this->attachmentCard($message->attachment, class_basename($message->attachment_type))
+                : null,
+        ];
     }
 
     private function serialize(Conversation $c, bool $withMessages = false): array
@@ -223,13 +301,7 @@ class ConversationController extends Controller
                 'from' => (int) $m->sender_id === (int) request()->user()?->id ? 'me' : 'them',
                 'text' => $m->text,
                 'time' => $m->created_at?->diffForHumans(),
-                'attachment' => $m->attachment ? [
-                    'id' => $m->attachment->id,
-                    'type' => class_basename($m->attachment_type),
-                    'mediaUrl' => $m->attachment->image ?? $m->attachment->media_url ?? null,
-                    'videoUrl' => $m->attachment->video_url ?? null,
-                    'headline' => $m->attachment->headline ?? $m->attachment->caption ?? 'Story',
-                ] : null,
+                'attachment' => $m->attachment ? $this->attachmentCard($m->attachment, class_basename($m->attachment_type)) : null,
             ])->values();
         }
         return $payload;

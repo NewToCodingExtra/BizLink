@@ -132,15 +132,29 @@ class PageController extends Controller
         }
 
         if (!$conversation) {
-            // Try as seller (identifier is buyer's username)
-            $buyer = \App\Models\User::where('username', $identifier)->first();
-            if ($buyer) {
-                // Find all brand IDs owned by this seller
+            // Identifier is a username. It may be the buyer (seller viewing)
+            // or the owner on the other side (buyer viewing their thread).
+            $other = \App\Models\User::where('username', $identifier)->first();
+            if ($other) {
+                // Buyer viewing: my conversation with a brand owned by $other.
+                $theirBrandIds = \App\Models\Opportunity::where('user_id', $other->id)->pluck('brand_id')
+                    ->merge(\App\Models\Story::where('user_id', $other->id)->pluck('brand_id'))
+                    ->unique()->values()->all();
+                if (!empty($theirBrandIds)) {
+                    $conversation = Conversation::where('user_id', $user->id)
+                        ->whereIn('brand_id', $theirBrandIds)
+                        ->latest()
+                        ->first();
+                }
+            }
+            if (!$conversation && isset($other) && $other) {
+                // Seller viewing: conversation where $other is the buyer
+                // and the brand is one of mine.
                 $myBrandIds = \App\Models\Opportunity::where('user_id', $user->id)->pluck('brand_id')->toArray();
                 $myStoryBrandIds = \App\Models\Story::where('user_id', $user->id)->pluck('brand_id')->toArray();
                 $allMyBrands = array_unique(array_merge($myBrandIds, $myStoryBrandIds));
 
-                $conversation = Conversation::where('user_id', $buyer->id)
+                $conversation = Conversation::where('user_id', $other->id)
                     ->whereIn('brand_id', $allMyBrands)
                     ->latest()
                     ->first();
@@ -167,11 +181,41 @@ class PageController extends Controller
 
         $data = app(ConversationController::class)->show($request, $conversation)->getData(true)['data'];
 
-        return Inertia::render('MessageThread', ['conv' => $data]);
+        return Inertia::render('MessageThread', [
+            'conv' => $data,
+            'quote' => $this->quotePayload($request),
+        ]);
+    }
+
+    /**
+     * Resolve ?inquiry=opportunity:12 (or story:7) into a clickable quote card.
+     * Invalid/expired targets yield null (thread still opens, no pin).
+     */
+    private function quotePayload(Request $request): ?array
+    {
+        $q = (string) $request->query('inquiry', '');
+        if (!preg_match('/^(opportunity|story):(\d+)$/', $q, $m)) {
+            return null;
+        }
+        $model = $m[1] === 'opportunity'
+            ? Opportunity::find((int) $m[2])
+            : \App\Models\Story::find((int) $m[2]);
+        if (!$model) {
+            return null;
+        }
+        if ($model instanceof \App\Models\Story && $model->expires_at && $model->expires_at->isPast()) {
+            return ['expired' => true, 'kind' => 'story', 'headline' => 'Story expired'];
+        }
+        $type = $m[1] === 'opportunity' ? 'Opportunity' : 'Story';
+        return app(ConversationController::class)->attachmentCard($model, $type);
     }
 
     public function notifications(Request $request)
     {
+        if ($request->wantsJson() && !$request->header('X-Inertia')) {
+            return app(NotificationController::class)->index($request);
+        }
+
         $payload = app(NotificationController::class)->index($request)->getData(true);
 
         return Inertia::render('Notifications', [

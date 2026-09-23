@@ -2,7 +2,6 @@
 
 namespace App\Services;
 
-use App\Models\AppNotification;
 use App\Models\Comment;
 use App\Models\Opportunity;
 use App\Models\User;
@@ -19,8 +18,13 @@ class CommentService
     public const REPORT_HIDE_THRESHOLD = 3;
     public const EDIT_WINDOW_MINUTES = 15;
 
+    public function __construct(private NotificationService $notifications) {}
+
     public function store(?User $user, Opportunity $opportunity, array $data): Comment
     {
+        // Comments are auth-only (route has auth:sanctum) — a NULL user_id
+        // can only come from legacy snapshots, never new writes.
+        abort_if(! $user, 401, 'Log in to comment.');
         return DB::transaction(function () use ($user, $opportunity, $data) {
             $parent = null;
             if (!empty($data['parent_id'])) {
@@ -103,13 +107,7 @@ class CommentService
             $message = $type === 'comment_reply'
                 ? "{$author->name} replied to your comment on {$opp->headline}"
                 : "{$author->name} commented on {$opp->headline}";
-            AppNotification::create([
-                'user_id' => $userId,
-                'type' => $type,
-                'message' => $message,
-                'link' => "/post/{$opp->slug}#comment-{$comment->id}",
-                'read' => false,
-            ]);
+            $this->notifications->push($userId, $type, $message, "/post/{$opp->slug}#comment-{$comment->id}");
         }
     }
 
@@ -131,13 +129,12 @@ class CommentService
             if ($userId === (int) $user->id) {
                 continue;
             }
-            AppNotification::create([
-                'user_id' => $userId,
-                'type' => 'comment_reaction',
-                'message' => "{$user->name} reacted {$emoji} to a comment on {$opp->headline}",
-                'link' => "/post/{$opp->slug}#comment-{$comment->id}",
-                'read' => false,
-            ]);
+            $this->notifications->push(
+                $userId,
+                'comment_reaction',
+                "{$user->name} reacted {$emoji} to a comment on {$opp->headline}",
+                "/post/{$opp->slug}#comment-{$comment->id}"
+            );
         }
 
         return ['added' => true];

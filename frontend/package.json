@@ -13,6 +13,8 @@
     "@inertiajs/react": "^2.3.28",
     "@tailwindcss/vite": "^4.3.3",
     "date-fns": "^4.4.0",
+    "laravel-echo": "^2.5.0",
+    "pusher-js": "^8.6.0",
     "react": "^19.2.8",
     "react-dom": "^19.2.8",
     "tailwindcss": "^4.3.3"

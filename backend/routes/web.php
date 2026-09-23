@@ -83,11 +83,13 @@ Route::middleware('auth')->group(function () {
     Route::delete('/comments/{comment}', [CommentController::class, 'destroy']);
     Route::post('/comments/{comment}/react', [CommentController::class, 'react'])->middleware('throttle:60,1');
     Route::post('/comments/{comment}/report', [CommentController::class, 'report']);
+    Route::post('/conversations/{conversation}/messages', [ConversationController::class, 'send'])->middleware('throttle:30,1');
     Route::post('/stories', [StoryController::class, 'store']);
     Route::post('/stories/{story}/seen', [StoryController::class, 'markSeen']);
     Route::post('/stories/{story}/like', [StoryController::class, 'toggleLike']);
     Route::post('/inquiries', [ConversationController::class, 'inquire']);
-    Route::post('/conversations/{conversation}/messages', [ConversationController::class, 'send']);
+    Route::post('/inquiries/resolve', [ConversationController::class, 'resolve']);
+    Route::post('/conversations/{conversation}/messages', [ConversationController::class, 'send'])->middleware('throttle:30,1');
     Route::post('/notifications/{notification}/read', [NotificationController::class, 'markRead']);
     Route::post('/notifications/read-all', [NotificationController::class, 'markAllRead']);
     Route::put('/preferences', [PreferenceController::class, 'update']);

@@ -4,6 +4,7 @@ import { profilePath } from "../utils/profilePath";
 import { httpApi } from "../utils/http";
 import { useToast } from "../context/ToastContext";
 import CreativeLoader from "../Components/CreativeLoader";
+import { XIcon } from "../Components/icons";
 
 function timeAgo(dateInput) {
   if (!dateInput) return 'now';
@@ -188,23 +189,13 @@ export default function StoryViewer({ stories: serverStories, id: idProp, storyI
       toast.error("Log in to inquire.");
       return;
     }
-    const msg = prompt("Send an inquiry message:");
-    if (!msg) return;
-
     setIsPaused(true);
     try {
-      const res = await httpApi.post("/inquiries", { story_id: story.id, message: msg });
-      const conv = res?.conversation ?? res?.data?.conversation;
-      const convId = conv?.withUsername || conv?.brandId || conv?.id;
-      if (convId) {
-        router.visit(`/messages/${convId}`);
-      } else {
-        toast.success("Inquiry sent.");
-      }
-    } catch (e) {
-      toast.error(e.message || "Failed to send inquiry");
+      const { goInquire } = await import("../utils/inquire");
+      await goInquire(toast, "story", story.id);
+    } finally {
+      setIsPaused(false);
     }
-    setIsPaused(false);
   };
 
   const handleLike = async (e) => {
@@ -281,7 +272,7 @@ export default function StoryViewer({ stories: serverStories, id: idProp, storyI
             <span className="text-sm font-semibold hover:underline">{story.brandName}</span>
             <span className="text-xs text-white/80">· {timeAgo(story.createdAt)}</span>
           </Link>
-          <button onClick={(e) => { e.stopPropagation(); closeViewer(); }} className="w-8 h-8 grid place-items-center rounded-full bg-black/40 text-white hover:bg-black/60 transition-colors z-20 cursor-pointer">×</button>
+          <button onClick={(e) => { e.stopPropagation(); closeViewer(); }} className="w-8 h-8 grid place-items-center rounded-full bg-black/40 text-white hover:bg-black/60 transition-colors z-20 cursor-pointer"><XIcon /></button>
         </div>
       </div>
 
