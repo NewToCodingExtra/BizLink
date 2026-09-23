@@ -2,9 +2,10 @@ import { useEffect, useRef, useState } from "react";
 import { Head, Link, router, usePage } from "@inertiajs/react";
 import ReelCard from "../Components/ReelCard";
 import CommentThread from "../Components/CommentThread";
-import ContactForm from "../Components/ContactForm";
 import Modal from "../Components/Modal";
+import { CheckIcon, XIcon } from "../Components/icons";
 import { httpApi } from "../utils/http";
+import { goInquire } from "../utils/inquire";
 import { useToast } from "../context/ToastContext";
 
 function appendById(prev, incoming) {
@@ -27,8 +28,6 @@ export default function Reels({ opportunities, slug = "" }) {
 
   const [reels, setReels] = useState(initialData);
   const [loadingMore, setLoadingMore] = useState(false);
-  const [error, setError] = useState("");
-  const [selected, setSelected] = useState(null);
   const [commentOpp, setCommentOpp] = useState(null);
   const [highlightSlug, setHighlightSlug] = useState("");
   const sentinelRef = useRef(null);
@@ -47,7 +46,7 @@ export default function Reels({ opportunities, slug = "" }) {
         await httpApi.post(`/opportunities/${id}/hide`);
         setReels((prev) => prev.filter((o) => String(o.id) !== String(id)));
       } catch {
-        setError("Failed to hide reel.");
+        toast.error("Failed to hide reel.");
       }
     };
     return () => {
@@ -121,7 +120,7 @@ export default function Reels({ opportunities, slug = "" }) {
       const res = await httpApi.post(`/opportunities/${id}/like`);
       setReels((prev) => prev.map((o) => (String(o.id) === String(id) ? { ...o, liked: res.liked ?? o.liked, likes: res.likes_count ?? o.likes } : o)));
     } catch (err) {
-      setError(err.message || "Like failed");
+      toast.error(err.message || "Like failed");
     }
   };
 
@@ -130,7 +129,6 @@ export default function Reels({ opportunities, slug = "" }) {
   return (
     <div className="relative">
       <Head title="Reels" />
-      {error && <p className="mx-auto max-w-md mt-3 text-sm text-error bg-error/10 border border-error/20 rounded-lg px-3 py-2">{error}</p>}
       {targetMissing && <p className="mx-auto max-w-md mt-3 text-sm text-text-secondary bg-surface border border-border rounded-lg px-3 py-2">That reel isn&apos;t available — showing all reels.</p>}
       <div className="h-[calc(100dvh-64px)] overflow-y-scroll snap-y snap-mandatory bg-black">
         {reels.map((r) => (
@@ -138,7 +136,7 @@ export default function Reels({ opportunities, slug = "" }) {
             <ReelCard
               opp={r}
               onToggleLike={onToggleLike}
-              onInquire={(o) => (user ? setSelected(o) : toast.error("Log in to inquire."))}
+              onInquire={(o) => (user ? goInquire(toast, "opportunity", o.id) : toast.error("Log in to inquire."))}
               onOpenComments={(o) => (user ? setCommentOpp(o) : toast.error("Log in to comment."))}
             />
           </div>
@@ -155,7 +153,7 @@ export default function Reels({ opportunities, slug = "" }) {
         {!hasMore && reels.length > 0 && (
           <div className="snap-start h-[100dvh] w-full bg-black grid place-items-center">
             <div className="text-center px-6 max-w-md">
-              <span className="mx-auto w-12 h-12 rounded-full bg-surface/10 grid place-items-center text-accent text-xl">✓</span>
+              <span className="mx-auto w-12 h-12 rounded-full bg-surface/10 grid place-items-center text-accent"><CheckIcon className="w-6 h-6" /></span>
               <p className="text-[var(--color-text-primary)] font-semibold mt-4">You're all caught up</p>
               <p className="text-[var(--color-text-primary)]/60 text-sm mt-1">You watched all {reels.length} pitch reel{reels.length !== 1 ? "s" : ""}. New pitches land here first.</p>
               <Link href="/feed" className="inline-block mt-5 px-5 py-2.5 rounded-lg bg-action hover:bg-action-hover text-white text-sm font-medium transition-colors">Back to feed</Link>
@@ -165,23 +163,6 @@ export default function Reels({ opportunities, slug = "" }) {
       </div>
 
       <Modal
-        isOpen={!!selected}
-        onClose={() => setSelected(null)}
-        maxWidth="max-w-lg"
-      >
-        <ContactForm
-          prefill={selected}
-          onClose={() => setSelected(null)}
-          onSubmit={async ({ message }) => {
-            await httpApi.post("/inquiries", { opportunity_id: selected.id, message });
-            setSelected(null);
-            toast.success("Inquiry sent.");
-          }}
-          compact
-        />
-      </Modal>
-
-      <Modal
         isOpen={!!commentOpp}
         onClose={() => setCommentOpp(null)}
         maxWidth="max-w-2xl"
@@ -189,15 +170,17 @@ export default function Reels({ opportunities, slug = "" }) {
         <div className="bg-surface rounded-2xl w-full h-[80vh] flex flex-col">
           <div className="p-4 border-b border-border flex justify-between items-center bg-bg sticky top-0 z-10">
             <h3 className="text-lg font-semibold text-text-primary">Comments · {commentOpp?.headline}</h3>
-            <button onClick={() => setCommentOpp(null)} className="w-8 h-8 grid place-items-center rounded-full border border-border text-text-secondary hover:bg-surface">×</button>
+            <button onClick={() => setCommentOpp(null)} className="w-8 h-8 grid place-items-center rounded-full border border-border text-text-secondary hover:bg-surface"><XIcon /></button>
           </div>
           <div className="flex-1 overflow-y-auto p-4 custom-scrollbar">
             <CommentThread
               postId={commentOpp?.id}
+              postSlug={commentOpp?.slug}
+              authorId={commentOpp?.authorId}
               comments={(reels.find((r) => String(r.id) === String(commentOpp?.id))?.comments) || []}
-              onAdd={async ({ text }) => {
-                const res = await httpApi.post(`/opportunities/${commentOpp.id}/comments`, { text });
-                const comment = res?.data ?? res;
+              autoLoad
+              onAdd={async ({ comment }) => {
+                if (!comment) return;
                 setReels((prev) =>
                   prev.map((o) =>
                     String(o.id) === String(commentOpp.id)

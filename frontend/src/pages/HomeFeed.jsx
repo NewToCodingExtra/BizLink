@@ -2,11 +2,10 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { Head, Link, router, usePage } from "@inertiajs/react";
 import StoriesBar from "../Components/StoriesBar";
 import OpportunityFeed from "../Components/OpportunityFeed";
-import ContactForm from "../Components/ContactForm";
-import Modal from "../Components/Modal";
 import CreateStoryModal from "../Components/CreateStoryModal";
 import { FeedSkeleton, StoriesBarSkeleton } from "../Components/Skeleton";
 import { httpApi } from "../utils/http";
+import { goInquire } from "../utils/inquire";
 import { useToast } from "../context/ToastContext";
 
 function appendById(prev, incoming) {
@@ -30,10 +29,7 @@ export default function HomeFeed({ opportunities, stories, preferences }) {
   const [items, setItems] = useState(initialData);
   const [activeFilter, setActiveFilter] = useState("All");
   const [loadingMore, setLoadingMore] = useState(false);
-  const [error, setError] = useState("");
   const [isCreateStoryOpen, setIsCreateStoryOpen] = useState(false);
-  const [selectedPost, setSelectedPost] = useState(null);
-  const [isModalOpen, setIsModalOpen] = useState(false);
   const sentinelRef = useRef(null);
 
   // Sync server props: page 1 replaces, later pages append by id.
@@ -62,8 +58,8 @@ export default function HomeFeed({ opportunities, stories, preferences }) {
       try {
         await httpApi.post(`/opportunities/${id}/hide`);
         setItems((prev) => prev.filter((o) => String(o.id) !== String(id)));
-      } catch {
-        setError("Failed to hide opportunity.");
+      } catch (err) {
+        toast.error("Failed to hide opportunity.");
       }
     };
     return () => {
@@ -128,7 +124,7 @@ export default function HomeFeed({ opportunities, stories, preferences }) {
       const res = await httpApi.post(`/opportunities/${id}/like`);
       setItems((prev) => prev.map((o) => (String(o.id) === String(id) ? { ...o, liked: res.liked ?? !o.liked, likes: res.likes_count ?? o.likes } : o)));
     } catch {
-      setError("Like failed. Try again.");
+      toast.error("Like failed. Try again.");
     }
   };
 
@@ -141,45 +137,25 @@ export default function HomeFeed({ opportunities, stories, preferences }) {
       const res = await httpApi.post(`/opportunities/${id}/save`);
       setItems((prev) => prev.map((o) => (String(o.id) === String(id) ? { ...o, saved: res.saved, saves: res.saves_count ?? o.saves } : o)));
     } catch (err) {
-      setError(err.message || "Save failed");
+      toast.error(err.message || "Save failed");
     }
   };
 
-  const onAddComment = async ({ postId, text }) => {
-    if (!user) {
-      toast.error("Log in to comment.");
-      return;
-    }
-    try {
-      const res = await httpApi.post(`/opportunities/${postId}/comments`, { text });
-      const comment = res?.data ?? res;
-      setItems((prev) =>
-        prev.map((o) => (String(o.id) === String(postId) ? { ...o, comments: [...(o.comments || []), comment] } : o))
-      );
-    } catch (err) {
-      setError(err.message || "Failed to add comment");
-    }
+  // Append-only: CommentTree already POSTed; keep local lists in sync.
+  const onAddComment = async ({ postId, comment }) => {
+    if (!user || !comment) return;
+    setItems((prev) =>
+      prev.map((o) => (String(o.id) === String(postId) ? { ...o, comments: [...(o.comments || []), comment] } : o))
+    );
   };
 
+  // Inquire goes straight to the private thread with the post pinned as a quote.
   const onInquire = (opp) => {
     if (!user) {
       toast.error("Log in to inquire. Your message will open a private consultation thread.");
       return;
     }
-    setSelectedPost(opp);
-    setIsModalOpen(true);
-  };
-
-  const handleInquirySubmit = async ({ message }) => {
-    if (!selectedPost || !user) return;
-    try {
-      await httpApi.post("/inquiries", { opportunity_id: selectedPost.id, message });
-      setIsModalOpen(false);
-      setSelectedPost(null);
-      toast.success("Inquiry sent.");
-    } catch (err) {
-      setError(err.message || "Inquiry failed");
-    }
+    goInquire(toast, "opportunity", opp.id);
   };
 
   return (
@@ -193,7 +169,6 @@ export default function HomeFeed({ opportunities, stories, preferences }) {
             <Link href="/" className="px-4 py-1.5 rounded-lg bg-surface border border-amber-200 text-warning text-sm font-medium">About BizLink</Link>
           </div>
         )}
-        {error && <p className="mb-4 text-sm text-error bg-error/10 border border-error/20 rounded-lg px-3 py-2">{error}</p>}
         {opportunities === undefined ? (
           <>
             <StoriesBarSkeleton />
@@ -224,14 +199,6 @@ export default function HomeFeed({ opportunities, stories, preferences }) {
           </>
         )}
       </div>
-
-      <Modal
-        isOpen={isModalOpen}
-        onClose={() => setIsModalOpen(false)}
-        maxWidth="max-w-lg"
-      >
-        <ContactForm prefill={selectedPost} onClose={() => setIsModalOpen(false)} onSubmit={handleInquirySubmit} compact />
-      </Modal>
 
       <CreateStoryModal
         isOpen={isCreateStoryOpen}

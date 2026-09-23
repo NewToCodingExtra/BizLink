@@ -1,11 +1,10 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Head, router, usePage } from "@inertiajs/react";
 import OpportunityCard from "../Components/OpportunityCard";
-import ContactForm from "../Components/ContactForm";
-import Modal from "../Components/Modal";
 import { OpportunityCardSkeleton } from "../Components/Skeleton";
 import ProgressBar from "../Components/ProgressBar";
 import { httpApi } from "../utils/http";
+import { goInquire } from "../utils/inquire";
 import { useToast } from "../context/ToastContext";
 
 function appendById(prev, incoming) {
@@ -31,9 +30,6 @@ export default function Search({ opportunities, q: serverQ }) {
   const [results, setResults] = useState(initialData);
   const [loadingMore, setLoadingMore] = useState(false);
   const [refreshing] = useState(false);
-  const [error, setError] = useState("");
-  const [selectedPost, setSelectedPost] = useState(null);
-  const [isModalOpen, setIsModalOpen] = useState(false);
   const sentinelRef = useRef(null);
 
   useEffect(() => {
@@ -101,7 +97,7 @@ export default function Search({ opportunities, q: serverQ }) {
       const res = await httpApi.post(`/opportunities/${id}/like`);
       setResults((prev) => prev.map((o) => (String(o.id) === String(id) ? { ...o, liked: res.liked ?? o.liked, likes: res.likes_count ?? o.likes } : o)));
     } catch (err) {
-      setError(err.message || "Like failed");
+      toast.error(err.message || "Like failed");
     }
   };
 
@@ -114,44 +110,37 @@ export default function Search({ opportunities, q: serverQ }) {
       const res = await httpApi.post(`/opportunities/${id}/save`);
       setResults((prev) => prev.map((o) => (String(o.id) === String(id) ? { ...o, saved: res.saved } : o)));
     } catch (err) {
-      setError(err.message || "Save failed");
+      toast.error(err.message || "Save failed");
     }
   };
 
-  const onAddComment = async ({ postId, text }) => {
-    if (!user) return;
-    try {
-      const res = await httpApi.post(`/opportunities/${postId}/comments`, { text });
-      const comment = res?.data ?? res;
-      setResults((prev) =>
-        prev.map((o) => (String(o.id) === String(postId) ? { ...o, comments: [...(o.comments || []), comment] } : o))
-      );
-    } catch (err) {
-      setError(err.message || "Failed to add comment");
-    }
+  // Append-only: CommentTree already POSTed; keep local lists in sync.
+  const onAddComment = async ({ postId, comment }) => {
+    if (!user || !comment) return;
+    setResults((prev) =>
+      prev.map((o) => (String(o.id) === String(postId) ? { ...o, comments: [...(o.comments || []), comment] } : o))
+    );
   };
 
+  // Inquire goes straight to the private thread with the post pinned as a quote.
   const onInquire = (opp) => {
     if (!user) {
       toast.error("Log in to inquire.");
       return;
     }
-    setSelectedPost(opp);
-    setIsModalOpen(true);
+    goInquire(toast, "opportunity", opp.id);
   };
 
   return (
     <div className="max-w-2xl mx-auto px-4 sm:px-6 py-6">
       <Head title={q ? `Search · ${q}` : "Search"} />
-      <h1 className="text-2xl font-semibold text-primary">Search</h1>
+      <h1 className="text-2xl font-semibold text-text-primary">Search</h1>
       <div className="mt-4 relative">
         <span className="absolute left-3 top-1/2 -translate-y-1/2 text-text-secondary">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><circle cx="11" cy="11" r="7" /><path d="M20 20L16.5 16.5" /></svg>
         </span>
         <input value={input} onChange={(e) => setInput(e.target.value)} placeholder="Search brands, categories..." className="w-full border border-border focus:border-[#2563EB] focus:ring-2 focus:ring-blue-100 outline-none rounded-lg pl-9 pr-4 py-3 text-sm bg-surface" />
       </div>
-
-      {error && <p className="mt-4 text-sm text-error bg-error/10 border border-error/20 rounded-lg px-3 py-2">{error}</p>}
 
       {!q ? (
         <p className="text-sm text-text-secondary mt-6">Type to search franchises, wholesale and resell opportunities.</p>
@@ -177,22 +166,6 @@ export default function Search({ opportunities, q: serverQ }) {
         </div>
       )}
 
-      <Modal
-        isOpen={isModalOpen}
-        onClose={() => setIsModalOpen(false)}
-        maxWidth="max-w-lg"
-      >
-        <ContactForm
-          prefill={selectedPost}
-          onClose={() => setIsModalOpen(false)}
-          onSubmit={async ({ message }) => {
-            await httpApi.post("/inquiries", { opportunity_id: selectedPost.id, message });
-            setIsModalOpen(false);
-            toast.success("Inquiry sent.");
-          }}
-          compact
-        />
-      </Modal>
     </div>
   );
 }

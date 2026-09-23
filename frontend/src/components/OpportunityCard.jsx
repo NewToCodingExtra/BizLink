@@ -1,7 +1,9 @@
 import { useState } from "react";
 import { Link } from "@inertiajs/react";
 import CommentThread from "./CommentThread";
+import { HeartIcon, CommentIcon, BookmarkIcon, CheckIcon, SparkleIcon } from "./icons";
 import { profilePath } from "../utils/profilePath";
+import { displayCapital, displayRoi } from "../utils/money";
 import { useToast } from "../context/ToastContext";
 
 function badgeClasses(type) {
@@ -37,10 +39,10 @@ export default function OpportunityCard({ opp, comments, onToggleLike, onToggleS
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2">
             <Link href={profilePath({ username: opp.user?.username || opp.authorUsername, authorId: opp.authorId, brandId: opp.brandId })} className="text-sm font-semibold text-text-primary hover:text-action">{opp.brandName}</Link>
-            {opp.verified && <span className="inline-flex items-center gap-1 text-[11px] font-bold text-success bg-success/10 border border-success/20 rounded-full px-2 py-0.5">✓ Verified</span>}
+            {opp.verified && <span className="inline-flex items-center gap-1 text-[11px] font-bold text-success bg-success/10 border border-success/20 rounded-full px-2 py-0.5"><CheckIcon className="w-3 h-3" /> Verified</span>}
             {fresh && <span className="text-[10px] font-bold tracking-widest bg-primary text-white px-2 py-0.5 rounded-full">NEW</span>}
             {opp.featured && <span className="text-[10px] font-bold tracking-widest bg-accent text-[#0B1F3A] px-2 py-0.5 rounded-full">FEATURED</span>}
-            {opp.preferred && <span title={(opp.reasons || []).join(" · ") || "Matches your preferences"} className="text-[10px] font-bold tracking-widest bg-action/10 text-action border border-action/20 px-2 py-0.5 rounded-full">✦ FOR YOU</span>}
+            {opp.preferred && <span title={(opp.reasons || []).join(" · ") || "Matches your preferences"} className="inline-flex items-center gap-1 text-[10px] font-bold tracking-widest bg-action/10 text-action border border-action/20 px-2 py-0.5 rounded-full"><SparkleIcon className="w-3 h-3" /> FOR YOU</span>}
           </div>
           <p className="text-xs text-text-secondary">{opp.category} · {formatDate(opp.createdAt)}</p>
         </div>
@@ -96,25 +98,25 @@ export default function OpportunityCard({ opp, comments, onToggleLike, onToggleS
         <p className="text-sm text-text-secondary mt-2 line-clamp-2 leading-relaxed">{opp.description}</p>
 
         <div className="mt-3 flex flex-wrap gap-2">
-          <span className="text-xs font-semibold bg-primary-light text-white rounded-full px-3 py-1">{opp.capitalRequired}</span>
-          <span className="text-xs font-medium bg-success/10 text-success border border-success/20 rounded-full px-3 py-1">{opp.roi}</span>
+          <span className="text-xs font-semibold bg-primary-light text-white rounded-full px-3 py-1">{displayCapital(opp)}</span>
+          <span className="text-xs font-medium bg-success/10 text-success border border-success/20 rounded-full px-3 py-1">{displayRoi(opp)}</span>
           <span className="text-xs text-text-secondary px-2 py-1">{opp.category}</span>
         </div>
 
         <div className="mt-4 flex items-center gap-2">
           <button onClick={() => onToggleLike(opp.id)} className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full border text-sm font-medium transition-colors ${opp.liked ? "bg-error/10 border border-error/20 text-error" : "bg-surface border-border text-text-secondary hover:bg-bg"}`}>
-            <span>{opp.liked ? "♥" : "♡"}</span> {opp.likes}
+            <HeartIcon filled={!!opp.liked} /> {opp.likes}
           </button>
           <button onClick={() => setShowComments(!showComments)} className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-border bg-surface text-text-secondary hover:bg-bg text-sm font-medium transition-colors">
-            💬 {commentCount > 0 ? commentCount : "Comment"}
+            <CommentIcon /> {commentCount > 0 ? commentCount : "Comment"}
           </button>
           <button onClick={() => onToggleSave(opp.id)} className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full border text-sm font-medium transition-colors ml-auto ${saved ? "bg-primary text-white border-[#0B1F3A]" : "bg-surface text-text-secondary border-border hover:bg-bg"}`}>
-            {saved ? "★ Saved" : "☆ Save"}
+            <BookmarkIcon filled={!!saved} /> {saved ? "Saved" : "Save"}
           </button>
           <button onClick={() => onInquire(opp)} className="px-4 py-1.5 rounded-lg bg-action hover:bg-action-hover active:bg-[#1E40AF] text-white text-sm font-medium transition-colors focus-visible:ring-2 focus-visible:ring-blue-300">Inquire</button>
         </div>
 
-        {showComments && <CommentThread postId={opp.id} comments={comments} onAdd={onAddComment} />}
+        {showComments && <CommentThread postId={opp.id} postSlug={opp.slug} authorId={opp.authorId} comments={comments} onAdd={onAddComment} autoLoad={showComments} />}
       </div>
     </article>
   );
