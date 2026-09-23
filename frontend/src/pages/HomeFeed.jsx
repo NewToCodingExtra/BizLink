@@ -92,7 +92,7 @@ export default function HomeFeed({ opportunities, stories, preferences }) {
 
   const handleFilterChange = (next) => {
     setActiveFilter(next);
-    router.get("/feed", next === "All" ? {} : { type: next }, { preserveState: false });
+    router.get("/feed", next === "All" ? {} : { type: next }, { preserveState: true, preserveScroll: true });
   };
 
   const handleLoadMore = () => {
@@ -256,3 +256,4 @@ export default function HomeFeed({ opportunities, stories, preferences }) {
     </div>
   );
 }
+

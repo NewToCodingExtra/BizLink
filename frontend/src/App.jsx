@@ -37,7 +37,8 @@ createInertiaApp({
   },
   title: (title) => (title ? `${title} · BizLink` : 'BizLink'),
   progress: {
-    color: '#2563EB',
-    showSpinner: true,
+    color: '#D4AF37',
+    showSpinner: false,
   },
 });
+

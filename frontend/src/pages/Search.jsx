@@ -50,7 +50,7 @@ export default function Search({ opportunities, q: serverQ }) {
   useEffect(() => {
     const t = setTimeout(() => {
       if (input !== q) {
-        router.get("/search", input ? { q: input } : {}, { preserveState: false });
+        router.get("/search", input ? { q: input } : {}, { preserveState: true, preserveScroll: true, replace: true });
       }
     }, 300);
     return () => clearTimeout(t);
@@ -196,3 +196,4 @@ export default function Search({ opportunities, q: serverQ }) {
     </div>
   );
 }
+
