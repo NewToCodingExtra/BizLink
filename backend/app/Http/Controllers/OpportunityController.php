@@ -109,7 +109,14 @@ class OpportunityController extends Controller
 
         $base = \Illuminate\Support\Str::slug($opp->headline ?: $opp->brand_name);
         if (empty($base)) $base = 'post';
-        $opp->slug = $base . '-' . $opp->id;
+        
+        $slug = $base;
+        $count = 1;
+        while (Opportunity::where('slug', $slug)->exists()) {
+            $slug = $base . '-' . $count;
+            $count++;
+        }
+        $opp->slug = $slug;
         $opp->save();
 
         if ($user) {

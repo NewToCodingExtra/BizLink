@@ -44,7 +44,14 @@ class StoryController extends Controller
 
         $base = \Illuminate\Support\Str::slug($story->brand_name);
         if (empty($base)) $base = 'story';
-        $story->slug = $base . '-' . $story->id;
+        
+        $slug = $base;
+        $count = 1;
+        while (Story::where('slug', $slug)->exists()) {
+            $slug = $base . '-' . $count;
+            $count++;
+        }
+        $story->slug = $slug;
         $story->save();
 
         return response()->json(['data' => $this->serialize($story)], 201);
