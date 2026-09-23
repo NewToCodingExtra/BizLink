@@ -7,9 +7,10 @@ use Illuminate\Database\Eloquent\Model;
 
 class Story extends Model
 {
-    use HasFactory;
+    use HasFactory, \Laravel\Scout\Searchable;
 
     protected $fillable = [
+        'slug',
         'user_id',
         'brand_id',
         'brand_name',

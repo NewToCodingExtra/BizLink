@@ -135,7 +135,7 @@ export default function Profile({
             <p className="text-xs font-semibold tracking-widest text-text-secondary">STORIES BY {profileUser.name.toUpperCase()}</p>
             <div className="mt-3 flex gap-3 overflow-auto pb-1">
               {stories.map((s) => (
-                <Link key={s.id} href={`/stories/${s.id}`} className="shrink-0 text-center group">
+                <Link key={s.id} href={`/stories/${s.slug}`} className="shrink-0 text-center group">
                   <img src={s.mediaUrl} alt={s.caption} className="w-24 h-32 rounded-xl object-cover border border-border group-hover:shadow-md transition" />
                   <span className="block mt-1 text-[11px] text-text-secondary truncate w-24">{s.caption}</span>
                 </Link>
@@ -200,7 +200,7 @@ export default function Profile({
                 </div>
               )}
               {opps.filter(o => o.mediaType === "video").map((o) => (
-                <Link key={o.id} href={`/reels?id=${o.id}`} className="aspect-[9/16] bg-bg relative group overflow-hidden">
+                <Link key={o.id} href={`/reels?slug=${o.slug}`} className="aspect-[9/16] bg-bg relative group overflow-hidden">
                   <img src={o.image || o.brandAvatar} alt={o.headline} className="w-full h-full object-cover group-hover:scale-105 transition duration-300" />
                   <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition flex items-center justify-center">
                     <span className="text-[var(--color-text-primary)] font-bold flex items-center gap-1">

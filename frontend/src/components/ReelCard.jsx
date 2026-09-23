@@ -28,7 +28,7 @@ export default function ReelCard({ opp, onToggleLike, onInquire, onOpenComments 
             <Link href={profilePath({ username: opp.user?.username || opp.authorUsername, authorId: opp.authorId, brandId: opp.brandId })} className="hover:underline truncate">{opp.brandName}</Link>
             <span className="text-[10px] tracking-widest bg-white/20 px-2 py-0.5 rounded-full shrink-0">{opp.type}</span>
           </p>
-          <Link href={`/post/${opp.id}`} className="block text-white text-sm mt-1 line-clamp-2 hover:underline">{opp.headline}</Link>
+          <Link href={`/post/${opp.slug}`} className="block text-white text-sm mt-1 line-clamp-2 hover:underline">{opp.headline}</Link>
           <p className="text-white/70 text-xs mt-1">{opp.capitalRequired} · {opp.roi}</p>
         </div>
         <div className="flex flex-col items-center gap-3">

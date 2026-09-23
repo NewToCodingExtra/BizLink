@@ -70,9 +70,9 @@ class PageController extends Controller
         ]);
     }
 
-    public function post(Request $request, int $id)
+    public function post(Request $request, string $slug)
     {
-        $opp = Opportunity::findOrFail($id);
+        $opp = Opportunity::where('slug', $slug)->firstOrFail();
         $data = app(OpportunityController::class)->show($request, $opp)->getData(true)['data'];
 
         return Inertia::render('OpportunityDetail', ['opp' => $data]);

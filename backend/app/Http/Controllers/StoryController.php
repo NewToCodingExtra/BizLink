@@ -42,6 +42,11 @@ class StoryController extends Controller
             'seen' => false,
         ]);
 
+        $base = \Illuminate\Support\Str::slug($story->brand_name);
+        if (empty($base)) $base = 'story';
+        $story->slug = $base . '-' . $story->id;
+        $story->save();
+
         return response()->json(['data' => $this->serialize($story)], 201);
     }
 
@@ -83,6 +88,7 @@ class StoryController extends Controller
     {
         return [
             'id' => $s->id,
+            'slug' => $s->slug,
             'authorId' => $s->user_id,
             'authorUsername' => $username ?? \App\Models\User::where('id', $s->user_id)->value('username'),
             'brandId' => $s->brand_id,

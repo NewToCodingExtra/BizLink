@@ -97,7 +97,7 @@ export default function StoriesBar({ stories }) {
               className="no-scrollbar flex gap-4 overflow-x-auto pb-1 pt-0.5 px-0.5 items-start"
             >
               {grouped.map((s) => (
-                <Link key={s.id} href={`/stories/${s.id}`} className="shrink-0 text-center group flex flex-col items-center">
+                <Link key={s.id} href={`/stories/${s.slug}`} className="shrink-0 text-center group flex flex-col items-center">
                   <span className={`block w-[68px] h-[68px] rounded-full p-[3px] ${s.seen ? "bg-bg" : "bg-gradient-to-tr from-amber-400 via-orange-500 to-pink-500"}`}>
                     <img src={s.avatar} alt={s.brandName} className="w-full h-full rounded-full object-cover border-2 border-white group-hover:scale-[1.02] transition" />
                   </span>

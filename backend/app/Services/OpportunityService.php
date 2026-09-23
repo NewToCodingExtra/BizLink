@@ -262,12 +262,22 @@ class OpportunityService
         }
 
         if ($search = $request->query('q')) {
-            $query->where(function ($q) use ($search) {
-                $q->where('brand_name', 'like', "%{$search}%")
-                  ->orWhere('headline', 'like', "%{$search}%")
-                  ->orWhere('description', 'like', "%{$search}%")
-                  ->orWhere('category', 'like', "%{$search}%");
-            });
+            try {
+                $scoutIds = \App\Models\Opportunity::search($search)->keys()->toArray();
+                if (empty($scoutIds)) {
+                    $query->whereRaw('1 = 0');
+                } else {
+                    $query->whereIn('id', $scoutIds);
+                }
+            } catch (\Exception $e) {
+                // Fallback to basic DB search if Meilisearch is down
+                $query->where(function ($q) use ($search) {
+                    $q->where('brand_name', 'like', "%{$search}%")
+                      ->orWhere('headline', 'like', "%{$search}%")
+                      ->orWhere('description', 'like', "%{$search}%")
+                      ->orWhere('category', 'like', "%{$search}%");
+                });
+            }
         }
 
         if ($category = $request->query('category')) {

@@ -62,8 +62,8 @@ Brand posts Franchise/Wholesale/Resell → Feed + Reels + Stories → Buyer like
 | **Why Choose Us** | `BusinessFeatures.jsx` `/` + `/about` | 4 cards: Verified Brands, Direct Matchmaking, Transparent ROI, Nationwide Reach |
 | **Contact** | `ContactForm.jsx` `/contact` + modal | Standalone `POST /api/contact` + pre-filled **Inquire** modal → `POST /api/inquiries` opens a consultation thread |
 | **Feed Interactions** | Like, comment (Seller badge), save, inquire | `POST /opportunities/:id/like|save`, `POST /opportunities/:id/comments` — persisted in MySQL |
-| **Stories** | `StoriesBar.jsx` → `/stories/:id` | `GET /api/stories`, gradient ring if unseen, auto-advances, `POST /stories/:id/seen` |
-| **Search** | `/search` | Debounced 300ms, server-side `?q=` on brand/headline/desc/category |
+| **Stories** | `StoriesBar.jsx` → `/stories/:slug` | `GET /api/stories`, gradient ring if unseen, auto-advances, `POST /stories/:id/seen` |
+| **Search** | `/search` | Debounced 300ms, Meilisearch typo-tolerant engine + DB fallback |
 | **Reels** | `/reels` | `snap-y` vertical, video opportunities from the same API source |
 | **Messenger** | `/messages` & `/messages/:id` | `GET /api/conversations`, `POST /api/conversations/:id/messages` |
 | **Notifications** | Bell + `/notifications` | `GET /api/notifications` with unread badge, mark-read + mark-all-read |
@@ -114,7 +114,7 @@ Locked via CSS variables + Tailwind — no hardcoded hex in components.
 
 - **Frontend:** React 19 + Vite 8 + Tailwind CSS v4 + React Router 7 (20 routes)
 - **Backend:** Laravel 12 + Sanctum (token auth) + Socialite (Google + Facebook OAuth) + GCS uploads
-- **Database:** MySQL 8.0 (`bizlink` on `127.0.0.1:3307`), seeded from the old frontend mocks
+- **Database/Search:** MySQL 8.0 (`bizlink` on `127.0.0.1:3307`), seeded from the old frontend mocks. Meilisearch on `127.0.0.1:7700` for typo-tolerant search.
 - **State:** Per-page API fetching via `src/api/client.js` + `AuthContext` — no more lifted mock seeds
 - **Lint:** Oxlint
 - **Icons:** Inline SVG + Unsplash/Pravatar placeholders
@@ -130,6 +130,7 @@ BizLink/
 │   ├── routes/web.php         Inertia pages + session auth + JSON mutations
 │   ├── routes/api.php         JSON API (still available)
 │   ├── resources/views/app.blade.php   Inertia root (@vite src/app.jsx)
+│   ├── meilisearch.exe        (Downloaded automatically by start script)
 │   └── public/build|hot       Written by frontend Vite
 ├── frontend/                React + Inertia + Vite (UI only)
 │   ├── src/
@@ -141,7 +142,7 @@ BizLink/
 │   │   ├── utils/           http.js (session + CSRF), profilePath
 │   │   └── css/app.css      Design tokens + Tailwind
 │   └── vite.config.js       laravel-vite-plugin → ../backend/public
-└── start-bizlink.ps1        MySQL:3307 + Laravel:8000 + frontend Vite
+└── start-bizlink.ps1        MySQL:3307 + Laravel:8000 + frontend Vite + Meilisearch:7700
 ```
 
 **Activity 4 → Rubric Mapping**

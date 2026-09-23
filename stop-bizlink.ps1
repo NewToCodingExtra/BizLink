@@ -1,4 +1,4 @@
-# BizLink stop script: Frees ports used by Laravel, Vite, and MySQL
+# BizLink stop script: Frees ports used by Laravel, Vite, MySQL, and Meilisearch
 $ErrorActionPreference = "Continue"
 $root = Split-Path -Parent $MyInvocation.MyCommand.Path
 $backend = Join-Path $root "backend"
@@ -23,8 +23,8 @@ function Stop-ListenersOnPort {
   }
 }
 
-Write-Host "1) Stopping Laravel and Vite servers..."
-Stop-ListenersOnPort -Ports @(8000, 5173, 5174, 5175)
+Write-Host "1) Stopping Laravel, Vite, and Meilisearch servers..."
+Stop-ListenersOnPort -Ports @(8000, 5173, 5174, 5175, 7700)
 
 Write-Host "2) Stopping MySQL server (Port 3307)..."
 Stop-ListenersOnPort -Ports @(3307)

@@ -107,6 +107,11 @@ class OpportunityController extends Controller
             'is_new' => true,
         ]);
 
+        $base = \Illuminate\Support\Str::slug($opp->headline ?: $opp->brand_name);
+        if (empty($base)) $base = 'post';
+        $opp->slug = $base . '-' . $opp->id;
+        $opp->save();
+
         if ($user) {
             AppNotification::create([
                 'user_id' => $user->id,

@@ -83,7 +83,7 @@ export default function OpportunityCard({ opp, comments, onToggleLike, onToggleS
         </div>
       </div>
 
-      <Link href={`/post/${opp.id}`} className="block bg-bg">
+      <Link href={`/post/${opp.slug}`} className="block bg-bg">
         {opp.mediaType === "video" && opp.videoUrl ? (
           <video src={opp.videoUrl} muted loop playsInline poster={opp.image} className="w-full h-[280px] object-cover" />
         ) : (
@@ -92,7 +92,7 @@ export default function OpportunityCard({ opp, comments, onToggleLike, onToggleS
       </Link>
 
       <div className="p-4">
-        <Link href={`/post/${opp.id}`} className="text-lg font-semibold text-text-primary leading-tight hover:text-action line-clamp-2">{opp.headline}</Link>
+        <Link href={`/post/${opp.slug}`} className="text-lg font-semibold text-text-primary leading-tight hover:text-action line-clamp-2">{opp.headline}</Link>
         <p className="text-sm text-text-secondary mt-2 line-clamp-2 leading-relaxed">{opp.description}</p>
 
         <div className="mt-3 flex flex-wrap gap-2">

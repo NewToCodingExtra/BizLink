@@ -7,9 +7,10 @@ use Illuminate\Database\Eloquent\Model;
 
 class Opportunity extends Model
 {
-    use HasFactory;
+    use HasFactory, \Laravel\Scout\Searchable;
 
     protected $fillable = [
+        'slug',
         'user_id',
         'brand_name',
         'brand_avatar',
@@ -29,6 +30,17 @@ class Opportunity extends Model
         'saves_count',
         'is_new',
     ];
+
+    public function toSearchableArray()
+    {
+        return [
+            'id' => $this->id,
+            'brand_name' => $this->brand_name,
+            'headline' => $this->headline,
+            'description' => $this->description,
+            'category' => $this->category,
+        ];
+    }
 
     protected $casts = [
         'featured' => 'boolean',

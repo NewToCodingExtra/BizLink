@@ -1,4 +1,4 @@
-# BizLink dev startup: MySQL 3307 + Laravel :8000 + frontend Vite :5173 (Inertia)
+# BizLink dev startup: MySQL 3307 + Laravel :8000 + frontend Vite :5173 (Inertia) + Meilisearch
 $ErrorActionPreference = "Continue"
 $root = Split-Path -Parent $MyInvocation.MyCommand.Path
 $backend = Join-Path $root "backend"
@@ -25,8 +25,8 @@ function Stop-ListenersOnPort {
   }
 }
 
-Write-Host "0) Closing existing Laravel / Vite runs..."
-Stop-ListenersOnPort -Ports @(8000, 5173, 5174, 5175)
+Write-Host "0) Closing existing Laravel / Vite / Meilisearch runs..."
+Stop-ListenersOnPort -Ports @(8000, 5173, 5174, 5175, 7700)
 $hot = Join-Path $backend "public\hot"
 if (Test-Path $hot) {
   Remove-Item $hot -Force
@@ -40,11 +40,17 @@ if (!$listening) {
   Start-Process -FilePath "C:\Program Files\MySQL\MySQL Server 8.0\bin\mysqld.exe" -ArgumentList "--datadir=C:\temp\bizlink-mysql\data", "--port=3307", "--mysqlx-port=33070", "--bind-address=127.0.0.1", "--server-id=99", "--log-error=C:\temp\bizlink-mysql\error.log" -WindowStyle Hidden
   Start-Sleep -Seconds 8
 }
-netstat -ano | Select-String "3307" | Select-Object -First 3
 
-Write-Host "2) Laravel on :8000 (multi-worker for parallel requests)..."
-# PHP_CLI_SERVER_WORKERS lets the built-in server answer concurrent
-# calls instead of queueing them one-by-one (was the slow-feed cause).
+Write-Host "2) Meilisearch on :7700..."
+$meiliPath = Join-Path $backend "meilisearch.exe"
+if (-not (Test-Path $meiliPath)) {
+    Write-Host "   Downloading Meilisearch (one-time setup)..."
+    Invoke-WebRequest -Uri "https://github.com/meilisearch/meilisearch/releases/latest/download/meilisearch-windows-amd64.exe" -OutFile $meiliPath
+}
+Start-Process -FilePath $meiliPath -ArgumentList "--db-path=C:\temp\meilisearch_data" -WindowStyle Hidden
+Start-Sleep -Seconds 2
+
+Write-Host "3) Laravel on :8000 (multi-worker for parallel requests)..."
 Start-Process -FilePath "cmd.exe" -ArgumentList @('/c', "set PHP_CLI_SERVER_WORKERS=5 && `"$xamppPhp`" artisan serve --host=127.0.0.1 --port=8000") -WorkingDirectory $backend -WindowStyle Hidden -RedirectStandardOutput C:\temp\bizlink-api.log -RedirectStandardError C:\temp\bizlink-api-err.log
 Start-Sleep -Seconds 5
 try {
@@ -53,7 +59,7 @@ try {
   Write-Host "   Health check skipped (API may still be warming up)."
 }
 
-Write-Host "3) Frontend Vite on :5173 (Inertia assets for Laravel)..."
+Write-Host "4) Frontend Vite on :5173 (Inertia assets for Laravel)..."
 Start-Process -FilePath "cmd.exe" -ArgumentList @('/c', "npm run dev") -WorkingDirectory $frontend -WindowStyle Hidden -RedirectStandardOutput C:\temp\bizlink-vite.log -RedirectStandardError C:\temp\bizlink-vite-err.log
 Start-Sleep -Seconds 4
 $viteUp = netstat -ano | Select-String "127.0.0.1:5173.*LISTENING"
@@ -73,6 +79,7 @@ if ($viteUp) {
 Write-Host ""
 Write-Host "App URL:  http://localhost:8000   <-- open THIS (not :5173)"
 Write-Host "Vite HMR: http://127.0.0.1:5173   (assets only; visiting it shows an info page)"
+Write-Host "Meilisearch: http://127.0.0.1:7700"
 Write-Host "Demo: demo@bizlink.ph / password123, brand@bizlink.ph / password123"
 Write-Host "Google OAuth needs GOOGLE_CLIENT_ID/SECRET in backend/.env"
 try {

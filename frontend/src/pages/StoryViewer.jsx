@@ -115,10 +115,10 @@ export default function StoryViewer({ stories: serverStories, id: idProp, storyI
     return finalStories;
   }, [localStories, authorFilter, routeId]);
 
-  const idx = stories.findIndex((s) => String(s.id) === String(routeId));
+  const idx = stories.findIndex((s) => s.slug === routeId);
   const story = stories[idx];
   const authorStories = story ? stories.filter((s) => s.brandId === story.brandId) : [];
-  const localIdx = authorStories.findIndex((s) => String(s.id) === String(routeId));
+  const localIdx = authorStories.findIndex((s) => s.slug === routeId);
 
   const visitStory = useCallback(
     (nextId, replace = true) => {
@@ -140,7 +140,7 @@ export default function StoryViewer({ stories: serverStories, id: idProp, storyI
           clearInterval(iv);
           const nextStory = stories[idx + 1];
           if (nextStory && nextStory.expiresAt > Date.now()) {
-            visitStory(nextStory.id, true);
+            visitStory(nextStory.slug, true);
           } else {
             closeViewer();
           }
@@ -160,7 +160,7 @@ export default function StoryViewer({ stories: serverStories, id: idProp, storyI
   useEffect(() => {
     if (story && user && !story.seen) {
       httpApi.post(`/stories/${story.id}/seen`).catch(() => {});
-      setLocalStories((prev) => prev.map((s) => (String(s.id) === String(routeId) ? { ...s, seen: true } : s)));
+      setLocalStories((prev) => prev.map((s) => (s.slug === routeId ? { ...s, seen: true } : s)));
     }
   }, [routeId, story, user]);
 
@@ -170,11 +170,11 @@ export default function StoryViewer({ stories: serverStories, id: idProp, storyI
       if (e.key === "Escape") closeViewer();
       if (e.key === "ArrowLeft") {
         const prev = stories[idx - 1];
-        if (prev) visitStory(prev.id, true);
+        if (prev) visitStory(prev.slug, true);
       }
       if (e.key === "ArrowRight") {
         const nxt = stories[idx + 1];
-        if (nxt) visitStory(nxt.id, true);
+        if (nxt) visitStory(nxt.slug, true);
         else closeViewer();
       }
     };
@@ -211,7 +211,7 @@ export default function StoryViewer({ stories: serverStories, id: idProp, storyI
     const originalStories = [...localStories];
     setLocalStories((prev) =>
       prev.map((s) =>
-        String(s.id) === String(routeId)
+        s.slug === routeId
           ? {
               ...s,
               liked: !s.liked,
@@ -225,7 +225,7 @@ export default function StoryViewer({ stories: serverStories, id: idProp, storyI
       const res = await httpApi.post(`/stories/${routeId}/like`);
       setLocalStories((prev) =>
         prev.map((s) =>
-          String(s.id) === String(routeId)
+          s.slug === routeId
             ? { ...s, liked: res.liked ?? s.liked, likesCount: res.likes_count ?? res.likesCount ?? s.likesCount }
             : s
         )
@@ -239,13 +239,13 @@ export default function StoryViewer({ stories: serverStories, id: idProp, storyI
   const handlePrev = (e) => {
     e.stopPropagation();
     const prev = stories[idx - 1];
-    if (prev) visitStory(prev.id, true);
+    if (prev) visitStory(prev.slug, true);
   };
 
   const handleNext = (e) => {
     e.stopPropagation();
     const nxt = stories[idx + 1];
-    if (nxt) visitStory(nxt.id, true);
+    if (nxt) visitStory(nxt.slug, true);
     else closeViewer();
   };
 

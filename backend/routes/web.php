@@ -29,9 +29,9 @@ Route::get('/', [PageController::class, 'home']);
 Route::get('/feed', [PageController::class, 'feed']);
 Route::get('/about', [PageController::class, 'about']);
 Route::get('/reels', [PageController::class, 'reels']);
-Route::get('/stories/{id}', [PageController::class, 'storyViewer'])->whereNumber('id');
+Route::get('/stories/{slug}', [PageController::class, 'storyViewer']);
 Route::get('/search', [PageController::class, 'search']);
-Route::get('/post/{id}', [PageController::class, 'post'])->whereNumber('id');
+Route::get('/post/{slug}', [PageController::class, 'post']);
 // NOTE: /profile/edit is registered before /profile/{username} so the
 // static segment wins over the wildcard.
 Route::get('/profile/edit', [PageController::class, 'editProfile'])->middleware('auth');
@@ -85,6 +85,7 @@ Route::middleware('auth')->group(function () {
     Route::post('/notifications/{notification}/read', [NotificationController::class, 'markRead']);
     Route::post('/notifications/read-all', [NotificationController::class, 'markAllRead']);
     Route::put('/preferences', [PreferenceController::class, 'update']);
+    Route::get('/preferences', [PreferenceController::class, 'show']);
     Route::get('/follows', [FollowController::class, 'index']);
     Route::post('/follows/toggle', [FollowController::class, 'toggle']);
     Route::post('/uploads', [UploadController::class, 'store']);
