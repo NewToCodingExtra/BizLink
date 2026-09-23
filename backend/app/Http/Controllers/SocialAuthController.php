@@ -113,6 +113,73 @@ class SocialAuthController extends Controller
         return redirect($frontend . "?provider={$provider}&token=" . urlencode($token));
     }
 
+    /**
+     * Session (web/Inertia) OAuth entry point. Uses stateful Socialite so
+     * the provider round-trip is CSRF-protected. The token-API flow above
+     * is intentionally left untouched.
+     */
+    public function webRedirect(Request $request, string $provider)
+    {
+        if ($bad = $this->providerOrFail($provider)) {
+            return $bad;
+        }
+
+        if (!config("services.{$provider}.client_id")) {
+            return redirect('/login')->with('error', ucfirst($provider) . ' OAuth is not configured.');
+        }
+
+        return Socialite::driver($provider)->redirect();
+    }
+
+    public function webCallback(Request $request, string $provider)
+    {
+        if ($bad = $this->providerOrFail($provider)) {
+            return $bad;
+        }
+
+        if ($request->query('error')) {
+            Log::warning("Social login denied", ['provider' => $provider]);
+            return redirect('/login')->with('error', ucfirst($provider) . ' sign-in was cancelled.');
+        }
+
+        try {
+            $socialUser = Socialite::driver($provider)->user();
+        } catch (\Exception $e) {
+            Log::error("Social login exchange failed", ['provider' => $provider, 'message' => $e->getMessage()]);
+            return redirect('/login')->with('error', ucfirst($provider) . ' sign-in failed. Try again.');
+        }
+
+        $idColumn = $provider . '_id';
+        $user = User::where($idColumn, $socialUser->getId())
+            ->orWhere('email', $socialUser->getEmail())
+            ->first();
+
+        if (!$user) {
+            $user = User::create([
+                'name' => $socialUser->getName() ?: explode('@', $socialUser->getEmail())[0],
+                'email' => $socialUser->getEmail(),
+                $idColumn => $socialUser->getId(),
+                'avatar' => $socialUser->getAvatar() ?: 'https://i.pravatar.cc/100?u=' . urlencode($socialUser->getEmail()),
+                'password' => Hash::make(Str::random(32)),
+                'email_verified_at' => now(),
+            ]);
+        } else {
+            $user->forceFill([
+                $idColumn => $user->{$idColumn} ?: $socialUser->getId(),
+                'avatar' => $user->avatar ?: $socialUser->getAvatar(),
+                'email_verified_at' => $user->email_verified_at ?: now(),
+            ])->save();
+        }
+
+        \App\Models\Preference::firstOrCreate(['user_id' => $user->id], ['categories' => []]);
+
+        \Illuminate\Support\Facades\Auth::login($user, true);
+        $request->session()->regenerate();
+        $request->session()->put('last_activity_at', now());
+
+        return redirect()->intended('/feed')->with('success', "Welcome back, {$user->name}!");
+    }
+
     public function tokenFromSession(Request $request)
     {
         $user = $request->user();

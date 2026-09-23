@@ -21,6 +21,22 @@ class CheckSessionActivity
                 $token->delete();
                 return response()->json(['message' => 'Session expired due to inactivity. Please log in again.'], 401);
             }
+            return $next($request);
+        }
+
+        // Session (browser) users: same inactivity policy, web-friendly logout.
+        if ($user && $request->hasSession()) {
+            $idleDays = Setting::get('session_idle_timeout_days', 7);
+            $last = $request->session()->get('last_activity_at');
+
+            if ($last && now()->diffInMinutes($last) > $idleDays * 24 * 60) {
+                Auth::logout();
+                $request->session()->invalidate();
+                $request->session()->regenerateToken();
+                return redirect('/login')->with('error', 'Session expired due to inactivity. Please log in again.');
+            }
+
+            $request->session()->put('last_activity_at', now());
         }
         
         return $next($request);
