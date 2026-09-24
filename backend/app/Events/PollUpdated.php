@@ -2,32 +2,33 @@
 
 namespace App\Events;
 
-use App\Http\Controllers\ConversationController;
-use App\Models\Message;
+use App\Http\Resources\PollResource;
+use App\Models\Poll;
 use Illuminate\Broadcasting\InteractsWithSockets;
 use Illuminate\Broadcasting\PrivateChannel;
 use Illuminate\Contracts\Broadcasting\ShouldBroadcastNow;
 use Illuminate\Foundation\Events\Dispatchable;
 use Illuminate\Queue\SerializesModels;
 
-class MessageSent implements ShouldBroadcastNow
+class PollUpdated implements ShouldBroadcastNow
 {
     use Dispatchable, InteractsWithSockets, SerializesModels;
 
-    public function __construct(public Message $message) {}
+    public function __construct(public Poll $poll, public ?int $viewerId = null) {}
 
     public function broadcastOn(): array
     {
-        return [new PrivateChannel("conversation.{$this->message->conversation_id}")];
+        return [new PrivateChannel("conversation.{$this->poll->conversation_id}")];
     }
 
     public function broadcastAs(): string
     {
-        return 'message.sent';
+        return 'poll.updated';
     }
 
     public function broadcastWith(): array
     {
-        return ['message' => app(ConversationController::class)->serializeForBroadcast($this->message)];
+        $this->poll->loadMissing('votes');
+        return ['poll' => (new PollResource($this->poll))->withViewer($this->viewerId)->toArray(request())];
     }
 }

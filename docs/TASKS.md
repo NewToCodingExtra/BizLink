@@ -27,7 +27,7 @@ verified (lint/build/live). Spec: SPECIFICATION.md · How: IMPLEMENTATION.md.
   `OpportunityService` distance signal + near/province filters, Search filter row,
   PHP location dataset (`database/data/ph_locations.php`: provinces→cities).
   Verify: tagged post scores nearer-first; NULLs neutral.
-- [ ] **T7 · Rich chat** — UploadController file whitelist (+25MB), `send` media support,
+- [x] **T7 · Rich chat** — UploadController file whitelist (+25MB), `send` media support,
   `polls`/`poll_votes` + endpoints + `PollCard.jsx`, `POST insights` +
   `InsightsCard.jsx`, composer attach menu. Verify: file guards live (php-as-pdf,
   oversize), poll lifecycle, real-count card.

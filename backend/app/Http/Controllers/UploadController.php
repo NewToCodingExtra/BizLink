@@ -14,16 +14,38 @@ class UploadController extends Controller
     // server-side — client checks are UX only and trivially bypassable.
     private const VIDEO_MAX_BYTES = 100 * 1024 * 1024;
     private const IMAGE_MAX_BYTES = 20 * 1024 * 1024;
+    private const FILE_MAX_BYTES  = 25 * 1024 * 1024;
 
     // MIME (server-sniffed) => safe extension. Anything else is rejected,
     // notably SVG (scriptable) and any executable/office/archive type.
+    // File entries (pdf/doc/xls/txt/zip) are safe for document downloads but
+    // cannot be executed because our public disk has no PHP handler and
+    // extensions are derived from MIME, never from the client filename.
+    // ClamAV is declared a non-goal for local dev; compensated by whitelist.
     private const ALLOWED_MIME = [
         'image/jpeg' => 'jpg',
-        'image/png' => 'png',
+        'image/png'  => 'png',
         'image/webp' => 'webp',
-        'image/gif' => 'gif',
-        'video/mp4' => 'mp4',
+        'image/gif'  => 'gif',
+        'video/mp4'       => 'mp4',
         'video/quicktime' => 'mov',
+        // Document / archive whitelist (25 MB cap, download-only)
+        'application/pdf'                                                          => 'pdf',
+        'application/msword'                                                       => 'doc',
+        'application/vnd.openxmlformats-officedocument.wordprocessingml.document'  => 'docx',
+        'application/vnd.ms-excel'                                                 => 'xls',
+        'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'        => 'xlsx',
+        'text/plain'         => 'txt',
+        'application/zip'    => 'zip',
+        'application/x-zip-compressed' => 'zip',
+    ];
+
+    private const FILE_MIME = [
+        'application/pdf', 'application/msword',
+        'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+        'application/vnd.ms-excel',
+        'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        'text/plain', 'application/zip', 'application/x-zip-compressed',
     ];
 
     public function store(Request $request)
@@ -43,24 +65,26 @@ class UploadController extends Controller
         // or filename, both attacker-controlled.
         $mime = $file->getMimeType() ?: '';
         if (!isset(self::ALLOWED_MIME[$mime])) {
-            return response()->json(['message' => 'Unsupported file type. Use JPG, PNG, WebP, GIF, MP4 or MOV.'], 422);
+            return response()->json(['message' => 'Unsupported file type. Use JPG, PNG, WebP, GIF, MP4, MOV, PDF, DOC, DOCX, XLS, XLSX, TXT or ZIP.'], 422);
         }
 
         // Per-type size caps measured server-side (client checks are
-        // bypassable): video 100MB, images 20MB.
+        // bypassable): video 100MB, images 20MB, documents 25MB.
         $isVideo = str_starts_with($mime, 'video/');
-        $limit = $isVideo ? self::VIDEO_MAX_BYTES : self::IMAGE_MAX_BYTES;
+        $isFile = in_array($mime, self::FILE_MIME, true);
+        $limit = $isVideo ? self::VIDEO_MAX_BYTES : ($isFile ? self::FILE_MAX_BYTES : self::IMAGE_MAX_BYTES);
         if (($file->getSize() ?: 0) > $limit) {
-            return response()->json(['message' => $isVideo
+            $msg = $isVideo
                 ? 'Video must be under 100MB.'
-                : 'Image must be under 20MB.'], 422);
+                : ($isFile ? 'File must be under 25MB.' : 'Image must be under 20MB.');
+            return response()->json(['message' => $msg], 422);
         }
 
         // Extension derived from the VERIFIED mime — never from the client
         // filename. This blocks shell.php / photo.php.jpg style uploads
         // from landing executable names on the public disk.
         $extension = self::ALLOWED_MIME[$mime];
-        $mediaType = $isVideo ? 'video' : 'image';
+        $mediaType = $isVideo ? 'video' : ($isFile ? 'file' : 'image');
         $name = 'bizlink/' . now()->format('Y/m/d') . '/' . Str::uuid() . '.' . $extension;
 
         $bucket = env('GOOGLE_CLOUD_STORAGE_BUCKET');
@@ -70,6 +94,8 @@ class UploadController extends Controller
                 return response()->json([
                     'url' => $this->storeToGcs($bucket, $name, $file->getRealPath(), $mime),
                     'media_type' => $mediaType,
+                    'media_name' => basename($name),
+                    'media_size' => $file->getSize() ?: 0,
                     'path' => $name,
                     'disk' => 'gcs',
                 ], 201);
@@ -83,6 +109,8 @@ class UploadController extends Controller
         return response()->json([
             'url' => asset('storage/' . $path),
             'media_type' => $mediaType,
+            'media_name' => basename($path),
+            'media_size' => $file->getSize() ?: 0,
             'path' => $path,
             'disk' => 'local',
         ], 201);
@@ -91,7 +119,7 @@ class UploadController extends Controller
     private function uploadErrorMessage(?int $code): string
     {
         return match ($code) {
-            UPLOAD_ERR_INI_SIZE, UPLOAD_ERR_FORM_SIZE => 'File is too large. Videos up to 100MB and images up to 20MB are allowed.',
+            UPLOAD_ERR_INI_SIZE, UPLOAD_ERR_FORM_SIZE => 'File is too large. Videos up to 100MB, images up to 20MB, and documents up to 25MB are allowed.',
             UPLOAD_ERR_PARTIAL => 'Upload was interrupted. Please try again.',
             UPLOAD_ERR_NO_FILE => 'No file was received. Please try again.',
             default => 'Upload failed. Please try again.',

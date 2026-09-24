@@ -37,4 +37,9 @@ class Conversation extends Model
     {
         return $this->belongsTo(Opportunity::class);
     }
+
+    public function polls()
+    {
+        return $this->hasMany(Poll::class);
+    }
 }

@@ -41,7 +41,7 @@ class ConversationController extends Controller
         if (!$isBuyer && !$isSeller) {
             return response()->json(['message' => 'Forbidden'], 403);
         }
-        $conversation->load('messages.sender:id,name,avatar');
+        $conversation->load(['messages.sender:id,name,avatar', 'messages.attachment', 'messages.poll.votes']);
         $conversation->update(['unread' => 0]);
         return response()->json(['data' => $this->serialize($conversation, true)]);
     }
@@ -173,10 +173,19 @@ class ConversationController extends Controller
             return response()->json(['message' => 'Forbidden'], 403);
         }
         $data = $request->validate([
-            'text' => 'required|string|max:2000',
+            'text' => 'nullable|string|max:2000',
+            'media_url' => 'nullable|string|max:2048',
+            'media_type' => 'nullable|in:image,video,file',
+            'media_name' => 'nullable|string|max:255',
+            'media_size' => 'nullable|integer|min:0',
             'attachment.type' => 'nullable|in:opportunity,story',
             'attachment.id' => 'nullable|integer',
         ]);
+
+        $text = trim((string) ($data['text'] ?? ''));
+        if ($text === '' && empty($data['media_url'])) {
+            return response()->json(['message' => 'Write something or attach a file.'], 422);
+        }
 
         $attachmentId = null;
         $attachmentType = null;
@@ -195,11 +204,16 @@ class ConversationController extends Controller
             'conversation_id' => $conversation->id,
             'sender_id' => $request->user()->id,
             'from_side' => 'me',
-            'text' => $data['text'],
+            'text' => $text,
+            'media_url' => $data['media_url'] ?? null,
+            'media_type' => $data['media_type'] ?? null,
+            'media_name' => $data['media_name'] ?? null,
+            'media_size' => $data['media_size'] ?? null,
             'attachment_id' => $attachmentId,
             'attachment_type' => $attachmentType,
         ]);
-        $conversation->update(['last_message' => $data['text']]);
+        $preview = $text !== '' ? $text : ($data['media_type'] === 'file' ? 'Sent a file' : 'Sent media');
+        $conversation->update(['last_message' => $preview]);
         broadcast(new \App\Events\MessageSent($message));
         return response()->json(['data' => $this->serializeMessage($message)], 201);
     }
@@ -242,6 +256,47 @@ class ConversationController extends Controller
         return response()->json(['url' => "/messages/{$identifier}?inquiry={$data['type']}:{$model->id}"]);
     }
 
+    public function insights(Request $request, Conversation $conversation)
+    {
+        $user = $request->user();
+        $isBuyer = (int) $conversation->user_id === (int) $user->id;
+        $isSeller = false;
+        if (!$isBuyer) {
+            $ownerId = Opportunity::where('brand_id', $conversation->brand_id)->value('user_id')
+                ?? \App\Models\Story::where('brand_id', $conversation->brand_id)->value('user_id');
+            $isSeller = (int) $ownerId === (int) $user->id;
+        }
+        if (!$isSeller) {
+            return response()->json(['message' => 'Only the brand can share insights.'], 403);
+        }
+
+        $posts = Opportunity::where('user_id', $user->id)->get(['id', 'headline', 'likes_count', 'brand_id']);
+        $brandIds = $posts->pluck('brand_id')->filter()->unique()->values()->all();
+        $inquiries = empty($brandIds) ? 0 : Conversation::whereIn('brand_id', $brandIds)->count();
+        $likes = (int) $posts->sum('likes_count');
+        $top = $posts->sortByDesc('likes_count')->first();
+
+        $snapshot = [
+            'asOf' => now()->toIso8601String(),
+            'postsCount' => $posts->count(),
+            'inquiriesCount' => $inquiries,
+            'likesTotal' => $likes,
+            'topPost' => $top ? ['headline' => $top->headline, 'likes' => (int) $top->likes_count] : null,
+        ];
+
+        $message = Message::create([
+            'conversation_id' => $conversation->id,
+            'sender_id' => $user->id,
+            'from_side' => 'me',
+            'text' => '',
+            'insight' => $snapshot,
+        ]);
+        $conversation->update(['last_message' => 'Shared sales insights']);
+        broadcast(new \App\Events\MessageSent($message));
+
+        return response()->json(['data' => $this->serializeMessage($message)], 201);
+    }
+
     /**
      * Clickable quote-card payload shared by thread props, send, and inquire.
      */
@@ -260,19 +315,37 @@ class ConversationController extends Controller
         ];
     }
 
+    public function serializeForBroadcast(Message $message): array
+    {
+        return $this->serializeMessage($message);
+    }
+
     private function serializeMessage(Message $message): array
     {
-        $message->loadMissing('attachment');
+        $message->loadMissing(['attachment', 'poll.votes']);
+        $viewerId = request()->user()?->id;
         return [
             'id' => $message->id,
             'conversationId' => $message->conversation_id,
-            'from' => (int) $message->sender_id === (int) request()->user()?->id ? 'me' : 'them',
+            'senderId' => $message->sender_id,
+            'from' => (int) $message->sender_id === (int) $viewerId ? 'me' : 'them',
             'text' => $message->text,
             'time' => $message->created_at?->diffForHumans(),
+            'mediaUrl' => $message->media_url,
+            'mediaType' => $message->media_type,
+            'mediaName' => $message->media_name,
+            'mediaSize' => $message->media_size,
+            'insight' => $message->insight,
+            'poll' => $message->poll ? $this->pollPayload($message->poll, $viewerId) : null,
             'attachment' => $message->attachment
                 ? $this->attachmentCard($message->attachment, class_basename($message->attachment_type))
                 : null,
         ];
+    }
+
+    private function pollPayload(\App\Models\Poll $poll, ?int $viewerId): array
+    {
+        return app(\App\Services\PollService::class)->payload($poll, $viewerId);
     }
 
     private function serialize(Conversation $c, bool $withMessages = false): array
@@ -292,17 +365,13 @@ class ConversationController extends Controller
             'lastMessage' => $c->last_message,
             'unread' => (int) $c->unread,
             'brandId' => $c->brand_id,
+            'isSeller' => !$isBuyer,
         ];
         if ($withMessages || $c->relationLoaded('messages')) {
             $c->loadMissing('messages.attachment');
-            $payload['messages'] = $c->messages->map(fn($m) => [
-                'id' => $m->id,
-                'conversationId' => $m->conversation_id,
-                'from' => (int) $m->sender_id === (int) request()->user()?->id ? 'me' : 'them',
-                'text' => $m->text,
-                'time' => $m->created_at?->diffForHumans(),
-                'attachment' => $m->attachment ? $this->attachmentCard($m->attachment, class_basename($m->attachment_type)) : null,
-            ])->values();
+            $c->loadMissing('messages.poll.votes');
+            $payload['messages'] = $c->messages->map(fn($m) => $this->serializeMessage($m))->values();
+            $payload['isSeller'] = !((int) $c->user_id === $viewerId);
         }
         return $payload;
     }

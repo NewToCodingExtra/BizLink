@@ -12,6 +12,7 @@ use App\Http\Controllers\OpportunityController;
 use App\Http\Controllers\PreferenceController;
 use App\Http\Controllers\StoryController;
 use App\Http\Controllers\UploadController;
+use App\Http\Controllers\PollController;
 use App\Http\Controllers\UserController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
@@ -72,6 +73,10 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/inquiries', [ConversationController::class, 'inquire']);
     Route::post('/inquiries/resolve', [ConversationController::class, 'resolve']);
     Route::post('/conversations/{conversation}/messages', [ConversationController::class, 'send']);
+    Route::post('/conversations/{conversation}/polls', [PollController::class, 'store'])->middleware('throttle:5,1440');
+    Route::post('/polls/{poll}/vote', [PollController::class, 'vote']);
+    Route::post('/polls/{poll}/close', [PollController::class, 'close']);
+    Route::post('/conversations/{conversation}/insights', [ConversationController::class, 'insights']);
 
     Route::get('/notifications', [NotificationController::class, 'index']);
     Route::post('/notifications/{notification}/read', [NotificationController::class, 'markRead']);

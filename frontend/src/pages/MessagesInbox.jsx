@@ -16,7 +16,7 @@ export default function MessagesInbox({ conversations = [] }) {
     const channel = client.private(`user.${user.id}`);
     channel.listen(".notification.created", (e) => {
       const t = e?.notification?.type;
-      if (t === "inquiry" || t === "comment" || t === "comment_reply") {
+      if (t === "inquiry" || t === "comment" || t === "comment_reply" || t === "poll_closed") {
         router.reload({ only: ["conversations"] });
       }
     });
