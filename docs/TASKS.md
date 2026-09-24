@@ -5,30 +5,21 @@ verified (lint/build/live). Spec: SPECIFICATION.md · How: IMPLEMENTATION.md.
 
 ## Phase 1 — Discuss + Convert + Live
 
-- [ ] **T1 · Comment data layer** — migrations: comments(+parent_id FK self-null,
-  media_url, media_type, edited_at, softDeletes, composite index),
-  `comment_reactions` (unique triple), `comment_reports` (unique pair);
-  models: `Comment` (fillable/casts/relations/scopes), `CommentReaction`,
-  `CommentReport`. Verify: `migrate`, `php -l`.
-- [ ] **T2 · Comment API** — `Services/CommentService` (store/reparent/notify/report-count),
-  `Resources/CommentResource` (tree shape), `CommentController` rewrite (tree index,
-  store, edit, soft-delete/hide, react toggle, report, replies page), routes web+api,
-  `AppNotification` types `comment_reply|comment_reaction` with deep links.
-  Verify: live HTTP (reply fan-out rows, depth reparent, edit window, auto-hide ≥3).
-- [ ] **T3 · Comment UI** — `icons.jsx` (+Flag, Pencil, Trash, Dots, Link2),
-  `Components/CommentTree.jsx`, `CommentThread.jsx`→wrapper, wiring in
-  OpportunityCard/OpportunityDetail/Reels modal. Verify: build + click-through.
-- [ ] **T4 · Inquiry redirect + quotes** — `ConversationController@inquire` accepts
-  quote attachment; `PageController::thread` honors `?inquiry=`; `QuoteCard.jsx`;
-  `MessageResource` quote shape; all `onInquire` call-sites → `router.visit`
-  (ContactForm stays for Contact page only). Verify: end-to-end from feed + reels.
-- [ ] **T5 · Realtime core** — `composer require laravel/reverb`, broadcasting config,
-  `routes/channels.php`, events (MessageSent, CommentReplied, Typing*, NotificationCreated),
-  `utils/echo.js` + `laravel-echo/pusher-js`, thread/inbox/bell subscriptions, 15s
-  fallback + chip, `start-bizlink.ps1` WS process. Verify: two-browser live test + 403
-  on foreign channel.
+- [x] **T1 · Comment data layer** — DONE + pushed (migration
+  `2026_09_24_020000`, `Comment`/`CommentReaction`/`CommentReport`).
+- [x] **T2 · Comment API** — DONE + pushed (`Services/CommentService`,
+  `Resources/CommentResource`, rewritten `CommentController`, routes,
+  `comment_reply|comment_reaction` fan-out). Verified live 10/11 HTTP.
+- [x] **T3 · Comment UI** — DONE + pushed (`Components/CommentTree.jsx`,
+  `CommentThread.jsx` wrapper, 4 surfaces rewired). Build green.
+- [x] **T4 · Inquiry redirect + quotes** — DONE + pushed
+  (`POST /inquiries/resolve`, quoted `send`, `?inquiry=` thread prop,
+  `QuoteCard.jsx`, all 7 surfaces redirect). 6/6 live checks green.
+- [x] **T5 · Realtime core** — DONE + pushed (Reverb :8080, session-authed
+  channels, `MessageSent` + `NotificationCreated`, Echo + typing + fallback,
+  bell/inbox bumps). Socket loop proven end-to-end.
 
-## Phase 2 — Locate + Enrich
+## Phase 2 — Locate + Enrich (TODO — see CONTINUATION.md for the full build guide)
 
 - [ ] **T6 · Location** — migrations (opps/stories/prefs location cols + index),
   `Services/LocationService` + `GeocodeAdapter` (Nominatim) + `GET /locations/search`
@@ -41,7 +32,7 @@ verified (lint/build/live). Spec: SPECIFICATION.md · How: IMPLEMENTATION.md.
   `InsightsCard.jsx`, composer attach menu. Verify: file guards live (php-as-pdf,
   oversize), poll lifecycle, real-count card.
 
-## Phase 3 — Meet
+## Phase 3 — Meet (TODO — see CONTINUATION.md for the full build guide)
 
 - [ ] **T8 · Meet-in-chat** — `composer require google/apiclient`, `google_tokens`
   (+encrypted casts), OAuth connect/disconnect, `Services/MeetService` +
