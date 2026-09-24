@@ -46,8 +46,8 @@ Brand posts Franchise/Wholesale/Resell → Feed + Reels + Stories → Buyer like
 
 | Feed | Reels | Inbox |
 |------|-------|-------|
-| Opportunity cards with type badges, ROI, capital | Vertical snap-scroll pitch videos | Private buyer↔seller threads separate from comments |
-| FilterBar (All / Franchise / Wholesale / Resell / Following) | Tap to unmute, like/inquire overlays | Last-message preview + unread dot |
+| Opportunity cards with type badges, ROI, capital | Vertical snap-scroll pitch videos | Private buyer–seller threads separate from comments |
+| FilterBar (All / Franchise / Wholesale / Resell / Following) | Tap to unmute, like/inquire overlays | Last-message preview + unread dot, live updates |
 
 ---
 
@@ -60,16 +60,18 @@ Brand posts Franchise/Wholesale/Resell → Feed + Reels + Stories → Buyer like
 | **Objectives** | `BusinessObjectives.jsx` `/about` | 3 numbered objectives, bento grid |
 | **Products/Services** | `OpportunityFeed.jsx` + `OpportunityCard.jsx` | Live from `GET /api/opportunities`, `.map()` with `key`, type badges: Franchise amber / Wholesale slate / Resell blue |
 | **Why Choose Us** | `BusinessFeatures.jsx` `/` + `/about` | 4 cards: Verified Brands, Direct Matchmaking, Transparent ROI, Nationwide Reach |
-| **Contact** | `ContactForm.jsx` `/contact` + modal | Standalone `POST /api/contact` + pre-filled **Inquire** modal → `POST /api/inquiries` opens a consultation thread |
-| **Feed Interactions** | Like, comment (Seller badge), save, inquire | `POST /opportunities/:id/like|save`, `POST /opportunities/:id/comments` — persisted in MySQL |
+| **Contact** | `ContactForm.jsx` `/contact` | Standalone `POST /api/contact` (the only place the form modal remains) |
+| **Feed Interactions** | Like, threaded comments (Seller badge), save, inquire-to-chat | `POST /opportunities/:id/like|save`, nested comments with reply/react/edit/delete/report (`CommentTree.jsx`), media comments — persisted in MySQL |
 | **Stories** | `StoriesBar.jsx` → `/stories/:slug` | `GET /api/stories`, gradient ring if unseen, auto-advances, `POST /stories/:id/seen` |
 | **Search** | `/search` | Debounced 300ms, Meilisearch typo-tolerant engine + DB fallback |
-| **Reels** | `/reels` | `snap-y` vertical, video opportunities from the same API source |
-| **Messenger** | `/messages` & `/messages/:id` | `GET /api/conversations`, `POST /api/conversations/:id/messages` |
-| **Notifications** | Bell + `/notifications` | `GET /api/notifications` with unread badge, mark-read + mark-all-read |
+| **Reels** | `/reels` | `snap-y` vertical, video opportunities from the same API source; profile grids deep-link via `/reels?slug=` (scrolls + highlights the reel) |
+| **Messenger** | `/messages` & `/messages/:id` | `GET /api/conversations`, `POST /api/conversations/:id/messages`; **Inquire on any surface redirects to the thread** with the post/reel/story pinned as a clickable quote card (`QuoteCard.jsx`); messages arrive live over Reverb |
+| **Realtime** | Reverb WebSocket `:8080` + Echo | `MessageSent` / `NotificationCreated` on private channels (session-authed), typing whispers, 15s-poll fallback with reconnecting chip |
+| **Notifications** | Bell + `/notifications` | `GET /api/notifications` with unread badge (live bump), mark-read + mark-all-read; comment replies/reactions and inquiries notify post + comment owners with deep links |
 | **Saved** | `/saved` | `GET /api/saved` bookmarks |
-| **Profile / Preferences** | `/profile/:id`, `/settings/preferences` | `POST /api/follows/toggle`, `GET+PUT /api/preferences` with category/budget auto-sort |
-| **Auth** | `/login`, `/register`, `/auth/social/callback`, `/forgot-password`, `/reset-password` | Sanctum tokens, Google/Facebook buttons, show/hide passwords, session-aware navbar, protected `/create`, `/messages`, `/saved` |
+| **Profile / Preferences** | `/profile/:id` (`?tab=reels` opens the Reels tab), `/settings/preferences` | `POST /api/follows/toggle`, `GET+PUT /api/preferences` with category/budget auto-sort + one-time onboarding modal |
+| **Uploads** | `POST /uploads` (also `/api/auth/uploads`) | Photos ≤20MB, video ≤100MB, docs (chat) ≤25MB — server-sniffed MIME whitelist, extension derived from MIME, GCS when configured else local |
+| **Auth** | `/login`, `/register`, `/auth/social/callback`, `/forgot-password`, `/reset-password` | Session auth for the Inertia app (Sanctum tokens kept for the legacy JSON API), Google/Facebook buttons, show/hide passwords, session-aware navbar, protected `/create`, `/messages`, `/saved` |
 
 ---
 
@@ -112,12 +114,12 @@ Locked via CSS variables + Tailwind — no hardcoded hex in components.
 
 ## Tech Stack
 
-- **Frontend:** React 19 + Vite 8 + Tailwind CSS v4 + React Router 7 (20 routes)
-- **Backend:** Laravel 12 + Sanctum (token auth) + Socialite (Google + Facebook OAuth) + GCS uploads
+- **Frontend:** React 19 + Vite 7 + Tailwind CSS v4 + Inertia React (session auth + CSRF via `utils/http.js`), laravel-echo + pusher-js (Reverb protocol)
+- **Backend:** Laravel 12 + session auth (Sanctum kept for the legacy JSON API) + Socialite (Google + Facebook OAuth) + GCS uploads + **Reverb WebSocket server**
 - **Database/Search:** MySQL 8.0 (`bizlink` on `127.0.0.1:3307`), seeded from the old frontend mocks. Meilisearch on `127.0.0.1:7700` for typo-tolerant search.
-- **State:** Per-page API fetching via `src/api/client.js` + `AuthContext` — no more lifted mock seeds
+- **State:** Inertia page props + local component state (props re-sync via `useEffect` on paginated pages); Echo subscriptions for live threads/bell
 - **Lint:** Oxlint
-- **Icons:** Inline SVG + Unsplash/Pravatar placeholders
+- **Icons:** Shared SVG set (`Components/icons.jsx`, feather-style strokes) — no emoji glyphs anywhere in the UI
 
 ---
 
@@ -126,23 +128,27 @@ Locked via CSS variables + Tailwind — no hardcoded hex in components.
 ```
 BizLink/
 ├── backend/                 Laravel: routes, controllers, Inertia props, Blade shell
-│   ├── app/Http/Controllers/  PageController, SessionAuth, API controllers…
+│   ├── app/Http/Controllers/  PageController, SessionAuth, Comment/Conversation/Upload…
+│   ├── app/Services/          OpportunityService (feed scoring), CommentService, NotificationService
+│   ├── app/Events/            MessageSent, NotificationCreated (ShouldBroadcastNow)
 │   ├── routes/web.php         Inertia pages + session auth + JSON mutations
 │   ├── routes/api.php         JSON API (still available)
+│   ├── routes/channels.php    Broadcast channel auth (participant/self only)
+│   ├── config/reverb.php      WebSocket server config (:8080)
 │   ├── resources/views/app.blade.php   Inertia root (@vite src/app.jsx)
-│   ├── meilisearch.exe        (Downloaded automatically by start script)
-│   └── public/build|hot       Written by frontend Vite
+│   └── public/build|hot       Written by frontend Vite (gitignored)
 ├── frontend/                React + Inertia + Vite (UI only)
 │   ├── src/
 │   │   ├── app.jsx          Inertia entry + AppLayout
-│   │   ├── Pages/           Landing, HomeFeed, Login, …, Legal/*
-│   │   ├── Components/      Navbar, Footer, feeds, forms, …
+│   │   ├── Pages/           Landing, HomeFeed, Reels, MessageThread, …, Legal/*
+│   │   ├── Components/      Navbar, Footer, feeds, CommentTree, QuoteCard, icons.jsx, …
 │   │   ├── Layouts/         AppLayout
 │   │   ├── context/         Theme + Toast
-│   │   ├── utils/           http.js (session + CSRF), profilePath
+│   │   ├── utils/           http.js (session + CSRF), echo.js, inquire.js, profilePath
 │   │   └── css/app.css      Design tokens + Tailwind
 │   └── vite.config.js       laravel-vite-plugin → ../backend/public
-└── start-bizlink.ps1        MySQL:3307 + Laravel:8000 + frontend Vite + Meilisearch:7700
+├── docs/                    SPECIFICATION / IMPLEMENTATION / TASKS (program blueprints) + CONTINUATION (handoff guide)
+└── start-bizlink.ps1        MySQL:3307 + Laravel:8000 + Reverb:8080 + Vite + Meilisearch:7700
 ```
 
 **Activity 4 → Rubric Mapping**
@@ -178,14 +184,14 @@ Database `bizlink`, user `bizlink` / `Bizlink123!` must exist (created once via 
 
 ```powershell
 cd backend
-copy .env.example .env   # set DB_* and APP_KEY
+copy .env.example .env   # set DB_*, APP_KEY, and REVERB_APP_KEY/SECRET (any random hex for local dev)
 C:\xampp\php\php.exe C:\Users\Joshua\.config\herd\bin\composer.phar install
 C:\xampp\php\php.exe artisan key:generate
 C:\xampp\php\php.exe artisan migrate:fresh --seed
 C:\xampp\php\php.exe artisan serve --host=127.0.0.1 --port=8000
 ```
 
-Or one shot: `.\start-bizlink.ps1` from the repo root.
+Or one shot: `.\start-bizlink.ps1` from the repo root (MySQL + Laravel + Reverb WS + Vite + Meilisearch).
 
 **2) Frontend Vite (assets for Laravel — open `http://localhost:8000`, not :5173):**
 
@@ -197,7 +203,7 @@ npm run build    # production → backend/public/build
 npm run lint     # oxlint
 ```
 
-Or one shot from repo root: `.\start-bizlink.ps1` (MySQL + Laravel + Vite).
+Or one shot from repo root: `.\start-bizlink.ps1` (MySQL + Laravel + Reverb + Vite + Meilisearch).
 
 **Demo accounts (seeded):**
 
@@ -210,7 +216,7 @@ Or one shot from repo root: `.\start-bizlink.ps1` (MySQL + Laravel + Vite).
 
 ## Auth
 
-- Email: `POST /api/auth/register`, `POST /api/auth/login` → Sanctum Bearer token stored in `localStorage`, `GET /api/auth/me`, `POST /api/auth/logout` revokes the current token. Password fields have show/hide toggles.
+- Browser app: session auth (`POST /login`, `POST /register`) — Sanctum Bearer tokens are kept only for the legacy JSON API. Password fields have show/hide toggles.
 - Google + Facebook: buttons on both `/login` and `/register`. `GET /api/auth/{google|facebook}/redirect` → `GET /api/auth/{google|facebook}/callback` → redirects to `/auth/social/callback?provider=...&token=...` which the frontend exchanges via `/auth/me`. Check `GET /api/auth/{provider}/status` first — the frontend does this so a missing setup shows a message instead of a failed fetch. Callback failures redirect with specific codes (`*_not_configured`, `*_denied`, `*_failed`) explained on the callback page.
   - Google: `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, `GOOGLE_REDIRECT_URI=http://localhost:8000/api/auth/google/callback` in `backend/.env` (Cloud Console → APIs & Services → Credentials; whitelist the exact redirect URI; add testers under Audience while in Testing mode).
   - Facebook: `FACEBOOK_CLIENT_ID`, `FACEBOOK_CLIENT_SECRET`, `FACEBOOK_REDIRECT_URI=http://localhost:8000/api/auth/facebook/callback` (developers.facebook.com → your app → Facebook Login → Valid OAuth Redirect URIs; add testers under App Roles while in Development mode).
@@ -241,11 +247,16 @@ Or one shot from repo root: `.\start-bizlink.ps1` (MySQL + Laravel + Vite).
 | POST | `/api/opportunities/:id/like` | token | Toggle like |
 | POST | `/api/opportunities/:id/save` | token | Toggle save |
 | GET | `/api/saved` | token | Saved list |
-| GET/POST | `/api/opportunities/:id/comments` | GET –, POST token | List / add comment |
+| GET/POST | `/api/opportunities/:id/comments` | GET –, POST token | Threaded list / add comment (reply via `parent_id`, media via `media_url`) |
+| PATCH/DELETE | `/api/comments/:id` | token | Edit (owner ≤15 min) / soft-delete (owner or post owner) |
+| POST | `/api/comments/:id/react` | token | Toggle reaction (👍❤️😮😂🙏) |
+| POST | `/api/comments/:id/report` | token | Report (spam/harassment/scam/other, auto-hide ≥3) |
+| GET | `/api/comments/:id/replies` | token | Lazy-load replies |
 | GET/POST | `/api/stories`, `/api/stories/:id/seen` | GET –, POST token | List / mark seen |
 | GET | `/api/conversations`, `/api/conversations/:id` | token | Inbox + thread |
-| POST | `/api/inquiries` | token | Inquire → conversation + notification |
-| POST | `/api/conversations/:id/messages` | token | Send message |
+| POST | `/api/inquiries` | token | Inquire → conversation + notification (legacy modal flow) |
+| POST | `/api/inquiries/resolve` | session | Find-or-create thread for a post/reel/story → `{url}` with `?inquiry=` quote (used by all Inquire buttons) |
+| POST | `/api/conversations/:id/messages` | token | Send message (optional `attachment{type,id}` quote) — broadcasts live |
 | GET/POST | `/api/notifications`, `/api/notifications/:id/read`, `/api/notifications/read-all` | token | List / mark read |
 | GET/PUT | `/api/preferences` | token | Get / save categories + budget |
 | GET/POST | `/api/follows`, `/api/follows/toggle` | token | List / follow brand |
@@ -255,10 +266,12 @@ Or one shot from repo root: `.\start-bizlink.ps1` (MySQL + Laravel + Vite).
 
 ## How It Works (With Backend)
 
-- **Posting:** `/create` → upload photo/video via `POST /api/auth/uploads` (Google Cloud Storage bucket when `GOOGLE_CLOUD_STORAGE_BUCKET` + credentials are set, otherwise `storage/app/public` served from `/storage`) → `POST /api/opportunities` → row in MySQL with `is_new: true`, plus a `new_post` notification.
-- **Feed loading:** feed and search paginate (`per_page=6`) with an IntersectionObserver sentinel 600px before the end — more cards stream in with skeleton placeholders, Facebook-style, instead of loading everything at once.
-- **Filtering:** `FilterBar` chips filter client-side; `preferences.categories` fetched from `GET /api/preferences` layers an auto-sort bonus on top.
-- **Inquiry:** Any `Inquire` → modal → `POST /api/inquiries { opportunity_id, message }` → creates/finds the brand conversation, appends a `me` message and an `inquiry` notification.
+- **Posting:** `/create` → upload photo (≤20MB) / video (≤100MB) via hardened `POST /uploads` (server-sniffed MIME whitelist, extension derived from MIME, GCS bucket when configured otherwise local `storage`) → `POST /opportunities` → row in MySQL with `is_new: true`, plus a `new_post` notification.
+- **Feed loading:** feed and search paginate with an IntersectionObserver sentinel 600px before the end — more cards stream in with skeleton placeholders, Facebook-style. Server-side personalized scoring (follows +60, category +35, budget fit +25, implicit signals, recency decay, engagement velocity) with diversity re-ranking.
+- **Filtering:** `FilterBar` chips + server-side `type` filter; `preferences.categories` layers the auto-sort bonus on top.
+- **Comments:** threaded (depth 2) with reply/react/edit/delete/report from the `⋯` menu, media comments, `comment_reply`/`comment_reaction` notifications with `#comment-{id}` deep links.
+- **Inquiry:** any `Inquire` → `POST /inquiries/resolve` → thread opens with the item pinned as a clickable quote card; first send carries the quote.
+- **Realtime:** `send` broadcasts `MessageSent` to `private-conversation.{id}`; notifications broadcast to `private-user.{id}` (bell bump); typing whispers; 15s-poll fallback if the socket drops. **Reverb must be running or chat sends fail.**
 - **Seeding:** `backend/database/seeders/DatabaseSeeder.php` ports the old `src/data/*.js` mocks (16 brands from BrewCraft to PrintFast + comments/stories/inbox) into MySQL. Each brand gets its own user account bound to its posts.
 
 ---
@@ -267,7 +280,13 @@ Or one shot from repo root: `.\start-bizlink.ps1` (MySQL + Laravel + Vite).
 
 - [x] Laravel backend + MySQL + Sanctum + Google/Facebook OAuth + password reset
 - [x] Guest landing vs authenticated feed split
-- [x] Infinite-scroll feed/search with skeletons + GCS uploads with local fallback
+- [x] Infinite-scroll feed/search with skeletons + hardened uploads with local fallback
+- [x] Threaded comments (nest, react, edit, report, media) with owner notifications
+- [x] Inquire-to-chat redirect with quoted post/reel/story cards
+- [x] Realtime consultation inbox (Reverb + live bell) with typing + fallback
+- [ ] Location tagging + distance-scored feed (see `docs/CONTINUATION.md` T6)
+- [ ] Rich chat: file attachments, polls, sales-insight shares (T7)
+- [ ] Google Meet scheduling inside consultation threads (T8)
 - [ ] `vitest` + Testing Library for feed interactions
 - [ ] GitHub Actions: backend `php artisan test` + frontend build
 - [ ] Light/dark theme token
