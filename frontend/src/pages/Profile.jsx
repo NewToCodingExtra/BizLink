@@ -214,7 +214,7 @@ export default function Profile({
                 </div>
               )}
               {reelOpps.map((o) => (
-                <Link key={o.id} href={`/reels?slug=${o.slug}`} className="aspect-[9/16] bg-bg relative group overflow-hidden">
+                <Link key={o.id} href={`/reels?slug=${o.slug}`} className="block aspect-[9/16] bg-bg relative group overflow-hidden">
                   {o.videoUrl ? (
                     <video
                       src={o.videoUrl}
