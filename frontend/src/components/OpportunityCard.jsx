@@ -34,21 +34,21 @@ export default function OpportunityCard({ opp, comments, onToggleLike, onToggleS
 
   return (
     <article className="bg-surface rounded-xl border border-border shadow-sm hover:shadow-md transition-shadow duration-150 overflow-hidden">
-      <div className="p-4 flex items-center gap-3">
-        <Link href={profilePath({ username: opp.user?.username || opp.authorUsername, authorId: opp.authorId, brandId: opp.brandId })}><img src={opp.brandAvatar} alt={opp.brandName} className="w-9 h-9 rounded-full object-cover" /></Link>
+      <div className="p-4 flex items-center gap-2 sm:gap-3">
+        <Link href={profilePath({ username: opp.user?.username || opp.authorUsername, authorId: opp.authorId, brandId: opp.brandId })} className="shrink-0"><img src={opp.brandAvatar} alt={opp.brandName} className="w-9 h-9 rounded-full object-cover" /></Link>
         <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-2">
-            <Link href={profilePath({ username: opp.user?.username || opp.authorUsername, authorId: opp.authorId, brandId: opp.brandId })} className="text-sm font-semibold text-text-primary hover:text-action">{opp.brandName}</Link>
-            {opp.verified && <span className="inline-flex items-center gap-1 text-[11px] font-bold text-success bg-success/10 border border-success/20 rounded-full px-2 py-0.5"><CheckIcon className="w-3 h-3" /> Verified</span>}
-            {fresh && <span className="text-[10px] font-bold tracking-widest bg-primary text-white px-2 py-0.5 rounded-full">NEW</span>}
-            {opp.featured && <span className="text-[10px] font-bold tracking-widest bg-accent text-[#0B1F3A] px-2 py-0.5 rounded-full">FEATURED</span>}
-            {opp.preferred && <span title={(opp.reasons || []).join(" · ") || "Matches your preferences"} className="inline-flex items-center gap-1 text-[10px] font-bold tracking-widest bg-action/10 text-action border border-action/20 px-2 py-0.5 rounded-full"><SparkleIcon className="w-3 h-3" /> FOR YOU</span>}
+          <div className="flex items-center gap-x-2 gap-y-1 flex-wrap min-w-0">
+            <Link href={profilePath({ username: opp.user?.username || opp.authorUsername, authorId: opp.authorId, brandId: opp.brandId })} className="text-sm font-semibold text-text-primary hover:text-action truncate min-w-0 max-w-full">{opp.brandName}</Link>
+            {opp.verified && <span className="inline-flex items-center gap-1 text-[11px] font-bold text-success bg-success/10 border border-success/20 rounded-full px-2 py-0.5 shrink-0 whitespace-nowrap"><CheckIcon className="w-3 h-3" /> Verified</span>}
+            {fresh && <span className="text-[10px] font-bold tracking-widest bg-primary text-white px-2 py-0.5 rounded-full shrink-0 whitespace-nowrap">NEW</span>}
+            {opp.featured && <span className="text-[10px] font-bold tracking-widest bg-accent text-[#0B1F3A] px-2 py-0.5 rounded-full shrink-0 whitespace-nowrap">FEATURED</span>}
+            {opp.preferred && <span title={(opp.reasons || []).join(" · ") || "Matches your preferences"} className="inline-flex items-center gap-1 text-[10px] font-bold tracking-widest bg-action/10 text-action border border-action/20 px-2 py-0.5 rounded-full shrink-0 whitespace-nowrap"><SparkleIcon className="w-3 h-3" /> FOR YOU</span>}
           </div>
-          <p className="text-xs text-text-secondary">{opp.category} · {formatDate(opp.createdAt)}</p>
+          <p className="text-xs text-text-secondary truncate">{opp.category} · {formatDate(opp.createdAt)}</p>
         </div>
-        <span className={`text-xs font-medium border rounded-full px-2.5 py-1 ${badgeClasses(opp.type)}`}>{opp.type}</span>
+        <span className={`text-xs font-medium border rounded-full px-2.5 py-1 shrink-0 whitespace-nowrap ${badgeClasses(opp.type)}`}>{opp.type}</span>
 
-        <div className="relative ml-2">
+        <div className="relative shrink-0">
           <button
             onClick={() => {
               const el = document.getElementById(`menu-${opp.id}`);
