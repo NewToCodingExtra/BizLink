@@ -122,7 +122,7 @@ export default function Navbar() {
             <div className="relative">
               <NotificationBell notifications={notifications} onToggle={() => setShowBell(!showBell)} />
               {showBell && (
-                <div className="absolute right-0 mt-3 w-[340px] bg-surface rounded-xl shadow-md border border-border overflow-hidden z-50">
+                <div className="fixed left-4 right-4 top-[70px] sm:absolute sm:left-auto sm:right-0 sm:top-auto sm:mt-3 sm:w-[340px] bg-surface rounded-xl shadow-md border border-border overflow-hidden z-50">
                   <div className="px-4 py-3 flex items-center justify-between border-b border-border">
                     <p className="text-sm font-semibold text-text-primary">Notifications{unread > 0 ? ` (${unread})` : ""}</p>
                     <Link href="/notifications" onClick={() => setShowBell(false)} className="text-xs font-medium text-action hover:text-[#1D4ED8]">View all</Link>
