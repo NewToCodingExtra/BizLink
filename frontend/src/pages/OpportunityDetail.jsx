@@ -72,28 +72,28 @@ export default function OpportunityDetail({ opp: initialOpp }) {
             controls
             playsInline
             loop
-            className="w-full h-[360px] object-contain bg-black"
+            className="w-full h-56 sm:h-72 lg:h-[360px] object-contain bg-black"
           />
         ) : (
-          <img src={opp.image} alt={opp.headline} className="w-full h-[360px] object-cover" />
+          <img src={opp.image} alt={opp.headline} className="w-full h-56 sm:h-72 lg:h-[360px] object-cover" />
         )}
-        <div className="p-6">
-          <div className="flex items-center gap-2">
-            <img src={opp.brandAvatar} alt={opp.brandName} className="w-9 h-9 rounded-full" />
-            <span className="text-sm font-semibold text-text-primary">{opp.brandName}</span>
-            {opp.verified && <span className="inline-flex items-center gap-1 text-xs font-bold text-success bg-success/10 border border-success/20 rounded-full px-2 py-0.5"><CheckIcon className="w-3 h-3" /> Verified</span>}
-            <span className={`ml-auto text-xs font-medium border rounded-full px-2.5 py-1 ${badgeClasses(opp.type)}`}>{opp.type}</span>
+        <div className="p-4 sm:p-6">
+          <div className="flex items-center gap-x-2 gap-y-1.5 flex-wrap">
+            <img src={opp.brandAvatar} alt={opp.brandName} className="w-9 h-9 rounded-full shrink-0" />
+            <span className="text-sm font-semibold text-text-primary truncate min-w-0 max-w-full">{opp.brandName}</span>
+            {opp.verified && <span className="inline-flex items-center gap-1 text-xs font-bold text-success bg-success/10 border border-success/20 rounded-full px-2 py-0.5 shrink-0 whitespace-nowrap"><CheckIcon className="w-3 h-3" /> Verified</span>}
+            <span className={`sm:ml-auto text-xs font-medium border rounded-full px-2.5 py-1 shrink-0 whitespace-nowrap ${badgeClasses(opp.type)}`}>{opp.type}</span>
           </div>
-          <h1 className="text-2xl font-semibold text-text-primary tracking-tight mt-4">{opp.headline}</h1>
+          <h1 className="text-xl sm:text-2xl font-semibold text-text-primary tracking-tight mt-4">{opp.headline}</h1>
           <p className="text-sm text-text-secondary mt-2 leading-relaxed">{opp.description}</p>
-          <div className="mt-4 flex gap-2">
-            <span className="text-sm font-semibold bg-primary-light text-white rounded-full px-3 py-1">{displayCapital(opp)}</span>
-            <span className="text-sm font-medium bg-success/10 text-success border border-success/20 rounded-full px-3 py-1">{displayRoi(opp)}</span>
+          <div className="mt-4 flex gap-2 flex-wrap">
+            <span className="text-sm font-semibold bg-primary-light text-white rounded-full px-3 py-1 whitespace-nowrap">{displayCapital(opp)}</span>
+            <span className="text-sm font-medium bg-success/10 text-success border border-success/20 rounded-full px-3 py-1 whitespace-nowrap">{displayRoi(opp)}</span>
           </div>
-          <div className="mt-6 flex gap-2">
-            <button onClick={onToggleLike} className={`inline-flex items-center gap-1.5 px-4 py-2 rounded-lg border text-sm font-medium ${opp.liked ? "bg-error/10 border border-error/20 text-error" : "bg-surface border-border text-text-secondary"}`}><HeartIcon filled={!!opp.liked} /> {opp.likes} Interested</button>
-            <button onClick={onToggleSave} className={`inline-flex items-center gap-1.5 px-4 py-2 rounded-lg border text-sm font-medium ${opp.saved ? "bg-primary text-white border-[#0B1F3A]" : "bg-surface border-border text-text-secondary"}`}><BookmarkIcon filled={!!opp.saved} /> {opp.saved ? "Saved" : "Save"}</button>
-            <button onClick={() => (user ? goInquire(toast, "opportunity", opp.id) : toast.error("Log in to inquire."))} className="ml-auto px-5 py-2 rounded-lg bg-action hover:bg-action-hover text-white text-sm font-medium">Inquire</button>
+          <div className="mt-6 flex gap-2 flex-wrap">
+            <button onClick={onToggleLike} className={`inline-flex items-center gap-1.5 px-4 py-2 rounded-lg border text-sm font-medium whitespace-nowrap ${opp.liked ? "bg-error/10 border border-error/20 text-error" : "bg-surface border-border text-text-secondary"}`}><HeartIcon filled={!!opp.liked} /> {opp.likes} Interested</button>
+            <button onClick={onToggleSave} className={`inline-flex items-center gap-1.5 px-4 py-2 rounded-lg border text-sm font-medium whitespace-nowrap ${opp.saved ? "bg-primary text-white border-[#0B1F3A]" : "bg-surface border-border text-text-secondary"}`}><BookmarkIcon filled={!!opp.saved} /> {opp.saved ? "Saved" : "Save"}</button>
+            <button onClick={() => (user ? goInquire(toast, "opportunity", opp.id) : toast.error("Log in to inquire."))} className="flex-1 min-w-[120px] inline-flex justify-center px-5 py-2 rounded-lg bg-action hover:bg-action-hover text-white text-sm font-medium">Inquire</button>
           </div>
           <div className="mt-6">
             <CommentThread postId={opp.id} postSlug={opp.slug} authorId={opp.authorId} comments={comments} onAdd={onAddComment} autoLoad />
