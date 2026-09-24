@@ -81,8 +81,8 @@ export default function OpportunityDetail({ opp: initialOpp }) {
           <div className="flex items-center gap-x-2 gap-y-1.5 flex-wrap">
             <img src={opp.brandAvatar} alt={opp.brandName} className="w-9 h-9 rounded-full shrink-0" />
             <span className="text-sm font-semibold text-text-primary truncate min-w-0 max-w-full">{opp.brandName}</span>
-            {opp.verified && <span className="inline-flex items-center gap-1 text-xs font-bold text-success bg-success/10 border border-success/20 rounded-full px-2 py-0.5 shrink-0 whitespace-nowrap"><CheckIcon className="w-3 h-3" /> Verified</span>}
-            <span className={`sm:ml-auto text-xs font-medium border rounded-full px-2.5 py-1 shrink-0 whitespace-nowrap ${badgeClasses(opp.type)}`}>{opp.type}</span>
+            {opp.verified && <span className="inline-flex items-center gap-1 text-xs font-bold text-success bg-success/10 border border-success/20 rounded-full px-2.5 py-1 leading-none shrink-0 whitespace-nowrap"><CheckIcon className="w-3 h-3" /> Verified</span>}
+            <span className={`sm:ml-auto text-xs font-medium border rounded-full px-2.5 py-1 leading-none shrink-0 whitespace-nowrap ${badgeClasses(opp.type)}`}>{opp.type}</span>
           </div>
           <h1 className="text-xl sm:text-2xl font-semibold text-text-primary tracking-tight mt-4">{opp.headline}</h1>
           <p className="text-sm text-text-secondary mt-2 leading-relaxed">{opp.description}</p>
