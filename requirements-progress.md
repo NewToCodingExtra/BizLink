@@ -14,7 +14,7 @@
 |---|---|---|
 | Activity 3 — Backend infrastructure | **partial** | Schema, models, validation, modular named routes exist. Missing resource CRUD (edit/update/destroy implementations). |
 | Activity 4 — React + Inertia | **done** | `@inertiaHead` + `resolvePageComponent`; pages live in `frontend/src/Pages`. |
-| Activity 5 — Fortify + Spatie | **not started** | Custom session auth + a string `users.role` column. No Fortify, no Spatie. |
+| Activity 5 — Fortify + Spatie | **in progress** | Batch 4 Fortify in progress. Spatie still not started. |
 | Final project — product + security | **partial** | Domain app is far along. Assignment auth/RBAC and full resource CRUD are the blockers. |
 
 **Do not redo** working product surfaces (feed, reels, stories, messenger, notifications, search). Close assignment gaps around them.
@@ -98,13 +98,13 @@ Owner FKs (`opportunities.user_id`, `stories.user_id`) use `restrictOnDelete()` 
 
 | ID | Task | Status |
 |---|---|---|
-| 4.1 | `composer require laravel/fortify` + publish config/migrations | not started |
-| 4.2 | Register `FortifyServiceProvider`; `Fortify::loginView` / `registerView` / `requestPasswordResetLinkView` / `resetPasswordView` → `Inertia::render(...)` | not started |
-| 4.3 | Disable Fortify’s Blade views; keep JSON API (`AuthController`) for the legacy token API | not started |
-| 4.4 | Remove overlapping guest routes from `SessionAuthController` (login/register/forgot/reset POST+GET) | not started |
-| 4.5 | Keep session regenerate, preference bootstrap, and intended redirect to `/feed` via Fortify `LoginResponse` / `RegisterResponse` | not started |
-| 4.6 | Stop allowing `role: admin` on public register | not started |
-| 4.7 | Smoke: register, login, logout, forgot, reset on Inertia pages with error bags | not started |
+| 4.1 | `composer require laravel/fortify` + publish config/migrations | done |
+| 4.2 | Register `FortifyServiceProvider`; `Fortify::loginView` / `registerView` / `requestPasswordResetLinkView` / `resetPasswordView` → `Inertia::render(...)` | done |
+| 4.3 | Disable Fortify’s Blade views; keep JSON API (`AuthController`) for the legacy token API | done |
+| 4.4 | Remove overlapping guest routes from `SessionAuthController` (login/register/forgot/reset POST+GET) | done |
+| 4.5 | Keep session regenerate, preference bootstrap, and intended redirect to `/feed` via Fortify `LoginResponse` / `RegisterResponse` | done |
+| 4.6 | Stop allowing `role: admin` on public register | done |
+| 4.7 | Smoke: register, login, logout, forgot, reset on Inertia pages with error bags | done |
 
 ---
 
@@ -180,7 +180,7 @@ Granular permissions to seed:
 | 1 | Inertia assignment compliance | done |
 | 2 | Modular named routes | done |
 | 3 | Resource controllers (7 CRUD) | done |
-| 4 | Laravel Fortify | not started |
+| 4 | Laravel Fortify | done |
 | 5 | Spatie RBAC | not started |
 | 6 | Conditional React UI | not started |
 | 7 | Security / quality / git | not started |

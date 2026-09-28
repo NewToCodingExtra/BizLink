@@ -6,7 +6,6 @@ use App\Http\Controllers\FollowController;
 use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\PageController;
 use App\Http\Controllers\PreferenceController;
-use App\Http\Controllers\SessionAuthController;
 use App\Http\Controllers\SocialAuthController;
 use App\Http\Controllers\StoryController;
 use App\Http\Controllers\UploadController;
@@ -40,17 +39,8 @@ Route::inertia('/privacy', 'Legal/SitePrivacy')->name('privacy');
 Route::inertia('/terms', 'Legal/SiteTerms')->name('terms');
 Route::inertia('/acceptable-use', 'Legal/SiteAcceptable')->name('acceptable-use');
 
-// Session authentication (guest only)
-Route::middleware('guest')->group(function () {
-    Route::get('/login', [SessionAuthController::class, 'showLogin'])->name('login');
-    Route::post('/login', [SessionAuthController::class, 'login'])->name('login.store');
-    Route::get('/register', [SessionAuthController::class, 'showRegister'])->name('register');
-    Route::post('/register', [SessionAuthController::class, 'register'])->name('register.store');
-    Route::get('/forgot-password', [SessionAuthController::class, 'showForgot'])->name('password.request');
-    Route::post('/forgot-password', [SessionAuthController::class, 'sendResetLink'])->name('password.email');
-    Route::get('/reset-password', [SessionAuthController::class, 'showReset'])->name('password.reset');
-    Route::post('/reset-password', [SessionAuthController::class, 'reset'])->name('password.update');
-});
+// Session authentication is owned by Laravel Fortify (login/register/forgot/reset/logout).
+// Logout is handled by Fortify's default POST /logout route.
 
 // OAuth (stateful session flow for the Inertia app)
 Route::get('/auth/{provider}/redirect', [SocialAuthController::class, 'webRedirect'])
@@ -60,10 +50,10 @@ Route::get('/auth/{provider}/callback', [SocialAuthController::class, 'webCallba
     ->where('provider', 'google|facebook')
     ->name('social.callback');
 
-// Authenticated pages + session logout
+// Authenticated pages
 Route::middleware('auth')->group(function () {
-    Route::post('/logout', [SessionAuthController::class, 'logout'])->name('logout');
     Route::get('/create', [PageController::class, 'create'])->name('opportunities.create');
+
     Route::get('/notifications', [PageController::class, 'notifications'])->name('notifications.index');
     Route::get('/saved', [PageController::class, 'saved'])->name('saved');
     Route::get('/settings/preferences', [PageController::class, 'preferencesPage'])->name('preferences.edit');

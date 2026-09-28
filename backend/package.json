@@ -3,8 +3,8 @@
     "private": true,
     "type": "module",
     "scripts": {
-        "build": "echo Frontend build lives in ../frontend — run: cd ../frontend && npm run build",
-        "dev": "echo Frontend Vite lives in ../frontend — run: cd ../frontend && npm run dev"
+        "build": "cd ../frontend && npm run build",
+        "dev": "cd ../frontend && npm run dev"
     },
     "devDependencies": {}
 }
