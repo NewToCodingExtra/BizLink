@@ -52,7 +52,7 @@ Route::get('/auth/{provider}/callback', [SocialAuthController::class, 'webCallba
 
 // Authenticated pages
 Route::middleware('auth')->group(function () {
-    Route::get('/create', [PageController::class, 'create'])->name('opportunities.create');
+    Route::middleware(['auth', 'role:Admin|Manager'])->get('/create', [PageController::class, 'create'])->name('opportunities.create');
 
     Route::get('/notifications', [PageController::class, 'notifications'])->name('notifications.index');
     Route::get('/saved', [PageController::class, 'saved'])->name('saved');

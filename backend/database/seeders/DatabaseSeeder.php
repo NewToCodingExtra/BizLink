@@ -16,6 +16,8 @@ class DatabaseSeeder extends Seeder
 {
     public function run(): void
     {
+        $this->call(RolesAndPermissionsSeeder::class);
+
         $entrepreneur = User::firstOrCreate(
             ['email' => 'demo@bizlink.ph'],
             [
@@ -27,6 +29,7 @@ class DatabaseSeeder extends Seeder
                 'email_verified_at' => now(),
             ]
         );
+        $entrepreneur->assignRole('User');
 
         $brandOwner = User::firstOrCreate(
             ['email' => 'brand@bizlink.ph'],
@@ -39,6 +42,18 @@ class DatabaseSeeder extends Seeder
                 'email_verified_at' => now(),
             ]
         );
+        $brandOwner->assignRole('Manager');
+
+        $admin = User::firstOrCreate(
+            ['email' => 'admin@bizlink.ph'],
+            [
+                'name' => 'Platform Admin',
+                'password' => Hash::make('password123'),
+                'role' => 'admin',
+                'email_verified_at' => now(),
+            ]
+        );
+        $admin->assignRole('Admin');
 
         $brandUsers = ['brand@bizlink.ph' => $brandOwner];
         $brandAccounts = [
@@ -78,7 +93,7 @@ class DatabaseSeeder extends Seeder
         ];
 
         foreach ($brandAccounts as $brandId => [$name, $email, $avatar]) {
-            $brandUsers[$brandId] = User::firstOrCreate(
+            $user = User::firstOrCreate(
                 ['email' => $email],
                 [
                     'name' => $name,
@@ -89,6 +104,8 @@ class DatabaseSeeder extends Seeder
                     'email_verified_at' => now(),
                 ]
             );
+            $user->assignRole('Manager');
+            $brandUsers[$brandId] = $user;
         }
         $brandUsers['brand-1'] = $brandOwner;
 

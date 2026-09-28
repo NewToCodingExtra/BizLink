@@ -35,12 +35,16 @@ class CreateNewUser implements CreatesNewUsers
             'role' => ['sometimes', 'string', 'in:entrepreneur,brand'],
         ])->validate();
 
-        return User::create([
+        $user = User::create([
             'name' => $input['name'],
             'email' => $input['email'],
             'password' => Hash::make($input['password']),
             'role' => $input['role'] ?? 'entrepreneur',
             'avatar' => 'https://i.pravatar.cc/100?u=' . urlencode($input['email']),
         ]);
+
+        $user->assignRole(($input['role'] ?? 'entrepreneur') === 'brand' ? 'Manager' : 'User');
+
+        return $user;
     }
 }

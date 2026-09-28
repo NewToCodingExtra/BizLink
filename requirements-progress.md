@@ -122,13 +122,13 @@ BizLink mapping (assignment names, our domain):
 
 | ID | Task | Status |
 |---|---|---|
-| 5.1 | `composer require spatie/laravel-permission` + publish + migrate | not started |
-| 5.2 | `HasRoles` on `User` | not started |
-| 5.3 | Register Spatie `role` / `permission` middleware aliases in `bootstrap/app.php` | not started |
-| 5.4 | `RolesAndPermissionsSeeder`: roles Admin / Manager / User + granular permissions | not started |
-| 5.5 | Call the seeder from `DatabaseSeeder`; assign roles to existing demo users | not started |
-| 5.6 | Protect write routes: `auth` + `role:Admin\|Manager` for create/update/destroy opportunities; `role:Admin` for admin-only | not started |
-| 5.7 | Share `roles` + `permissions` (and `can`) from `HandleInertiaRequests` | not started |
+| 5.1 | `composer require spatie/laravel-permission` + publish + migrate | done |
+| 5.2 | `HasRoles` on `User` | done |
+| 5.3 | Register Spatie `role` / `permission` middleware aliases in `bootstrap/app.php` | done |
+| 5.4 | `RolesAndPermissionsSeeder`: roles Admin / Manager / User + granular permissions | done |
+| 5.5 | Call the seeder from `DatabaseSeeder`; assign roles to existing demo users | done |
+| 5.6 | Protect write routes: `auth` + `role:Admin\|Manager` for create/update/destroy opportunities; `role:Admin` for admin-only | done |
+| 5.7 | Share `roles` + `permissions` (and `can`) from `HandleInertiaRequests` | done |
 
 Granular permissions to seed:
 
@@ -181,7 +181,7 @@ Granular permissions to seed:
 | 2 | Modular named routes | done |
 | 3 | Resource controllers (7 CRUD) | done |
 | 4 | Laravel Fortify | done |
-| 5 | Spatie RBAC | not started |
+| 5 | Spatie RBAC | done |
 | 6 | Conditional React UI | not started |
 | 7 | Security / quality / git | not started |
 

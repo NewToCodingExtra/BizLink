@@ -10,9 +10,12 @@ use Illuminate\Support\Facades\Auth;
 use App\Services\OpportunityService;
 use App\Http\Resources\OpportunityResource;
 use Inertia\Inertia;
+use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 
 class OpportunityController extends Controller
 {
+    use AuthorizesRequests;
+
     protected $service;
 
     public function __construct(OpportunityService $service)
@@ -139,7 +142,7 @@ class OpportunityController extends Controller
 
     public function edit(Request $request, Opportunity $opportunity)
     {
-        $this->authorizeOwnerOrAdmin($request, $opportunity);
+        $this->authorize('update', $opportunity);
 
         return Inertia::render('Opportunities/Edit', [
             'opportunity' => new OpportunityResource($opportunity),
@@ -148,7 +151,7 @@ class OpportunityController extends Controller
 
     public function update(Request $request, Opportunity $opportunity)
     {
-        $this->authorizeOwnerOrAdmin($request, $opportunity);
+        $this->authorize('update', $opportunity);
 
         $data = $request->validate([
             'type' => 'required|string|in:Franchise,Wholesale,Resell',
@@ -185,7 +188,7 @@ class OpportunityController extends Controller
 
     public function destroy(Request $request, Opportunity $opportunity)
     {
-        $this->authorizeOwnerOrAdmin($request, $opportunity);
+        $this->authorize('delete', $opportunity);
 
         $opportunity->delete();
 
@@ -271,10 +274,7 @@ class OpportunityController extends Controller
 
     private function authorizeOwnerOrAdmin(Request $request, Opportunity $opportunity): void
     {
-        $user = $request->user();
-        if ((int) $user->id !== (int) $opportunity->user_id && $user->role !== 'admin') {
-            abort(403);
-        }
+        $this->authorize('update', $opportunity);
     }
 
     private static function formatCapital(int $amount): string
