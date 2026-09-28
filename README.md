@@ -209,6 +209,7 @@ Or one shot from repo root: `.\start-bizlink.ps1` (MySQL + Laravel + Reverb + Vi
 
 | Role | Email | Password |
 |------|-------|----------|
+| Admin | `admin@bizlink.ph` | `password123` |
 | Entrepreneur | `demo@bizlink.ph` | `password123` |
 | Brand owner | `brand@bizlink.ph` | `password123` |
 
@@ -216,6 +217,9 @@ Or one shot from repo root: `.\start-bizlink.ps1` (MySQL + Laravel + Reverb + Vi
 
 ## Auth
 
+- **Session Auth:** Managed by [Laravel Fortify](https://laravel.com/docs/fortify).
+- **Authorization:** Handled by [Spatie Laravel Permission](https://spatie.be/docs/laravel-permission).
+- **Demo Accounts:** `admin@bizlink.ph`, `brand@bizlink.ph`, `demo@bizlink.ph` (all `password123`).
 - Browser app: session auth (`POST /login`, `POST /register`) — Sanctum Bearer tokens are kept only for the legacy JSON API. Password fields have show/hide toggles.
 - Google + Facebook: buttons on both `/login` and `/register`. `GET /api/auth/{google|facebook}/redirect` → `GET /api/auth/{google|facebook}/callback` → redirects to `/auth/social/callback?provider=...&token=...` which the frontend exchanges via `/auth/me`. Check `GET /api/auth/{provider}/status` first — the frontend does this so a missing setup shows a message instead of a failed fetch. Callback failures redirect with specific codes (`*_not_configured`, `*_denied`, `*_failed`) explained on the callback page.
   - Google: `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, `GOOGLE_REDIRECT_URI=http://localhost:8000/api/auth/google/callback` in `backend/.env` (Cloud Console → APIs & Services → Credentials; whitelist the exact redirect URI; add testers under Audience while in Testing mode).

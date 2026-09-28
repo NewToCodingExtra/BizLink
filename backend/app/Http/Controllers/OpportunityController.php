@@ -74,6 +74,8 @@ class OpportunityController extends Controller
 
     public function store(Request $request)
     {
+        $this->authorize('create', Opportunity::class);
+
         $data = $request->validate([
             'type' => 'required|string|in:Franchise,Wholesale,Resell',
             'category' => 'nullable|string|max:255',

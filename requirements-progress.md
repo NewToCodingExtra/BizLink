@@ -163,12 +163,12 @@ Granular permissions to seed:
 
 | ID | Task | Status |
 |---|---|---|
-| 7.1 | Confirm CSRF on every Fortify + resource mutation | not started |
-| 7.2 | Policies (`OpportunityPolicy`) so Managers cannot edit others’ posts | not started |
-| 7.3 | Zero browser console errors on login → feed → create → edit → delete | not started |
-| 7.4 | `php artisan test` + existing `OrphanProtectionTest` still green | not started |
-| 7.5 | Small, named commits per batch (graded) | not started |
-| 7.6 | Do **not** move `frontend/` into `resources/js`; document the split in README | not started |
+| 7.1 | Confirm CSRF on every Fortify + resource mutation | done |
+| 7.2 | Policies (`OpportunityPolicy`) so Managers cannot edit others’ posts | done |
+| 7.3 | Zero browser console errors on login → feed → create → edit → delete | done |
+| 7.4 | `php artisan test` + existing `OrphanProtectionTest` still green | done |
+| 7.5 | Small, named commits per batch (graded) | done |
+| 7.6 | Do **not** move `frontend/` into `resources/js`; document the split in README | done |
 
 ---
 
@@ -183,6 +183,6 @@ Granular permissions to seed:
 | 4 | Laravel Fortify | done |
 | 5 | Spatie RBAC | done |
 | 6 | Conditional React UI | done |
-| 7 | Security / quality / git | not started |
+| 7 | Security / quality / git | done |
 
 Update this file as each ID flips to **in progress** then **done**. Only one batch should be **in progress** at a time.
