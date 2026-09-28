@@ -9,6 +9,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use App\Services\OpportunityService;
 use App\Http\Resources\OpportunityResource;
+use Inertia\Inertia;
 
 class OpportunityController extends Controller
 {
@@ -136,6 +137,61 @@ class OpportunityController extends Controller
         return response()->json(['data' => new OpportunityResource($opp)], 201);
     }
 
+    public function edit(Request $request, Opportunity $opportunity)
+    {
+        $this->authorizeOwnerOrAdmin($request, $opportunity);
+
+        return Inertia::render('Opportunities/Edit', [
+            'opportunity' => new OpportunityResource($opportunity),
+        ]);
+    }
+
+    public function update(Request $request, Opportunity $opportunity)
+    {
+        $this->authorizeOwnerOrAdmin($request, $opportunity);
+
+        $data = $request->validate([
+            'type' => 'required|string|in:Franchise,Wholesale,Resell',
+            'category' => 'nullable|string|max:255',
+            'headline' => 'required|string|max:255',
+            'capital_amount' => 'required|numeric|min:0|max:100000000000',
+            'roi_percent' => 'required|numeric|min:0|max:1000',
+            'description' => 'nullable|string|max:2000',
+            'image' => 'nullable|string|max:2048',
+            'media_type' => 'sometimes|string|in:image,video',
+            'video_url' => 'nullable|string|max:2048',
+            'brand_name' => 'sometimes|nullable|string|max:255',
+            'brand_avatar' => 'sometimes|nullable|string|max:2048',
+        ]);
+
+        $opportunity->update([
+            'type' => $data['type'],
+            'category' => $data['category'] ?? 'General',
+            'headline' => $data['headline'],
+            'capital_amount' => (int) $data['capital_amount'],
+            'capital_required' => self::formatCapital((int) $data['capital_amount']),
+            'roi_percent' => (float) $data['roi_percent'],
+            'roi' => self::formatRoi((float) $data['roi_percent']),
+            'description' => $data['description'] ?? null,
+            'image' => array_key_exists('image', $data) ? ($data['image'] ?: $opportunity->image) : $opportunity->image,
+            'media_type' => $data['media_type'] ?? $opportunity->media_type,
+            'video_url' => array_key_exists('video_url', $data) ? $data['video_url'] : $opportunity->video_url,
+            'brand_name' => $data['brand_name'] ?? $opportunity->brand_name,
+            'brand_avatar' => $data['brand_avatar'] ?? $opportunity->brand_avatar,
+        ]);
+
+        return redirect()->route('opportunities.show', $opportunity->slug)->with('success', 'Opportunity updated.');
+    }
+
+    public function destroy(Request $request, Opportunity $opportunity)
+    {
+        $this->authorizeOwnerOrAdmin($request, $opportunity);
+
+        $opportunity->delete();
+
+        return redirect()->route('feed')->with('success', 'Opportunity deleted.');
+    }
+
     public function toggleLike(Request $request, Opportunity $opportunity)
     {
         $user = $request->user();
@@ -211,6 +267,14 @@ class OpportunityController extends Controller
         ]);
         
         return response()->json(['hidden' => true]);
+    }
+
+    private function authorizeOwnerOrAdmin(Request $request, Opportunity $opportunity): void
+    {
+        $user = $request->user();
+        if ((int) $user->id !== (int) $opportunity->user_id && $user->role !== 'admin') {
+            abort(403);
+        }
     }
 
     private static function formatCapital(int $amount): string

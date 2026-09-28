@@ -83,7 +83,7 @@ Owner FKs (`opportunities.user_id`, `stories.user_id`) use `restrictOnDelete()` 
 
 | ID | Task | Status |
 |---|---|---|
-| 3.1 | Expand `OpportunityController` (or a dedicated Inertia resource controller) to all 7 actions | not started |
+| 3.1 | Expand `OpportunityController` (or a dedicated Inertia resource controller) to all 7 actions | in progress |
 | 3.2 | `edit` + `update` Inertia page (`Pages/Opportunities/Edit`) — owner or Admin only | not started |
 | 3.3 | `destroy` with confirmation — owner or Admin only | not started |
 | 3.4 | Wire `index`/`show`/`create`/`store` to the existing feed/detail/create pages (do not duplicate UI) | not started |

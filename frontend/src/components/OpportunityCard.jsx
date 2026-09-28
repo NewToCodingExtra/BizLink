@@ -1,10 +1,12 @@
 import { useState } from "react";
-import { Link } from "@inertiajs/react";
+import { Link, router, usePage } from "@inertiajs/react";
 import CommentThread from "./CommentThread";
 import { HeartIcon, CommentIcon, BookmarkIcon, CheckIcon, SparkleIcon } from "./icons";
 import { profilePath } from "../utils/profilePath";
 import { displayCapital, displayRoi } from "../utils/money";
 import { useToast } from "../context/ToastContext";
+import Modal from "./Modal";
+import Button from "./Button";
 
 function badgeClasses(type) {
   if (type === "Franchise") return "bg-warning/10 text-warning border border-warning/20";
@@ -28,9 +30,15 @@ function formatDate(createdAt) {
 
 export default function OpportunityCard({ opp, comments, onToggleLike, onToggleSave, onAddComment, onInquire, saved }) {
   const toast = useToast();
+  const { auth } = usePage().props;
+  const user = auth?.user ?? null;
   const [showComments, setShowComments] = useState(false);
+  const [confirmDelete, setConfirmDelete] = useState(false);
+  const [deleting, setDeleting] = useState(false);
   const fresh = isFresh(opp.createdAt);
   const commentCount = typeof opp.commentsCount === "number" ? opp.commentsCount : (comments || []).filter((c) => String(c.postId) === String(opp.id)).length;
+  const ownerId = opp.user_id ?? opp.authorId ?? opp.user?.id;
+  const canManage = !!user && (String(user.id) === String(ownerId) || user.role === "admin");
 
   return (
     <article className="bg-surface rounded-xl border border-border shadow-sm hover:shadow-md transition-shadow duration-150 overflow-hidden">
@@ -61,6 +69,28 @@ export default function OpportunityCard({ opp, comments, onToggleLike, onToggleS
             </svg>
           </button>
           <div id={`menu-${opp.id}`} className="hidden absolute right-0 mt-1 w-48 bg-surface rounded-lg shadow-lg border border-border z-10 py-1">
+            {canManage && (
+              <>
+                <Link
+                  href={`/opportunities/${opp.id}/edit`}
+                  onClick={() => document.getElementById(`menu-${opp.id}`)?.classList.add('hidden')}
+                  className="w-full text-left px-4 py-2 text-sm text-text-primary hover:bg-bg flex items-center gap-2"
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15.232 5.232l3.536 3.536M4 20h4.586a1 1 0 00.707-.293l9.414-9.414a2 2 0 00-2.828-2.828L6.465 16.88A1 1 0 006.172 17.586V20z" /></svg>
+                  Edit
+                </Link>
+                <button
+                  onClick={() => {
+                    document.getElementById(`menu-${opp.id}`)?.classList.add('hidden');
+                    setConfirmDelete(true);
+                  }}
+                  className="w-full text-left px-4 py-2 text-sm text-error hover:bg-error/10 flex items-center gap-2"
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6M9 7V4a1 1 0 011-1h4a1 1 0 011 1v3m-9 0h10" /></svg>
+                  Delete
+                </button>
+              </>
+            )}
             <button
               onClick={() => {
                 document.getElementById(`menu-${opp.id}`).classList.add('hidden');
@@ -118,6 +148,32 @@ export default function OpportunityCard({ opp, comments, onToggleLike, onToggleS
 
         {showComments && <CommentThread postId={opp.id} postSlug={opp.slug} authorId={opp.authorId} comments={comments} onAdd={onAddComment} autoLoad={showComments} />}
       </div>
+
+      <Modal
+        isOpen={confirmDelete}
+        onClose={() => setConfirmDelete(false)}
+        title="Delete this opportunity?"
+        footer={
+          <>
+            <Button variant="ghost" onClick={() => setConfirmDelete(false)}>Cancel</Button>
+            <Button
+              variant="danger"
+              disabled={deleting}
+              onClick={() => {
+                setDeleting(true);
+                router.delete(`/opportunities/${opp.id}`, {
+                  onFinish: () => setDeleting(false),
+                  onError: () => toast.error("Could not delete this opportunity."),
+                });
+              }}
+            >
+              {deleting ? "Deleting..." : "Delete"}
+            </Button>
+          </>
+        }
+      >
+        <p className="text-sm text-text-secondary">This removes the post from the feed. Comments and likes on it are deleted too.</p>
+      </Modal>
     </article>
   );
 }

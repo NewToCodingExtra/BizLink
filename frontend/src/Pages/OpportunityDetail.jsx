@@ -1,11 +1,13 @@
 import { useEffect, useState } from "react";
-import { Head, Link, usePage } from "@inertiajs/react";
+import { Head, Link, router, usePage } from "@inertiajs/react";
 import CommentThread from "../Components/CommentThread";
 import { HeartIcon, BookmarkIcon, CheckIcon, ArrowLeftIcon } from "../Components/icons";
 import { displayCapital, displayRoi } from "../utils/money";
 import { httpApi } from "../utils/http";
 import { goInquire } from "../utils/inquire";
 import { useToast } from "../context/ToastContext";
+import Modal from "../Components/Modal";
+import Button from "../Components/Button";
 
 function badgeClasses(type) {
   if (type === "Franchise") return "bg-warning/10 text-warning border border-warning/20";
@@ -18,6 +20,10 @@ export default function OpportunityDetail({ opp: initialOpp }) {
   const { auth } = usePage().props;
   const user = auth?.user ?? null;
   const [opp, setOpp] = useState(initialOpp ?? null);
+  const [confirmDelete, setConfirmDelete] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+  const ownerId = opp?.user_id ?? opp?.authorId ?? opp?.user?.id;
+  const canManage = !!user && !!opp && (String(user.id) === String(ownerId) || user.role === "admin");
 
   useEffect(() => {
     setOpp(initialOpp ?? null);
@@ -94,6 +100,12 @@ export default function OpportunityDetail({ opp: initialOpp }) {
             <button onClick={onToggleLike} className={`inline-flex items-center gap-1.5 px-4 py-2 rounded-lg border text-sm font-medium whitespace-nowrap ${opp.liked ? "bg-error/10 border border-error/20 text-error" : "bg-surface border-border text-text-secondary"}`}><HeartIcon filled={!!opp.liked} /> {opp.likes} Interested</button>
             <button onClick={onToggleSave} className={`inline-flex items-center gap-1.5 px-4 py-2 rounded-lg border text-sm font-medium whitespace-nowrap ${opp.saved ? "bg-primary text-white border-[#0B1F3A]" : "bg-surface border-border text-text-secondary"}`}><BookmarkIcon filled={!!opp.saved} /> {opp.saved ? "Saved" : "Save"}</button>
             <button onClick={() => (user ? goInquire(toast, "opportunity", opp.id) : toast.error("Log in to inquire."))} className="flex-1 min-w-[120px] inline-flex justify-center px-5 py-2 rounded-lg bg-action hover:bg-action-hover text-white text-sm font-medium">Inquire</button>
+            {canManage && (
+              <>
+                <Link href={`/opportunities/${opp.id}/edit`} className="inline-flex items-center px-4 py-2 rounded-lg border border-border text-sm font-medium text-text-primary hover:bg-bg">Edit</Link>
+                <button onClick={() => setConfirmDelete(true)} className="inline-flex items-center px-4 py-2 rounded-lg border border-error/30 text-sm font-medium text-error hover:bg-error/10">Delete</button>
+              </>
+            )}
           </div>
           <div className="mt-6">
             <CommentThread postId={opp.id} postSlug={opp.slug} authorId={opp.authorId} comments={comments} onAdd={onAddComment} autoLoad />
@@ -101,6 +113,31 @@ export default function OpportunityDetail({ opp: initialOpp }) {
         </div>
       </article>
 
+      <Modal
+        isOpen={confirmDelete}
+        onClose={() => setConfirmDelete(false)}
+        title="Delete this opportunity?"
+        footer={
+          <>
+            <Button variant="ghost" onClick={() => setConfirmDelete(false)}>Cancel</Button>
+            <Button
+              variant="danger"
+              disabled={deleting}
+              onClick={() => {
+                setDeleting(true);
+                router.delete(`/opportunities/${opp.id}`, {
+                  onFinish: () => setDeleting(false),
+                  onError: () => toast.error("Could not delete this opportunity."),
+                });
+              }}
+            >
+              {deleting ? "Deleting..." : "Delete"}
+            </Button>
+          </>
+        }
+      >
+        <p className="text-sm text-text-secondary">This removes the post from the feed. Comments and likes on it are deleted too.</p>
+      </Modal>
     </div>
   );
 }
