@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Link, router, usePage } from "@inertiajs/react";
+import { can, hasRole } from "../utils/can";
 import CommentThread from "./CommentThread";
 import { HeartIcon, CommentIcon, BookmarkIcon, CheckIcon, SparkleIcon } from "./icons";
 import { profilePath } from "../utils/profilePath";
@@ -38,7 +39,8 @@ export default function OpportunityCard({ opp, comments, onToggleLike, onToggleS
   const fresh = isFresh(opp.createdAt);
   const commentCount = typeof opp.commentsCount === "number" ? opp.commentsCount : (comments || []).filter((c) => String(c.postId) === String(opp.id)).length;
   const ownerId = opp.user_id ?? opp.authorId ?? opp.user?.id;
-  const canManage = !!user && (String(user.id) === String(ownerId) || user.role === "admin");
+  const isOwner = !!user && String(user.id) === String(ownerId);
+  const canManage = !!user && (can(usePage(), 'opportunities.update') && isOwner || hasRole(usePage(), 'Admin'));
 
   return (
     <article className="bg-surface rounded-xl border border-border shadow-sm hover:shadow-md transition-shadow duration-150 overflow-hidden">

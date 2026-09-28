@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { Head, Link, router, usePage } from "@inertiajs/react";
+import { can, hasRole } from "../utils/can";
 import CommentThread from "../Components/CommentThread";
 import { HeartIcon, BookmarkIcon, CheckIcon, ArrowLeftIcon } from "../Components/icons";
 import { displayCapital, displayRoi } from "../utils/money";
@@ -23,7 +24,8 @@ export default function OpportunityDetail({ opp: initialOpp }) {
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const ownerId = opp?.user_id ?? opp?.authorId ?? opp?.user?.id;
-  const canManage = !!user && !!opp && (String(user.id) === String(ownerId) || user.role === "admin");
+  const isOwner = !!user && !!opp && String(user.id) === String(ownerId);
+  const canManage = !!user && !!opp && (can(usePage(), 'opportunities.update') && isOwner || hasRole(usePage(), 'Admin'));
 
   useEffect(() => {
     setOpp(initialOpp ?? null);

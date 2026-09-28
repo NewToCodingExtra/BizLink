@@ -123,7 +123,7 @@ export default function Profile({
             <div className="mt-3 flex flex-wrap items-center gap-2">
               <h1 className="text-xl font-semibold text-text-primary">{profileUser.name}</h1>
               {profileUser.username && <span className="text-sm text-text-secondary">@{profileUser.username}</span>}
-              {profileUser.role === "brand" && <span className="inline-flex items-center gap-1 text-xs bg-success/10 text-success border border-success/20 rounded-full px-2 py-0.5 font-bold"><CheckIcon className="w-3 h-3" /> Brand</span>}
+              {profileUser.roles && (profileUser.roles.includes('Manager') || profileUser.roles.includes('Admin')) && <span className="inline-flex items-center gap-1 text-xs bg-success/10 text-success border border-success/20 rounded-full px-2 py-0.5 font-bold"><CheckIcon className="w-3 h-3" /> Brand</span>}
               {isOwn && <span className="text-xs bg-bg text-text-secondary border border-border rounded-full px-2 py-0.5">You</span>}
             </div>
             {profileUser.bio && <p className="text-sm text-text-secondary mt-2 leading-relaxed">{profileUser.bio}</p>}

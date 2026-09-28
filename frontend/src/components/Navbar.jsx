@@ -1,11 +1,13 @@
 import { useEffect, useState } from "react";
 import { Link, router, usePage } from "@inertiajs/react";
+import { can } from "../utils/can";
 import NotificationBell from "./NotificationBell";
 import SearchBar from "./SearchBar";
 import ProfileMenu from "./ProfileMenu";
 import markUrl from "../assets/bizlink-mark.svg";
 import { httpApi } from "../utils/http";
 import { getEcho } from "../utils/echo";
+import { can } from "../utils/can";
 import { useTheme } from "../context/ThemeContext";
 import Modal from "./Modal";
 import Button from "./Button";
@@ -108,9 +110,11 @@ export default function Navbar() {
           </button>
 
           {user ? (
-            <Link href="/create" className="hidden sm:inline-flex items-center gap-1.5 bg-action hover:bg-action-hover active:bg-[#1E40AF] text-white text-sm font-medium px-4 py-2 rounded-lg transition-colors duration-150 focus-visible:ring-2 focus-visible:ring-blue-300 focus-visible:ring-offset-2 focus-visible:ring-offset-[#0B1F3A]">
-              <span className="text-lg leading-none -mt-0.5">+</span> Post
-            </Link>
+            can(usePage(), "opportunities.create") && (
+              <Link href="/create" className="hidden sm:inline-flex items-center gap-1.5 bg-action hover:bg-action-hover active:bg-[#1E40AF] text-white text-sm font-medium px-4 py-2 rounded-lg transition-colors duration-150 focus-visible:ring-2 focus-visible:ring-blue-300 focus-visible:ring-offset-2 focus-visible:ring-offset-[#0B1F3A]">
+                <span className="text-lg leading-none -mt-0.5">+</span> Post
+              </Link>
+            )
           ) : (
             <>
               <Link href="/login" className="hidden sm:inline-flex text-sm font-medium text-slate-200 hover:text-white px-3 py-2">Log in</Link>
@@ -184,13 +188,9 @@ export default function Navbar() {
             {!user && <Link href="/register" onClick={() => setMobileOpen(false)} className="px-3 py-1.5 rounded-full bg-action text-white text-sm">Sign up</Link>}
           </div>
           {user ? (
-            <>
+            can(page, "opportunities.create") && (
               <Link href="/create" onClick={() => setMobileOpen(false)} className="block text-center bg-action text-white rounded-lg py-2.5 text-sm font-medium">+ Post Opportunity</Link>
-              <div className="grid grid-cols-2 gap-2">
-                <Link href="/profile/me" onClick={() => setMobileOpen(false)} className="block text-center border border-white/20 text-white rounded-lg py-2.5 text-sm">Profile</Link>
-                <button onClick={() => setShowLogoutConfirm(true)} className="block w-full text-center bg-error/10 border border-error/20 text-error rounded-lg py-2.5 text-sm font-medium">Logout</button>
-              </div>
-            </>
+            )
           ) : null}
         </div>
       )}

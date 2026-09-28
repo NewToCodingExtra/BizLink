@@ -141,6 +141,7 @@ class UserController extends Controller
                     'avatar' => $user->avatar,
                     'bio' => $user->bio,
                     'role' => $user->role,
+                    'roles' => $user->getRoleNames(),
                     'created_at' => $user->created_at,
                 ],
                 'stats' => [

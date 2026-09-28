@@ -96,16 +96,25 @@ export default function Register() {
               </div>
             </div>
           </div>
-          <div>
+           <div>
             <label className="text-sm font-medium text-text-primary">I am a</label>
             <div className="mt-2 flex gap-2">
-              {['entrepreneur', 'brand'].map((r) => (
-                <button key={r} type="button" onClick={() => setData('role', r)} className={`flex-1 px-4 py-2 rounded-lg border text-sm font-medium capitalize transition-colors ${data.role === r ? 'bg-primary text-white border-[#0B1F3A]' : 'bg-surface text-text-secondary border-border hover:bg-bg'}`}>
-                  {r}
+              {[
+                { label: 'Entrepreneur', value: 'User' },
+                { label: 'Brand', value: 'Manager' },
+              ].map((r) => (
+                <button 
+                  key={r.value} 
+                  type="button" 
+                  onClick={() => setData('role', r.value)} 
+                  className={`flex-1 px-4 py-2 rounded-lg border text-sm font-medium capitalize transition-colors ${data.role === r.value ? 'bg-primary text-white border-[#0B1F3A]' : 'bg-surface text-text-secondary border-border hover:bg-bg'}`}
+                >
+                  {r.label}
                 </button>
               ))}
             </div>
           </div>
+
           <div className="text-[11px] text-text-secondary leading-tight pt-2">
             By creating an account, you agree to our <Link href="/terms" className="text-action hover:underline">Terms of Service</Link> and acknowledge our <Link href="/privacy" className="text-action hover:underline">Privacy Policy</Link>.
           </div>

@@ -182,7 +182,7 @@ Granular permissions to seed:
 | 3 | Resource controllers (7 CRUD) | done |
 | 4 | Laravel Fortify | done |
 | 5 | Spatie RBAC | done |
-| 6 | Conditional React UI | not started |
+| 6 | Conditional React UI | done |
 | 7 | Security / quality / git | not started |
 
 Update this file as each ID flips to **in progress** then **done**. Only one batch should be **in progress** at a time.
