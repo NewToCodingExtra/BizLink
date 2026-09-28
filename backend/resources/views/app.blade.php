@@ -8,6 +8,7 @@
     <title inertia>{{ config('app.name', 'BizLink') }}</title>
     @viteReactRefresh
     @vite(['src/app.jsx'])
+    @inertiaHead
 </head>
 <body>
 @inertia

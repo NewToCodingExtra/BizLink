@@ -13,7 +13,7 @@
 | Area | Status | Notes |
 |---|---|---|
 | Activity 3 — Backend infrastructure | **partial** | Schema, models, validation exist. Missing resource CRUD (edit/update/destroy), modular route files, named routes. |
-| Activity 4 — React + Inertia | **partial** | Stack works. Missing `@inertiaHead` and `resolvePageComponent`. |
+| Activity 4 — React + Inertia | **done** | `@inertiaHead` + `resolvePageComponent`; pages live in `frontend/src/Pages`. |
 | Activity 5 — Fortify + Spatie | **not started** | Custom session auth + a string `users.role` column. No Fortify, no Spatie. |
 | Final project — product + security | **partial** | Domain app is far along. Assignment auth/RBAC and full resource CRUD are the blockers. |
 
@@ -56,9 +56,9 @@ Owner FKs (`opportunities.user_id`, `stories.user_id`) use `restrictOnDelete()` 
 
 | ID | Task | Status |
 |---|---|---|
-| 1.1 | Add `@inertiaHead` to `backend/resources/views/app.blade.php` (keep `@viteReactRefresh`, `@vite`, `@inertia`) | not started |
-| 1.2 | Switch `frontend/src/app.jsx` resolver to Laravel’s `resolvePageComponent` (keep the AppLayout default) | not started |
-| 1.3 | Confirm pages still resolve (`Pages/` vs `pages/` case) after the helper change | not started |
+| 1.1 | Add `@inertiaHead` to `backend/resources/views/app.blade.php` (keep `@viteReactRefresh`, `@vite`, `@inertia`) | done |
+| 1.2 | Switch `frontend/src/app.jsx` resolver to Laravel’s `resolvePageComponent` (keep the AppLayout default) | done |
+| 1.3 | Confirm pages still resolve (`Pages/` vs `pages/` case) after the helper change | done |
 
 ---
 
@@ -177,7 +177,7 @@ Granular permissions to seed:
 | Batch | Title | Status |
 |---|---|---|
 | 0 | Already in place | done |
-| 1 | Inertia assignment compliance | not started |
+| 1 | Inertia assignment compliance | done |
 | 2 | Modular named routes | not started |
 | 3 | Resource controllers (7 CRUD) | not started |
 | 4 | Laravel Fortify | not started |
