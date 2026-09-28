@@ -1,111 +1,86 @@
 <?php
 
+use App\Http\Controllers\AuthController;
 use App\Http\Controllers\ContactController;
-use App\Http\Controllers\CommentController;
-use App\Http\Controllers\ConversationController;
 use App\Http\Controllers\FollowController;
 use App\Http\Controllers\NotificationController;
-use App\Http\Controllers\OpportunityController;
 use App\Http\Controllers\PageController;
 use App\Http\Controllers\PreferenceController;
 use App\Http\Controllers\SessionAuthController;
 use App\Http\Controllers\SocialAuthController;
 use App\Http\Controllers\StoryController;
 use App\Http\Controllers\UploadController;
-use App\Http\Controllers\PollController;
-use App\Http\Controllers\MeetController;
-use App\Http\Controllers\AuthController;
 use Illuminate\Support\Facades\Route;
 
 /*
 |--------------------------------------------------------------------------
 | Browser (Inertia) routes
 |--------------------------------------------------------------------------
-| Pages render via Inertia::render with server props. Lightweight mutations
-| stay as same-origin JSON fetch calls (session cookie + CSRF) reusing the
-| existing controllers, so interaction behavior is unchanged.
+| Pages render via Inertia::render with server props. Domain mutations live
+| in routes/opportunities.php, comments.php, and conversations.php.
 */
 
 // Guest pages
-Route::get('/', [PageController::class, 'home']);
-Route::get('/feed', [PageController::class, 'feed']);
-Route::get('/about', [PageController::class, 'about']);
-Route::get('/reels', [PageController::class, 'reels']);
-Route::get('/stories/{slug}', [PageController::class, 'storyViewer']);
-Route::get('/search', [PageController::class, 'search']);
-Route::get('/post/{slug}', [PageController::class, 'post']);
+Route::get('/', [PageController::class, 'home'])->name('home');
+Route::get('/feed', [PageController::class, 'feed'])->name('feed');
+Route::get('/about', [PageController::class, 'about'])->name('about');
+Route::get('/reels', [PageController::class, 'reels'])->name('reels');
+Route::get('/stories/{slug}', [PageController::class, 'storyViewer'])->name('stories.show');
+Route::get('/search', [PageController::class, 'search'])->name('search');
+Route::get('/post/{slug}', [PageController::class, 'post'])->name('opportunities.show');
 // NOTE: /profile/edit is registered before /profile/{username} so the
 // static segment wins over the wildcard.
-Route::get('/profile/edit', [PageController::class, 'editProfile'])->middleware('auth');
-Route::get('/profile/{username}', [PageController::class, 'profile']);
-Route::get('/contact', [PageController::class, 'contactPage']);
-Route::post('/contact', [ContactController::class, 'submit']);
+Route::get('/profile/edit', [PageController::class, 'editProfile'])->middleware('auth')->name('profile.edit');
+Route::get('/profile/{username}', [PageController::class, 'profile'])->name('profile.show');
+Route::get('/contact', [PageController::class, 'contactPage'])->name('contact');
+Route::post('/contact', [ContactController::class, 'submit'])->name('contact.submit');
 
 // Legal pages
-Route::inertia('/privacy', 'Legal/SitePrivacy');
-Route::inertia('/terms', 'Legal/SiteTerms');
-Route::inertia('/acceptable-use', 'Legal/SiteAcceptable');
+Route::inertia('/privacy', 'Legal/SitePrivacy')->name('privacy');
+Route::inertia('/terms', 'Legal/SiteTerms')->name('terms');
+Route::inertia('/acceptable-use', 'Legal/SiteAcceptable')->name('acceptable-use');
 
 // Session authentication (guest only)
 Route::middleware('guest')->group(function () {
     Route::get('/login', [SessionAuthController::class, 'showLogin'])->name('login');
-    Route::post('/login', [SessionAuthController::class, 'login']);
-    Route::get('/register', [SessionAuthController::class, 'showRegister']);
-    Route::post('/register', [SessionAuthController::class, 'register']);
-    Route::get('/forgot-password', [SessionAuthController::class, 'showForgot']);
-    Route::post('/forgot-password', [SessionAuthController::class, 'sendResetLink']);
-    Route::get('/reset-password', [SessionAuthController::class, 'showReset']);
-    Route::post('/reset-password', [SessionAuthController::class, 'reset']);
+    Route::post('/login', [SessionAuthController::class, 'login'])->name('login.store');
+    Route::get('/register', [SessionAuthController::class, 'showRegister'])->name('register');
+    Route::post('/register', [SessionAuthController::class, 'register'])->name('register.store');
+    Route::get('/forgot-password', [SessionAuthController::class, 'showForgot'])->name('password.request');
+    Route::post('/forgot-password', [SessionAuthController::class, 'sendResetLink'])->name('password.email');
+    Route::get('/reset-password', [SessionAuthController::class, 'showReset'])->name('password.reset');
+    Route::post('/reset-password', [SessionAuthController::class, 'reset'])->name('password.update');
 });
 
 // OAuth (stateful session flow for the Inertia app)
-Route::get('/auth/{provider}/redirect', [SocialAuthController::class, 'webRedirect'])->where('provider', 'google|facebook');
-Route::get('/auth/{provider}/callback', [SocialAuthController::class, 'webCallback'])->where('provider', 'google|facebook');
+Route::get('/auth/{provider}/redirect', [SocialAuthController::class, 'webRedirect'])
+    ->where('provider', 'google|facebook')
+    ->name('social.redirect');
+Route::get('/auth/{provider}/callback', [SocialAuthController::class, 'webCallback'])
+    ->where('provider', 'google|facebook')
+    ->name('social.callback');
 
 // Authenticated pages + session logout
 Route::middleware('auth')->group(function () {
-    Route::post('/logout', [SessionAuthController::class, 'logout']);
-    Route::get('/create', [PageController::class, 'create']);
-    Route::post('/opportunities', [PageController::class, 'storeOpportunity']);
-    Route::get('/messages', [PageController::class, 'messages']);
-    Route::get('/messages/{identifier}', [PageController::class, 'thread']);
-    Route::get('/notifications', [PageController::class, 'notifications']);
-    Route::get('/saved', [PageController::class, 'saved']);
-    Route::get('/settings/preferences', [PageController::class, 'preferencesPage']);
-    Route::put('/profile', [AuthController::class, 'updateProfile']);
+    Route::post('/logout', [SessionAuthController::class, 'logout'])->name('logout');
+    Route::get('/create', [PageController::class, 'create'])->name('opportunities.create');
+    Route::get('/notifications', [PageController::class, 'notifications'])->name('notifications.index');
+    Route::get('/saved', [PageController::class, 'saved'])->name('saved');
+    Route::get('/settings/preferences', [PageController::class, 'preferencesPage'])->name('preferences.edit');
+    Route::put('/profile', [AuthController::class, 'updateProfile'])->name('profile.update');
 
-    // JSON mutations (same controllers as the token API)
-    Route::post('/opportunities/{opportunity}/like', [OpportunityController::class, 'toggleLike']);
-    Route::post('/opportunities/{opportunity}/save', [OpportunityController::class, 'toggleSave']);
-    Route::post('/opportunities/{opportunity}/hide', [OpportunityController::class, 'hide']);
-    Route::post('/opportunities/{opportunity}/comments', [CommentController::class, 'store'])->middleware('throttle:10,1');
-    Route::get('/opportunities/{opportunity}/comments', [CommentController::class, 'index']);
-    Route::get('/comments/{comment}/replies', [CommentController::class, 'replies']);
-    Route::patch('/comments/{comment}', [CommentController::class, 'update']);
-    Route::delete('/comments/{comment}', [CommentController::class, 'destroy']);
-    Route::post('/comments/{comment}/react', [CommentController::class, 'react'])->middleware('throttle:60,1');
-    Route::post('/comments/{comment}/report', [CommentController::class, 'report']);
-    Route::post('/conversations/{conversation}/messages', [ConversationController::class, 'send'])->middleware('throttle:30,1');
-    Route::post('/conversations/{conversation}/polls', [PollController::class, 'store'])->middleware('throttle:5,1440');
-    Route::post('/polls/{poll}/vote', [PollController::class, 'vote']);
-    Route::post('/polls/{poll}/close', [PollController::class, 'close']);
-    Route::post('/conversations/{conversation}/insights', [ConversationController::class, 'insights']);
-    Route::get('/meet/connect', [MeetController::class, 'connect']);
-    Route::get('/meet/callback', [MeetController::class, 'callback']);
-    Route::get('/meet/status', [MeetController::class, 'status']);
-    Route::post('/meet/disconnect', [MeetController::class, 'disconnect']);
-    Route::post('/conversations/{conversation}/meet', [MeetController::class, 'schedule'])->middleware('throttle:10,1440');
-    Route::delete('/conversations/{conversation}/meet/{eventId}', [MeetController::class, 'cancel']);
-    Route::post('/stories', [StoryController::class, 'store']);
-    Route::post('/stories/{story}/seen', [StoryController::class, 'markSeen']);
-    Route::post('/stories/{story}/like', [StoryController::class, 'toggleLike']);
-    Route::post('/inquiries', [ConversationController::class, 'inquire']);
-    Route::post('/inquiries/resolve', [ConversationController::class, 'resolve']);
-    Route::post('/notifications/{notification}/read', [NotificationController::class, 'markRead']);
-    Route::post('/notifications/read-all', [NotificationController::class, 'markAllRead']);
-    Route::put('/preferences', [PreferenceController::class, 'update']);
-    Route::get('/preferences', [PreferenceController::class, 'show']);
-    Route::get('/follows', [FollowController::class, 'index']);
-    Route::post('/follows/toggle', [FollowController::class, 'toggle']);
-    Route::post('/uploads', [UploadController::class, 'store']);
+    Route::post('/stories', [StoryController::class, 'store'])->name('stories.store');
+    Route::post('/stories/{story}/seen', [StoryController::class, 'markSeen'])->name('stories.seen');
+    Route::post('/stories/{story}/like', [StoryController::class, 'toggleLike'])->name('stories.like');
+    Route::post('/notifications/{notification}/read', [NotificationController::class, 'markRead'])->name('notifications.read');
+    Route::post('/notifications/read-all', [NotificationController::class, 'markAllRead'])->name('notifications.read-all');
+    Route::put('/preferences', [PreferenceController::class, 'update'])->name('preferences.update');
+    Route::get('/preferences', [PreferenceController::class, 'show'])->name('preferences.show');
+    Route::get('/follows', [FollowController::class, 'index'])->name('follows.index');
+    Route::post('/follows/toggle', [FollowController::class, 'toggle'])->name('follows.toggle');
+    Route::post('/uploads', [UploadController::class, 'store'])->name('uploads.store');
 });
+
+require __DIR__.'/opportunities.php';
+require __DIR__.'/comments.php';
+require __DIR__.'/conversations.php';

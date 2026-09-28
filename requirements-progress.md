@@ -12,7 +12,7 @@
 
 | Area | Status | Notes |
 |---|---|---|
-| Activity 3 — Backend infrastructure | **partial** | Schema, models, validation exist. Missing resource CRUD (edit/update/destroy), modular route files, named routes. |
+| Activity 3 — Backend infrastructure | **partial** | Schema, models, validation, modular named routes exist. Missing resource CRUD (edit/update/destroy implementations). |
 | Activity 4 — React + Inertia | **done** | `@inertiaHead` + `resolvePageComponent`; pages live in `frontend/src/Pages`. |
 | Activity 5 — Fortify + Spatie | **not started** | Custom session auth + a string `users.role` column. No Fortify, no Spatie. |
 | Final project — product + security | **partial** | Domain app is far along. Assignment auth/RBAC and full resource CRUD are the blockers. |
@@ -68,12 +68,12 @@ Owner FKs (`opportunities.user_id`, `stories.user_id`) use `restrictOnDelete()` 
 
 | ID | Task | Status |
 |---|---|---|
-| 2.1 | Add `backend/routes/opportunities.php` (store/edit/update/destroy + like/save/hide only — no GET create) | not started |
-| 2.2 | Add `backend/routes/comments.php` | not started |
-| 2.3 | Add `backend/routes/conversations.php` (messages, polls, meet, inquiries) | not started |
-| 2.4 | Require the new files from `web.php`; keep guest pages + Fortify later in `web.php` | not started |
-| 2.5 | Named routes + prefixes + `middleware` groups; each name and path registered once (`/create` only, not `/opportunities/create`) | not started |
-| 2.6 | Point frontend links/forms at existing paths (do not add Ziggy; do not invent a second create URL) | not started |
+| 2.1 | Add `backend/routes/opportunities.php` (store/edit/update/destroy + like/save/hide only — no GET create) | done |
+| 2.2 | Add `backend/routes/comments.php` | done |
+| 2.3 | Add `backend/routes/conversations.php` (messages, polls, meet, inquiries) | done |
+| 2.4 | Require the new files from `web.php`; keep guest pages + Fortify later in `web.php` | done |
+| 2.5 | Named routes + prefixes + `middleware` groups; each name and path registered once (`/create` only, not `/opportunities/create`) | done |
+| 2.6 | Point frontend links/forms at existing paths (do not add Ziggy; do not invent a second create URL) | done |
 
 ---
 
@@ -178,7 +178,7 @@ Granular permissions to seed:
 |---|---|---|
 | 0 | Already in place | done |
 | 1 | Inertia assignment compliance | done |
-| 2 | Modular named routes | not started |
+| 2 | Modular named routes | done |
 | 3 | Resource controllers (7 CRUD) | not started |
 | 4 | Laravel Fortify | not started |
 | 5 | Spatie RBAC | not started |
