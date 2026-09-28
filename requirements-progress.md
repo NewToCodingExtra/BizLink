@@ -83,11 +83,11 @@ Owner FKs (`opportunities.user_id`, `stories.user_id`) use `restrictOnDelete()` 
 
 | ID | Task | Status |
 |---|---|---|
-| 3.1 | Expand `OpportunityController` (or a dedicated Inertia resource controller) to all 7 actions | in progress |
-| 3.2 | `edit` + `update` Inertia page (`Pages/Opportunities/Edit`) — owner or Admin only | not started |
-| 3.3 | `destroy` with confirmation — owner or Admin only | not started |
-| 3.4 | Wire `index`/`show`/`create`/`store` to the existing feed/detail/create pages (do not duplicate UI) | not started |
-| 3.5 | Server-side `$request->validate()` on `update` (parity with `store`) | not started |
+| 3.1 | Expand `OpportunityController` (or a dedicated Inertia resource controller) to all 7 actions | done |
+| 3.2 | `edit` + `update` Inertia page (`Pages/Opportunities/Edit`) — owner or Admin only | done |
+| 3.3 | `destroy` with confirmation — owner or Admin only | done |
+| 3.4 | Wire `index`/`show`/`create`/`store` to the existing feed/detail/create pages (do not duplicate UI) | done |
+| 3.5 | Server-side `$request->validate()` on `update` (parity with `store`) | done |
 | 3.6 | Optional: same 7-action pattern on `CommentController` if time (already has index/store/update/destroy) | not started |
 
 ---
@@ -179,7 +179,7 @@ Granular permissions to seed:
 | 0 | Already in place | done |
 | 1 | Inertia assignment compliance | done |
 | 2 | Modular named routes | done |
-| 3 | Resource controllers (7 CRUD) | not started |
+| 3 | Resource controllers (7 CRUD) | done |
 | 4 | Laravel Fortify | not started |
 | 5 | Spatie RBAC | not started |
 | 6 | Conditional React UI | not started |
