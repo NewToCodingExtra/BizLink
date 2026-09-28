@@ -13,7 +13,14 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
-        //
+        $this->app->bind(
+            \App\Contracts\CalendarAdapter::class,
+            \App\Services\GoogleCalendarAdapter::class
+        );
+        $this->app->bind(
+            \App\Contracts\GeocodeAdapter::class,
+            \App\Services\NominatimGeocodeAdapter::class
+        );
     }
 
     /**

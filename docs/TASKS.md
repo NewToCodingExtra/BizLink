@@ -21,7 +21,7 @@ verified (lint/build/live). Spec: SPECIFICATION.md · How: IMPLEMENTATION.md.
 
 ## Phase 2 — Locate + Enrich (TODO — see CONTINUATION.md for the full build guide)
 
-- [ ] **T6 · Location** — migrations (opps/stories/prefs location cols + index),
+- [x] **T6 · Location** — migrations (opps/stories/prefs location cols + index),
   `Services/LocationService` + `GeocodeAdapter` (Nominatim) + `GET /locations/search`
   proxy, `LocationPicker.jsx`, create-form + onboarding + Preferences wiring,
   `OpportunityService` distance signal + near/province filters, Search filter row,
@@ -32,9 +32,9 @@ verified (lint/build/live). Spec: SPECIFICATION.md · How: IMPLEMENTATION.md.
   `InsightsCard.jsx`, composer attach menu. Verify: file guards live (php-as-pdf,
   oversize), poll lifecycle, real-count card.
 
-## Phase 3 — Meet (TODO — see CONTINUATION.md for the full build guide)
+## Phase 3 — Meet (DONE)
 
-- [ ] **T8 · Meet-in-chat** — `composer require google/apiclient`, `google_tokens`
+- [x] **T8 · Meet-in-chat** — `composer require google/apiclient`, `google_tokens`
   (+encrypted casts), OAuth connect/disconnect, `Services/MeetService` +
   `CalendarAdapter`, schedule/cancel endpoints, `MeetingCard.jsx`, `meet:close-ended`
   scheduler + `schedule:work` in start script. Verify: schedule→live card→Join→ended

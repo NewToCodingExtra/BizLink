@@ -22,11 +22,19 @@ class Message extends Model
         'attachment_type',
         'poll_id',
         'insight',
+        'meet_status',
+        'meet_event_id',
+        'meet_url',
+        'meet_start_at',
+        'meet_end_at',
+        'meet_title',
     ];
 
     protected $casts = [
         'insight' => 'array',
         'media_size' => 'integer',
+        'meet_start_at' => 'datetime',
+        'meet_end_at' => 'datetime',
     ];
 
     public function conversation()

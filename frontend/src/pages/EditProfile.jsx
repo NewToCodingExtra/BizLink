@@ -1,6 +1,6 @@
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Head, Link, router } from "@inertiajs/react";
-import { ArrowLeftIcon } from "../Components/icons";
+import { ArrowLeftIcon, GoogleIcon } from "../Components/icons";
 import { httpApi } from "../utils/http";
 import { useToast } from '../context/ToastContext';
 
@@ -15,6 +15,29 @@ export default function EditProfile({ user }) {
   const [saving, setSaving] = useState(false);
   const [fieldErrors, setFieldErrors] = useState({});
   const [saved, setSaved] = useState(false);
+  const [googleConnected, setGoogleConnected] = useState(false);
+  const [disconnectingGoogle, setDisconnectingGoogle] = useState(false);
+
+  useEffect(() => {
+    httpApi.get("/meet/status")
+      .then((res) => {
+        setGoogleConnected(Boolean(res?.connected));
+      })
+      .catch(() => {});
+  }, []);
+
+  const handleDisconnectGoogle = async () => {
+    setDisconnectingGoogle(true);
+    try {
+      await httpApi.post("/meet/disconnect");
+      setGoogleConnected(false);
+      toast.success("Google account disconnected");
+    } catch (err) {
+      toast.error(err.message || "Failed to disconnect Google");
+    } finally {
+      setDisconnectingGoogle(false);
+    }
+  };
 
   const handleBlur = (e) => {
     const field = e.target.name;
@@ -129,6 +152,38 @@ export default function EditProfile({ user }) {
         <div>
           <label className="text-sm font-medium text-text-primary">Bio ({bio.length}/500)</label>
           <textarea name="bio" value={bio} onChange={(e) => setBio(e.target.value)} onBlur={handleBlur} maxLength={500} rows={3} placeholder="What do you do, and what are you looking for?" className={`${getInputClass('bio')} resize-none`} />
+        </div>
+
+        <div className="pt-2 border-t border-border">
+          <label className="text-sm font-medium text-text-primary block mb-2">Connected Integrations</label>
+          <div className="flex items-center justify-between p-3 rounded-lg border border-border bg-bg">
+            <div className="flex items-center gap-2.5">
+              <GoogleIcon className="w-5 h-5" />
+              <div>
+                <p className="text-xs font-semibold text-text-primary">Google Calendar & Meet</p>
+                <p className="text-[11px] text-text-secondary">
+                  {googleConnected ? "Connected — ready to schedule video meetings" : "Not connected"}
+                </p>
+              </div>
+            </div>
+            {googleConnected ? (
+              <button
+                type="button"
+                onClick={handleDisconnectGoogle}
+                disabled={disconnectingGoogle}
+                className="text-xs font-medium text-error hover:bg-error/10 border border-error/20 px-3 py-1.5 rounded-lg transition-colors"
+              >
+                {disconnectingGoogle ? "Disconnecting..." : "Disconnect"}
+              </button>
+            ) : (
+              <a
+                href={`/meet/connect?return_to=${encodeURIComponent(window.location.pathname)}`}
+                className="text-xs font-medium text-action hover:bg-action/10 border border-action/20 px-3 py-1.5 rounded-lg transition-colors"
+              >
+                Connect
+              </a>
+            )}
+          </div>
         </div>
 
         <div className="flex items-center gap-3">

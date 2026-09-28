@@ -337,6 +337,12 @@ class ConversationController extends Controller
             'mediaSize' => $message->media_size,
             'insight' => $message->insight,
             'poll' => $message->poll ? $this->pollPayload($message->poll, $viewerId) : null,
+            'meetStatus' => $message->meet_status,
+            'meetEventId' => $message->meet_event_id,
+            'meetUrl' => $message->meet_url,
+            'meetStartAt' => $message->meet_start_at?->toIso8601String(),
+            'meetEndAt' => $message->meet_end_at?->toIso8601String(),
+            'meetTitle' => $message->meet_title,
             'attachment' => $message->attachment
                 ? $this->attachmentCard($message->attachment, class_basename($message->attachment_type))
                 : null,

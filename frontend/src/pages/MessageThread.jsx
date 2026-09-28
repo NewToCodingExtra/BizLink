@@ -1,14 +1,24 @@
 import { useEffect, useRef, useState } from "react";
 import { Head, Link, router, usePage } from "@inertiajs/react";
-import { ArrowLeftIcon, ImageIcon, FileIcon, ChartIcon, PlusIcon, XIcon } from "../Components/icons";
+import {
+  ArrowLeftIcon,
+  ImageIcon,
+  FileIcon,
+  ChartIcon,
+  PlusIcon,
+  XIcon,
+  VideoIcon,
+  GoogleIcon,
+  DotsIcon,
+} from "../Components/icons";
 import QuoteCard from "../Components/QuoteCard";
 import PollCard from "../Components/PollCard";
 import InsightsCard from "../Components/InsightsCard";
+import MeetingCard from "../Components/MeetingCard";
 import { httpApi } from "../utils/http";
 import { getEcho, watchEchoHealth } from "../utils/echo";
 import { profilePath } from "../utils/profilePath";
-
-import { useToast } from '../context/ToastContext';
+import { useToast } from "../context/ToastContext";
 
 export default function MessageThread({ conv: initialConv, quote: initialQuote }) {
   const toast = useToast();
@@ -22,13 +32,23 @@ export default function MessageThread({ conv: initialConv, quote: initialQuote }
   const [sending, setSending] = useState(false);
   const [typingName, setTypingName] = useState("");
   const [liveDown, setLiveDown] = useState(false);
-  
+
   // Attachments and modals
   const [showAttachMenu, setShowAttachMenu] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [showPollModal, setShowPollModal] = useState(false);
   const [pollQuestion, setPollQuestion] = useState("");
   const [pollOptions, setPollOptions] = useState(["", ""]);
+
+  // Google Meet integration
+  const [googleConnected, setGoogleConnected] = useState(false);
+  const [showMeetModal, setShowMeetModal] = useState(false);
+  const [showConnectModal, setShowConnectModal] = useState(false);
+  const [showThreadMenu, setShowThreadMenu] = useState(false);
+  const [meetTitle, setMeetTitle] = useState("");
+  const [meetDate, setMeetDate] = useState("");
+  const [meetDuration, setMeetDuration] = useState(30);
+  const [schedulingMeet, setSchedulingMeet] = useState(false);
 
   const scrollRef = useRef(null);
   const typingTimer = useRef(null);
@@ -37,16 +57,23 @@ export default function MessageThread({ conv: initialConv, quote: initialQuote }
 
   useEffect(() => {
     scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: "smooth" });
-  }, [messages.length]);
+  }, [messages]);
 
-  // Live: incoming messages, polls, and typing whispers
+  // Check Google status
   useEffect(() => {
-    if (!conv) return;
+    httpApi.get("/meet/status")
+      .then((res) => {
+        setGoogleConnected(Boolean(res?.connected));
+      })
+      .catch(() => {});
+  }, []);
+
+  // Reverb broadcast subscription
+  useEffect(() => {
+    if (!conv?.id) return;
     const client = getEcho();
-    if (!client) {
-      setLiveDown(true);
-      return;
-    }
+    if (!client) return;
+
     const channel = client.private(`conversation.${conv.id}`);
     channel.listen(".message.sent", (e) => {
       const msg = e?.message;
@@ -61,6 +88,31 @@ export default function MessageThread({ conv: initialConv, quote: initialQuote }
         prev.map((m) => {
           if (m.poll && Number(m.poll.id) === Number(updatedPoll.id)) {
             return { ...m, poll: { ...updatedPoll, myVote: m.poll.myVote } };
+          }
+          return m;
+        })
+      );
+    });
+
+    channel.listen(".meet.scheduled", (e) => {
+      const msg = e?.message;
+      if (!msg || Number(msg.senderId) === Number(me?.id)) return;
+      setMessages((prev) => (prev.some((m) => Number(m.id) === Number(msg.id)) ? prev : [...prev, { ...msg, from: "them" }]));
+    });
+
+    channel.listen(".meet.ended", (e) => {
+      const { eventId, status, messageId, message: updatedMsg } = e || {};
+      setMessages((prev) =>
+        prev.map((m) => {
+          if (
+            (eventId && m.meetEventId === eventId) ||
+            (messageId && Number(m.id) === Number(messageId))
+          ) {
+            return {
+              ...m,
+              meetStatus: status || "ended",
+              ...(updatedMsg ? updatedMsg : {}),
+            };
           }
           return m;
         })
@@ -93,7 +145,7 @@ export default function MessageThread({ conv: initialConv, quote: initialQuote }
           setMessages((prev) => {
             const seen = new Set(prev.map((m) => String(m.id)));
             const merged = [...prev, ...fresh.filter((m) => !seen.has(String(m.id)))];
-            return merged.length === prev.length ? prev : merged;
+            return merged;
           });
         },
       });
@@ -189,6 +241,57 @@ export default function MessageThread({ conv: initialConv, quote: initialQuote }
     }
   };
 
+  const openMeetScheduler = () => {
+    setMeetTitle(`Consultation: ${pinned?.headline || conv?.with || "BizLink"}`);
+    const now = new Date(Date.now() + 20 * 60000);
+    const localIso = new Date(now.getTime() - now.getTimezoneOffset() * 60000).toISOString().slice(0, 16);
+    setMeetDate(localIso);
+    if (!googleConnected) {
+      setShowConnectModal(true);
+    } else {
+      setShowMeetModal(true);
+    }
+  };
+
+  const handleDisconnectGoogle = async () => {
+    try {
+      await httpApi.post("/meet/disconnect");
+      setGoogleConnected(false);
+      toast.success("Google account disconnected");
+    } catch (err) {
+      toast.error(err.message || "Failed to disconnect Google");
+    }
+  };
+
+  const handleScheduleMeet = async (e) => {
+    e.preventDefault();
+    if (!meetDate) {
+      toast.error("Please select a date and time");
+      return;
+    }
+    setSchedulingMeet(true);
+    try {
+      const res = await httpApi.post(`/conversations/${conv.id}/meet`, {
+        title: meetTitle || `Consultation: ${conv.with}`,
+        start_at: new Date(meetDate).toISOString(),
+        duration: Number(meetDuration),
+      });
+      const msg = res.data ?? res;
+      setMessages((prev) => (prev.some((m) => Number(m.id) === Number(msg.id)) ? prev : [...prev, msg]));
+      setConv((c) => (c ? { ...c, lastMessage: `Meeting scheduled: ${meetTitle || conv.with}` } : c));
+      setShowMeetModal(false);
+      toast.success("Meeting scheduled");
+    } catch (err) {
+      if (err.message?.includes("Google account not connected")) {
+        setShowMeetModal(false);
+        setShowConnectModal(true);
+      }
+      toast.error(err.message || "Failed to schedule meeting");
+    } finally {
+      setSchedulingMeet(false);
+    }
+  };
+
   const handleCreatePoll = async (e) => {
     e.preventDefault();
     const validOpts = pollOptions.map((o) => o.trim()).filter(Boolean);
@@ -204,17 +307,17 @@ export default function MessageThread({ conv: initialConv, quote: initialQuote }
       setShowPollModal(false);
       setPollQuestion("");
       setPollOptions(["", ""]);
-      // Refresh to grab the created poll system message
-      router.reload({ only: ["conv"] });
+      // Update thread last message
+      setConv((c) => (c ? { ...c, lastMessage: `Poll: ${pollQuestion.trim()}` } : c));
       toast.success("Poll created");
     } catch (err) {
       toast.error(err.message || "Failed to create poll");
     }
   };
 
-  const handleVote = async (pollId, optionIndex) => {
+  const handleVote = async (pollId, optIdx) => {
     try {
-      const res = await httpApi.post(`/polls/${pollId}/vote`, { option: optionIndex });
+      const res = await httpApi.post(`/polls/${pollId}/vote`, { option: optIdx });
       const updated = res.data ?? res;
       setMessages((prev) =>
         prev.map((m) => (m.poll && Number(m.poll.id) === Number(pollId) ? { ...m, poll: updated } : m))
@@ -266,17 +369,68 @@ export default function MessageThread({ conv: initialConv, quote: initialQuote }
   return (
     <div className="max-w-2xl mx-auto flex flex-col h-[calc(100dvh-64px)]">
       <Head title={conv.with || "Conversation"} />
-      <div className="px-4 sm:px-6 py-4 border-b border-border bg-surface flex items-center gap-3 shrink-0">
+      <div className="px-4 sm:px-6 py-4 border-b border-border bg-surface flex items-center gap-3 shrink-0 relative">
         <Link href="/messages" className="inline-flex items-center text-text-secondary hover:text-text-primary" aria-label="Back to inbox">
           <ArrowLeftIcon className="w-5 h-5" />
         </Link>
         <Link href={profilePath({ username: conv.withUsername, authorId: conv.withId, brandId: conv.brandId })}>
           <img src={conv.avatar} alt={conv.with} className="w-8 h-8 rounded-full" />
         </Link>
-        <Link href={profilePath({ username: conv.withUsername, authorId: conv.withId, brandId: conv.brandId })} className="text-sm font-semibold text-text-primary hover:text-action">
-          {conv.with}
-        </Link>
-        <span className="text-xs text-text-secondary">Private consultation</span>
+        <div className="flex flex-col min-w-0 flex-1">
+          <Link href={profilePath({ username: conv.withUsername, authorId: conv.withId, brandId: conv.brandId })} className="text-sm font-semibold text-text-primary hover:text-action truncate">
+            {conv.with}
+          </Link>
+          <span className="text-xs text-text-secondary">Private consultation</span>
+        </div>
+
+        {/* ⋯ Actions Menu */}
+        <div className="relative">
+          <button
+            type="button"
+            onClick={() => setShowThreadMenu(!showThreadMenu)}
+            className="p-1.5 rounded-lg text-text-secondary hover:text-text-primary hover:bg-bg border border-transparent hover:border-border transition-colors"
+            aria-label="Conversation options"
+          >
+            <DotsIcon className="w-5 h-5" />
+          </button>
+          {showThreadMenu && (
+            <div className="absolute right-0 mt-1 w-52 bg-surface rounded-xl border border-border shadow-lg py-1.5 z-30 animate-in fade-in">
+              <button
+                type="button"
+                onClick={() => {
+                  setShowThreadMenu(false);
+                  openMeetScheduler();
+                }}
+                className="w-full text-left px-3.5 py-2 text-xs font-medium text-text-primary hover:bg-bg flex items-center gap-2"
+              >
+                <VideoIcon className="w-4 h-4 text-action" />
+                <span>Schedule Google Meet</span>
+              </button>
+
+              {googleConnected ? (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowThreadMenu(false);
+                    handleDisconnectGoogle();
+                  }}
+                  className="w-full text-left px-3.5 py-2 text-xs font-medium text-error hover:bg-error/10 flex items-center gap-2"
+                >
+                  <GoogleIcon className="w-4 h-4" />
+                  <span>Disconnect Google</span>
+                </button>
+              ) : (
+                <a
+                  href={`/meet/connect?return_to=${encodeURIComponent(window.location.pathname)}`}
+                  className="w-full text-left px-3.5 py-2 text-xs font-medium text-text-primary hover:bg-bg flex items-center gap-2"
+                >
+                  <GoogleIcon className="w-4 h-4" />
+                  <span>Connect Google</span>
+                </a>
+              )}
+            </div>
+          )}
+        </div>
       </div>
 
       <div ref={scrollRef} className="flex-1 overflow-auto p-4 space-y-3 bg-[var(--color-bg)]">
@@ -308,14 +462,30 @@ export default function MessageThread({ conv: initialConv, quote: initialQuote }
                       >
                         <FileIcon className="w-6 h-6 shrink-0" />
                         <div className="flex-1 min-w-0">
-                          <p className="text-xs font-semibold truncate">{m.mediaName || "Document"}</p>
-                          <p className={`text-[10px] ${isMe ? "text-white/70" : "text-text-secondary"}`}>
-                            {m.mediaSize ? `${(m.mediaSize / (1024 * 1024)).toFixed(2)} MB` : "File"}
-                          </p>
+                          <p className="text-xs font-medium truncate">{m.mediaName || "Download File"}</p>
+                          {m.mediaSize && <p className={`text-[10px] ${isMe ? "text-white/70" : "text-text-secondary"}`}>{(m.mediaSize / 1024).toFixed(1)} KB</p>}
                         </div>
                       </a>
                     )}
                   </div>
+                )}
+
+                {/* Meeting card rendering */}
+                {(m.meetStatus || m.meetEventId || m.meetUrl) && (
+                  <MeetingCard
+                    message={m}
+                    conversationId={conv.id}
+                    isMe={isMe}
+                    onCancelled={() => {
+                      setMessages((prev) =>
+                        prev.map((item) =>
+                          item.id === m.id
+                            ? { ...item, meetStatus: "cancelled" }
+                            : item
+                        )
+                      );
+                    }}
+                  />
                 )}
 
                 {/* Poll rendering */}
@@ -342,7 +512,7 @@ export default function MessageThread({ conv: initialConv, quote: initialQuote }
 
       {/* Attach Menu Dropdown */}
       {showAttachMenu && (
-        <div className="p-3 bg-surface border-t border-border flex items-center gap-3 animate-in fade-in slide-in-from-bottom-2">
+        <div className="p-3 bg-surface border-t border-border flex items-center gap-2 overflow-x-auto animate-in fade-in slide-in-from-bottom-2">
           <input
             type="file"
             ref={fileInputRef}
@@ -353,7 +523,7 @@ export default function MessageThread({ conv: initialConv, quote: initialQuote }
           <button
             type="button"
             onClick={() => fileInputRef.current?.click()}
-            className="flex flex-col items-center gap-1.5 p-2 rounded-xl border border-border bg-bg hover:bg-surface text-text-primary text-xs font-medium flex-1 transition-colors"
+            className="flex flex-col items-center gap-1.5 p-2 rounded-xl border border-border bg-bg hover:bg-surface text-text-primary text-xs font-medium min-w-[70px] flex-1 transition-colors"
           >
             <ImageIcon className="w-5 h-5 text-action" />
             <span>Photo/Video</span>
@@ -361,7 +531,7 @@ export default function MessageThread({ conv: initialConv, quote: initialQuote }
           <button
             type="button"
             onClick={() => fileInputRef.current?.click()}
-            className="flex flex-col items-center gap-1.5 p-2 rounded-xl border border-border bg-bg hover:bg-surface text-text-primary text-xs font-medium flex-1 transition-colors"
+            className="flex flex-col items-center gap-1.5 p-2 rounded-xl border border-border bg-bg hover:bg-surface text-text-primary text-xs font-medium min-w-[70px] flex-1 transition-colors"
           >
             <FileIcon className="w-5 h-5 text-primary" />
             <span>Document</span>
@@ -369,16 +539,27 @@ export default function MessageThread({ conv: initialConv, quote: initialQuote }
           <button
             type="button"
             onClick={() => { setShowAttachMenu(false); setShowPollModal(true); }}
-            className="flex flex-col items-center gap-1.5 p-2 rounded-xl border border-border bg-bg hover:bg-surface text-text-primary text-xs font-medium flex-1 transition-colors"
+            className="flex flex-col items-center gap-1.5 p-2 rounded-xl border border-border bg-bg hover:bg-surface text-text-primary text-xs font-medium min-w-[70px] flex-1 transition-colors"
           >
             <ChartIcon className="w-5 h-5 text-warning" />
             <span>Create Poll</span>
+          </button>
+          <button
+            type="button"
+            onClick={() => {
+              setShowAttachMenu(false);
+              openMeetScheduler();
+            }}
+            className="flex flex-col items-center gap-1.5 p-2 rounded-xl border border-border bg-bg hover:bg-surface text-text-primary text-xs font-medium min-w-[70px] flex-1 transition-colors"
+          >
+            <VideoIcon className="w-5 h-5 text-indigo-500" />
+            <span>Google Meet</span>
           </button>
           {conv.isSeller && (
             <button
               type="button"
               onClick={handleShareInsights}
-              className="flex flex-col items-center gap-1.5 p-2 rounded-xl border border-border bg-bg hover:bg-surface text-text-primary text-xs font-medium flex-1 transition-colors"
+              className="flex flex-col items-center gap-1.5 p-2 rounded-xl border border-border bg-bg hover:bg-surface text-text-primary text-xs font-medium min-w-[70px] flex-1 transition-colors"
             >
               <ChartIcon className="w-5 h-5 text-success" />
               <span>Share Insights</span>
@@ -391,22 +572,30 @@ export default function MessageThread({ conv: initialConv, quote: initialQuote }
       <form onSubmit={send} className="p-4 bg-surface border-t border-border shrink-0">
         {liveDown && <p className="mb-2 text-xs text-warning bg-warning/10 border border-warning/20 rounded-lg px-3 py-1.5">Reconnecting… live updates paused, refreshing every 15s.</p>}
         {typingName && !liveDown && <p className="mb-2 text-xs text-text-secondary italic">{typingName} is typing…</p>}
-        {pinned && <QuoteCard quote={pinned} mode="pin" onDismiss={() => setPinned(null)} />}
-        <div className="flex gap-2 relative items-center">
+        {pinned && (
+          <div className="mb-2 relative">
+            <QuoteCard quote={pinned} mode="composer" />
+            <button type="button" onClick={() => setPinned(null)} className="absolute top-1.5 right-1.5 text-text-secondary hover:text-text-primary bg-surface/80 rounded-full p-0.5" aria-label="Remove quote">
+              <XIcon className="w-3.5 h-3.5" />
+            </button>
+          </div>
+        )}
+        <div className="flex items-center gap-2">
           <button
             type="button"
-            onClick={() => setShowAttachMenu((prev) => !prev)}
-            className="p-3 rounded-full border border-border bg-bg hover:bg-surface text-text-secondary hover:text-text-primary transition-colors shrink-0"
-            aria-label="Add attachment"
+            onClick={() => setShowAttachMenu(!showAttachMenu)}
+            className="w-10 h-10 rounded-full border border-border bg-bg hover:bg-surface flex items-center justify-center text-text-secondary hover:text-action transition-colors shrink-0"
+            aria-label="Attachments"
           >
-            <PlusIcon className={`w-4 h-4 transition-transform ${showAttachMenu ? "rotate-45" : ""}`} />
+            <PlusIcon className="w-5 h-5" />
           </button>
           <input
             name="text"
+            required
             value={text}
             onChange={(e) => onType(e.target.value)}
             onBlur={handleBlur}
-            placeholder={uploading ? "Uploading..." : "Type a message..."}
+            placeholder={uploading ? "Uploading attachment..." : "Type a message..."}
             disabled={uploading}
             className={getInputClass('text')}
           />
@@ -440,16 +629,16 @@ export default function MessageThread({ conv: initialConv, quote: initialQuote }
                   value={pollQuestion}
                   onChange={(e) => setPollQuestion(e.target.value)}
                   placeholder="Ask a question..."
-                  className="w-full px-3 py-2 rounded-lg border border-border bg-bg text-sm text-text-primary outline-none focus:border-action"
+                  className="w-full px-3 py-2 rounded-lg border border-border bg-bg text-sm text-text-primary focus:border-action focus:ring-2 focus:ring-action/20 outline-none"
                 />
               </div>
               <div className="space-y-2">
-                <label className="block text-xs font-semibold text-text-secondary">Options (2 to 5)</label>
+                <label className="block text-xs font-semibold text-text-secondary">Options (min 2)</label>
                 {pollOptions.map((opt, idx) => (
-                  <div key={idx} className="flex gap-2">
+                  <div key={idx} className="flex items-center gap-2">
                     <input
                       type="text"
-                      required
+                      required={idx < 2}
                       value={opt}
                       onChange={(e) => {
                         const next = [...pollOptions];
@@ -457,13 +646,13 @@ export default function MessageThread({ conv: initialConv, quote: initialQuote }
                         setPollOptions(next);
                       }}
                       placeholder={`Option ${idx + 1}`}
-                      className="flex-1 px-3 py-2 rounded-lg border border-border bg-bg text-sm text-text-primary outline-none focus:border-action"
+                      className="flex-1 px-3 py-2 rounded-lg border border-border bg-bg text-sm text-text-primary focus:border-action focus:ring-2 focus:ring-action/20 outline-none"
                     />
                     {pollOptions.length > 2 && (
                       <button
                         type="button"
                         onClick={() => setPollOptions(pollOptions.filter((_, i) => i !== idx))}
-                        className="p-2 text-text-secondary hover:text-error"
+                        className="text-text-secondary hover:text-error p-1"
                       >
                         <XIcon className="w-4 h-4" />
                       </button>
@@ -474,28 +663,145 @@ export default function MessageThread({ conv: initialConv, quote: initialQuote }
                   <button
                     type="button"
                     onClick={() => setPollOptions([...pollOptions, ""])}
-                    className="text-xs font-medium text-action hover:underline"
+                    className="text-xs text-action font-medium hover:underline flex items-center gap-1 mt-1"
                   >
-                    + Add Option
+                    <PlusIcon className="w-3.5 h-3.5" /> Add option
                   </button>
                 )}
               </div>
-              <div className="flex justify-end gap-2 pt-2 border-t border-border">
+              <div className="flex items-center justify-end gap-2 pt-2">
                 <button
                   type="button"
                   onClick={() => setShowPollModal(false)}
-                  className="px-4 py-2 rounded-lg text-sm text-text-secondary hover:bg-bg"
+                  className="px-4 py-2 text-xs font-medium text-text-secondary hover:text-text-primary rounded-lg border border-border"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  className="px-4 py-2 rounded-lg text-sm bg-action hover:bg-action-hover text-white font-medium"
+                  className="px-4 py-2 text-xs font-medium bg-action hover:bg-action-hover text-white rounded-lg transition-colors"
                 >
-                  Create
+                  Create Poll
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* Schedule Meet Modal */}
+      {showMeetModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in">
+          <div className="bg-surface w-full max-w-md rounded-2xl shadow-xl border border-border p-5 space-y-4">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <div className="w-7 h-7 rounded-lg bg-action/10 text-action grid place-items-center">
+                  <VideoIcon className="w-4 h-4" />
+                </div>
+                <h2 className="text-lg font-semibold text-text-primary">Schedule Google Meet</h2>
+              </div>
+              <button onClick={() => setShowMeetModal(false)} className="text-text-secondary hover:text-text-primary">
+                <XIcon className="w-5 h-5" />
+              </button>
+            </div>
+            <form onSubmit={handleScheduleMeet} className="space-y-3">
+              <div>
+                <label className="block text-xs font-semibold text-text-secondary mb-1">Meeting Title</label>
+                <input
+                  type="text"
+                  required
+                  value={meetTitle}
+                  onChange={(e) => setMeetTitle(e.target.value)}
+                  placeholder="e.g. Consultation: Partnership terms"
+                  className="w-full px-3 py-2 rounded-lg border border-border bg-bg text-sm text-text-primary focus:border-action focus:ring-2 focus:ring-action/20 outline-none"
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-semibold text-text-secondary mb-1">Start Date & Time (Local)</label>
+                <input
+                  type="datetime-local"
+                  required
+                  value={meetDate}
+                  onChange={(e) => setMeetDate(e.target.value)}
+                  min={new Date(Date.now() + 15 * 60000 - new Date().getTimezoneOffset() * 60000).toISOString().slice(0, 16)}
+                  className="w-full px-3 py-2 rounded-lg border border-border bg-bg text-sm text-text-primary focus:border-action focus:ring-2 focus:ring-action/20 outline-none"
+                />
+                <p className="text-[11px] text-text-secondary mt-1">Must be at least 15 minutes in advance.</p>
+              </div>
+              <div>
+                <label className="block text-xs font-semibold text-text-secondary mb-1">Duration</label>
+                <div className="grid grid-cols-3 gap-2">
+                  {[15, 30, 60].map((mins) => (
+                    <button
+                      key={mins}
+                      type="button"
+                      onClick={() => setMeetDuration(mins)}
+                      className={`py-2 px-3 rounded-lg text-xs font-medium border transition-colors ${
+                        meetDuration === mins
+                          ? "bg-action text-white border-action"
+                          : "bg-bg text-text-secondary border-border hover:bg-surface"
+                      }`}
+                    >
+                      {mins} mins
+                    </button>
+                  ))}
+                </div>
+              </div>
+              <div className="flex items-center justify-end gap-2 pt-2">
+                <button
+                  type="button"
+                  onClick={() => setShowMeetModal(false)}
+                  className="px-4 py-2 text-xs font-medium text-text-secondary hover:text-text-primary rounded-lg border border-border"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={schedulingMeet}
+                  className="px-4 py-2 text-xs font-medium bg-action hover:bg-action-hover text-white rounded-lg transition-colors disabled:opacity-50"
+                >
+                  {schedulingMeet ? "Scheduling..." : "Schedule Meeting"}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Connect Google Modal */}
+      {showConnectModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in">
+          <div className="bg-surface w-full max-w-md rounded-2xl shadow-xl border border-border p-5 space-y-4 text-center">
+            <div className="w-12 h-12 rounded-2xl bg-action/10 text-action grid place-items-center mx-auto">
+              <GoogleIcon className="w-6 h-6" />
+            </div>
+            <div>
+              <h2 className="text-lg font-semibold text-text-primary">Connect Google Account</h2>
+              <p className="text-xs text-text-secondary mt-1">
+                To schedule Google Meet video calls directly in chat, connect your Google account with Google Calendar access.
+              </p>
+            </div>
+            <div className="p-3 bg-bg rounded-xl border border-border text-[11px] text-text-secondary text-left space-y-1">
+              <p>• Requires Calendar Events permission</p>
+              <p>• Automatically mints Google Meet conference links</p>
+              <p>• You can disconnect anytime from thread options</p>
+            </div>
+            <div className="flex items-center justify-end gap-2 pt-2">
+              <button
+                type="button"
+                onClick={() => setShowConnectModal(false)}
+                className="flex-1 py-2 text-xs font-medium text-text-secondary hover:text-text-primary rounded-lg border border-border"
+              >
+                Cancel
+              </button>
+              <a
+                href={`/meet/connect?return_to=${encodeURIComponent(window.location.pathname)}`}
+                className="flex-1 py-2 text-xs font-medium bg-action hover:bg-action-hover text-white rounded-lg transition-colors shadow-sm text-center flex items-center justify-center gap-1.5"
+              >
+                <GoogleIcon className="w-4 h-4" />
+                <span>Connect Google</span>
+              </a>
+            </div>
           </div>
         </div>
       )}

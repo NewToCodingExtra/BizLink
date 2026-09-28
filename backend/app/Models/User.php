@@ -108,6 +108,11 @@ class User extends Authenticatable
         return $this->belongsToMany(Story::class, 'story_user_likes')->withTimestamps();
     }
 
+    public function googleToken()
+    {
+        return $this->hasOne(GoogleToken::class);
+    }
+
     public function notifications()
     {
         return $this->hasMany(AppNotification::class)->latest();

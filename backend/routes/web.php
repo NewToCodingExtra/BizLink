@@ -13,6 +13,7 @@ use App\Http\Controllers\SocialAuthController;
 use App\Http\Controllers\StoryController;
 use App\Http\Controllers\UploadController;
 use App\Http\Controllers\PollController;
+use App\Http\Controllers\MeetController;
 use App\Http\Controllers\AuthController;
 use Illuminate\Support\Facades\Route;
 
@@ -89,6 +90,12 @@ Route::middleware('auth')->group(function () {
     Route::post('/polls/{poll}/vote', [PollController::class, 'vote']);
     Route::post('/polls/{poll}/close', [PollController::class, 'close']);
     Route::post('/conversations/{conversation}/insights', [ConversationController::class, 'insights']);
+    Route::get('/meet/connect', [MeetController::class, 'connect']);
+    Route::get('/meet/callback', [MeetController::class, 'callback']);
+    Route::get('/meet/status', [MeetController::class, 'status']);
+    Route::post('/meet/disconnect', [MeetController::class, 'disconnect']);
+    Route::post('/conversations/{conversation}/meet', [MeetController::class, 'schedule'])->middleware('throttle:10,1440');
+    Route::delete('/conversations/{conversation}/meet/{eventId}', [MeetController::class, 'cancel']);
     Route::post('/stories', [StoryController::class, 'store']);
     Route::post('/stories/{story}/seen', [StoryController::class, 'markSeen']);
     Route::post('/stories/{story}/like', [StoryController::class, 'toggleLike']);

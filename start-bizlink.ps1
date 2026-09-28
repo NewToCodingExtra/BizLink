@@ -65,6 +65,9 @@ Start-Sleep -Seconds 5
 $reverbUp = netstat -ano | Select-String "127.0.0.1:8080.*LISTENING"
 if ($reverbUp) { Write-Host "   Reverb listening on :8080" } else { Write-Host "   Reverb may still be starting - check C:\temp\bizlink-reverb-err.log" }
 
+Write-Host "3c) Laravel Scheduler (meet:close-ended)..."
+Start-Process -FilePath "C:\xampp\php\php.exe" -ArgumentList "artisan", "schedule:work" -WorkingDirectory $backend -WindowStyle Hidden -RedirectStandardOutput C:\temp\bizlink-schedule.log -RedirectStandardError C:\temp\bizlink-schedule-err.log
+
 Write-Host "4) Frontend Vite on :5173 (Inertia assets for Laravel)..."
 Start-Process -FilePath "cmd.exe" -ArgumentList @('/c', "npm run dev") -WorkingDirectory $frontend -WindowStyle Hidden -RedirectStandardOutput C:\temp\bizlink-vite.log -RedirectStandardError C:\temp\bizlink-vite-err.log
 Start-Sleep -Seconds 4
