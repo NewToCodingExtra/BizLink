@@ -7,7 +7,6 @@ import ProfileMenu from "./ProfileMenu";
 import markUrl from "../assets/bizlink-mark.svg";
 import { httpApi } from "../utils/http";
 import { getEcho } from "../utils/echo";
-import { can } from "../utils/can";
 import { useTheme } from "../context/ThemeContext";
 import Modal from "./Modal";
 import Button from "./Button";
