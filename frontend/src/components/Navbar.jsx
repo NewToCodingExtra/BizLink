@@ -13,7 +13,8 @@ import Button from "./Button";
 import { XIcon, MenuIcon, ArrowRightIcon } from "./icons";
 
 export default function Navbar() {
-  const { auth, flash } = usePage().props;
+  const page = usePage();
+  const { auth, flash } = page.props;
   const user = auth?.user ?? null;
   const [mobileOpen, setMobileOpen] = useState(false);
   const [showBell, setShowBell] = useState(false);
@@ -109,7 +110,7 @@ export default function Navbar() {
           </button>
 
           {user ? (
-            can(usePage(), "opportunities.create") && (
+            can(page, "opportunities.create") && (
               <Link href="/create" className="hidden sm:inline-flex items-center gap-1.5 bg-action hover:bg-action-hover active:bg-[#1E40AF] text-white text-sm font-medium px-4 py-2 rounded-lg transition-colors duration-150 focus-visible:ring-2 focus-visible:ring-blue-300 focus-visible:ring-offset-2 focus-visible:ring-offset-[#0B1F3A]">
                 <span className="text-lg leading-none -mt-0.5">+</span> Post
               </Link>
