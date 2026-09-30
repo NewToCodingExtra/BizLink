@@ -62,6 +62,7 @@ Route::middleware('auth')->group(function () {
     Route::post('/stories', [StoryController::class, 'store'])->name('stories.store');
     Route::post('/stories/{story}/seen', [StoryController::class, 'markSeen'])->name('stories.seen');
     Route::post('/stories/{story}/like', [StoryController::class, 'toggleLike'])->name('stories.like');
+    Route::delete('/stories/{identifier}', [StoryController::class, 'destroy'])->name('stories.destroy');
     Route::post('/notifications/{notification}/read', [NotificationController::class, 'markRead'])->name('notifications.read');
     Route::post('/notifications/read-all', [NotificationController::class, 'markAllRead'])->name('notifications.read-all');
     Route::put('/preferences', [PreferenceController::class, 'update'])->name('preferences.update');

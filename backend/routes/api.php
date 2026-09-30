@@ -68,6 +68,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/stories', [StoryController::class, 'store']);
     Route::post('/stories/{story}/seen', [StoryController::class, 'markSeen']);
     Route::post('/stories/{story}/like', [StoryController::class, 'toggleLike']);
+    Route::delete('/stories/{identifier}', [StoryController::class, 'destroy']);
 
     Route::get('/conversations', [ConversationController::class, 'index']);
     Route::get('/conversations/{conversation}', [ConversationController::class, 'show']);

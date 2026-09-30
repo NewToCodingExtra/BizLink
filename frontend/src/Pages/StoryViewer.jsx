@@ -4,7 +4,7 @@ import { profilePath } from "../utils/profilePath";
 import { httpApi } from "../utils/http";
 import { useToast } from "../context/ToastContext";
 import CreativeLoader from "../Components/CreativeLoader";
-import { XIcon } from "../Components/icons";
+import { XIcon, TrashIcon } from "../Components/icons";
 
 function timeAgo(dateInput) {
   if (!dateInput) return 'now';
@@ -37,6 +37,8 @@ export default function StoryViewer({ stories: serverStories, id: idProp, storyI
   const { auth } = usePage().props;
   const user = auth?.user ?? null;
   const toast = useToast();
+  const [confirmDelete, setConfirmDelete] = useState(false);
+  const [deleting, setDeleting] = useState(false);
 
   const routeId = idProp ?? storyId ?? currentIdFromPath();
   const authorFilter = authorProp ?? authorQueryFromUrl();
@@ -229,6 +231,37 @@ export default function StoryViewer({ stories: serverStories, id: idProp, storyI
     }
   };
 
+  const canDelete = !!story && !!user && (
+    String(user.id) === String(story.authorId) ||
+    (auth?.roles || []).includes("Admin")
+  );
+
+  const handleDelete = async () => {
+    if (!story || deleting) return;
+    setDeleting(true);
+    setIsPaused(true);
+    try {
+      await httpApi.del(`/stories/${story.slug}`);
+      toast.success("Story deleted.");
+      setConfirmDelete(false);
+      const remaining = localStories.filter((s) => String(s.slug) !== String(story.slug));
+      setLocalStories(remaining);
+      // Jump to next story from the same author, else close.
+      const next = remaining.find((s) => String(s.brandId) === String(story.brandId))
+        ?? remaining[idx] ?? remaining[idx - 1];
+      if (next) {
+        visitStory(next.slug, true);
+      } else {
+        closeViewer();
+      }
+    } catch (err) {
+      toast.error(err.message || "Failed to delete story.");
+    } finally {
+      setDeleting(false);
+      setIsPaused(false);
+    }
+  };
+
   const handlePrev = (e) => {
     e.stopPropagation();
     const prev = stories[idx - 1];
@@ -272,7 +305,19 @@ export default function StoryViewer({ stories: serverStories, id: idProp, storyI
             <span className="text-sm font-semibold hover:underline">{story.brandName}</span>
             <span className="text-xs text-white/80">· {timeAgo(story.createdAt)}</span>
           </Link>
-          <button onClick={(e) => { e.stopPropagation(); closeViewer(); }} className="w-8 h-8 grid place-items-center rounded-full bg-black/40 text-white hover:bg-black/60 transition-colors z-20 cursor-pointer"><XIcon /></button>
+          <div className="flex items-center gap-2 z-20">
+            {canDelete && (
+              <button
+                onClick={(e) => { e.stopPropagation(); setIsPaused(true); setConfirmDelete(true); }}
+                className="w-8 h-8 grid place-items-center rounded-full bg-black/40 text-white hover:bg-red-600/80 transition-colors cursor-pointer"
+                aria-label="Delete story"
+                title="Delete story"
+              >
+                <TrashIcon className="w-4 h-4" />
+              </button>
+            )}
+            <button onClick={(e) => { e.stopPropagation(); closeViewer(); }} className="w-8 h-8 grid place-items-center rounded-full bg-black/40 text-white hover:bg-black/60 transition-colors cursor-pointer" aria-label="Close"><XIcon /></button>
+          </div>
         </div>
       </div>
 
@@ -371,6 +416,34 @@ export default function StoryViewer({ stories: serverStories, id: idProp, storyI
           </div>
         </div>
       </div>
+
+      {/* Delete confirmation */}
+      {confirmDelete && (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm" onClick={() => { if (!deleting) { setConfirmDelete(false); setIsPaused(false); } }}>
+          <div className="bg-surface w-full max-w-sm rounded-2xl shadow-xl border border-border p-5 space-y-4" onClick={(e) => e.stopPropagation()}>
+            <h2 className="text-base font-semibold text-text-primary">Delete this story?</h2>
+            <p className="text-sm text-text-secondary">It will be removed for everyone. This can't be undone.</p>
+            <div className="flex items-center justify-end gap-2 pt-1">
+              <button
+                type="button"
+                disabled={deleting}
+                onClick={() => { setConfirmDelete(false); setIsPaused(false); }}
+                className="px-4 py-2 text-xs font-medium text-text-secondary hover:text-text-primary rounded-lg border border-border disabled:opacity-50"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                disabled={deleting}
+                onClick={handleDelete}
+                className="px-4 py-2 text-xs font-medium bg-red-600 hover:bg-red-700 text-white rounded-lg transition-colors disabled:opacity-50"
+              >
+                {deleting ? "Deleting..." : "Delete"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

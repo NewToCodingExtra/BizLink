@@ -180,9 +180,11 @@ class PageController extends Controller
         }
 
         $data = app(ConversationController::class)->show($request, $conversation)->getData(true)['data'];
+        $convos = app(ConversationController::class)->index($request)->getData(true)['data'] ?? [];
 
         return Inertia::render('MessageThread', [
             'conv' => $data,
+            'conversations' => $convos,
             'quote' => $this->quotePayload($request),
         ]);
     }

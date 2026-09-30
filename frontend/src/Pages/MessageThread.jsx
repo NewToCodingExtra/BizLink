@@ -15,12 +15,13 @@ import QuoteCard from "../Components/QuoteCard";
 import PollCard from "../Components/PollCard";
 import InsightsCard from "../Components/InsightsCard";
 import MeetingCard from "../Components/MeetingCard";
+import ConversationList from "../components/ConversationList";
 import { httpApi } from "../utils/http";
 import { getEcho, watchEchoHealth } from "../utils/echo";
 import { profilePath } from "../utils/profilePath";
 import { useToast } from "../context/ToastContext";
 
-export default function MessageThread({ conv: initialConv, quote: initialQuote }) {
+export default function MessageThread({ conv: initialConv, conversations = [], quote: initialQuote }) {
   const toast = useToast();
   const { auth } = usePage().props;
   const me = auth?.user ?? null;
@@ -54,6 +55,14 @@ export default function MessageThread({ conv: initialConv, quote: initialQuote }
   const typingTimer = useRef(null);
   const whisperAt = useRef(0);
   const fileInputRef = useRef(null);
+
+  // Sync when navigating between threads via the left sidebar (Inertia reuses the component).
+  useEffect(() => {
+    setConv(initialConv || null);
+    setMessages(initialConv?.messages || []);
+    setPinned(initialQuote || null);
+    setText("");
+  }, [initialConv?.id]);
 
   useEffect(() => {
     scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: "smooth" });
@@ -367,10 +376,18 @@ export default function MessageThread({ conv: initialConv, quote: initialQuote }
   }
 
   return (
-    <div className="max-w-2xl mx-auto flex flex-col h-[calc(100dvh-64px)]">
+    <div className="max-w-6xl mx-auto px-0 sm:px-6 py-0 sm:py-6 min-h-[calc(100vh-64px)]">
       <Head title={conv.with || "Conversation"} />
+      <div className="flex bg-surface sm:rounded-xl sm:border sm:border-border sm:shadow-sm overflow-hidden h-[calc(100dvh-64px)] sm:h-[calc(100dvh-64px-48px)]">
+        {/* Left: contacts — desktop only (mobile uses /messages list) */}
+        <aside className="hidden md:flex w-[320px] shrink-0 border-r border-border flex-col min-h-0">
+          <ConversationList conversations={conversations} activeId={conv?.id} />
+        </aside>
+
+        {/* Right: active thread */}
+        <div className="flex-1 flex flex-col min-w-0 min-h-0">
       <div className="px-4 sm:px-6 py-4 border-b border-border bg-surface flex items-center gap-3 shrink-0 relative">
-        <Link href="/messages" className="inline-flex items-center text-text-secondary hover:text-text-primary" aria-label="Back to inbox">
+        <Link href="/messages" className="md:hidden inline-flex items-center text-text-secondary hover:text-text-primary" aria-label="Back to inbox">
           <ArrowLeftIcon className="w-5 h-5" />
         </Link>
         <Link href={profilePath({ username: conv.withUsername, authorId: conv.withId, brandId: conv.brandId })}>
@@ -805,6 +822,8 @@ export default function MessageThread({ conv: initialConv, quote: initialQuote }
           </div>
         </div>
       )}
+        </div>
+      </div>
     </div>
   );
 }

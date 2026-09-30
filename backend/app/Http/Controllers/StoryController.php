@@ -58,6 +58,43 @@ class StoryController extends Controller
         return response()->json(['data' => $this->serialize($story)], 201);
     }
 
+    public function destroy(Request $request, string $identifier)
+    {
+        // Accept either numeric id or slug (route binds by slug, viewer sends both).
+        $story = is_numeric($identifier)
+            ? Story::find($identifier)
+            : Story::where('slug', $identifier)->first();
+        abort_if(! $story, 404, 'Story not found.');
+
+        $user = $request->user();
+        $isOwner = $user && (int) $story->user_id === (int) $user->id;
+        $isAdmin = $user && method_exists($user, 'hasRole') && $user->hasRole('Admin');
+        abort_if(!$isOwner && !$isAdmin, 403, 'You cannot delete this story.');
+
+        // Detach likes pivot, then delete the row.
+        try {
+            $story->likes()->detach();
+        } catch (\Throwable $e) {
+            // Pivot may not exist on older installs — still delete the story.
+        }
+
+        // Best-effort cleanup of locally stored uploads (GCS URLs untouched).
+        if ($story->media_url && str_contains($story->media_url, '/storage/bizlink/')) {
+            $relative = ltrim(substr($story->media_url, strpos($story->media_url, '/storage/bizlink/') + strlen('/storage/')), '/');
+            try {
+                \Illuminate\Support\Facades\Storage::disk('public')->delete($relative);
+            } catch (\Throwable $e) {
+            }
+        }
+
+        $story->delete();
+
+        if ($request->wantsJson() || $request->header('X-Inertia')) {
+            return response()->json(['deleted' => true]);
+        }
+        return redirect('/feed')->with('success', 'Story deleted.');
+    }
+
     public function markSeen(Story $story)
     {
         $story->update(['seen' => true]);
