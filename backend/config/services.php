@@ -39,6 +39,9 @@ return [
         'client_id' => env('GOOGLE_CLIENT_ID'),
         'client_secret' => env('GOOGLE_CLIENT_SECRET'),
         'redirect' => env('GOOGLE_REDIRECT_URI', 'http://localhost:8000/api/auth/google/callback'),
+        // Meet/Calendar OAuth must send ONE fixed redirect_uri that is
+        // registered verbatim in Google Console. Empty = APP_URL/meet/callback.
+        'meet_redirect' => env('GOOGLE_MEET_REDIRECT_URI'),
     ],
 
     'facebook' => [

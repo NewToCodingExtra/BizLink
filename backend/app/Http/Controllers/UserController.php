@@ -102,7 +102,10 @@ class UserController extends Controller
                 ])->values(),
             ])->values();
 
-        $stories = Story::where('user_id', $user->id)
+        // Stories are private to their owner: only include them when the
+        // viewer is looking at their own profile.
+        $stories = ($viewer && (int) $viewer->id === (int) $user->id)
+            ? Story::where('user_id', $user->id)
             ->where(function ($q) {
                 $q->whereNull('expires_at')->orWhere('expires_at', '>', now());
             })
@@ -120,7 +123,8 @@ class UserController extends Controller
                 'caption' => $s->caption,
                 'expiresAt' => $s->expires_at?->toISOString(),
                 'seen' => (bool) $s->seen,
-            ])->values();
+            ])->values()
+            : collect();
 
         $following = false;
         if ($viewer) {

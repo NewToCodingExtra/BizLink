@@ -16,7 +16,7 @@ import PollCard from "../Components/PollCard";
 import InsightsCard from "../Components/InsightsCard";
 import MeetingCard from "../Components/MeetingCard";
 import ConversationList from "../components/ConversationList";
-import { httpApi } from "../utils/http";
+import { httpApi, csrfFetch } from "../utils/http";
 import { getEcho, watchEchoHealth } from "../utils/echo";
 import { profilePath } from "../utils/profilePath";
 import { useToast } from "../context/ToastContext";
@@ -206,13 +206,7 @@ export default function MessageThread({ conv: initialConv, conversations = [], q
     try {
       const fd = new FormData();
       fd.append("file", file);
-      const csrf = document.querySelector('meta[name="csrf-token"]')?.getAttribute("content") || "";
-      const res = await fetch("/uploads", {
-        method: "POST",
-        credentials: "same-origin",
-        headers: { "X-CSRF-TOKEN": csrf, "X-Requested-With": "XMLHttpRequest", Accept: "application/json" },
-        body: fd,
-      });
+      const res = await csrfFetch("/uploads", { formData: fd });
       const data = await res.json();
       if (!res.ok) throw new Error(data?.message || "Upload failed");
 

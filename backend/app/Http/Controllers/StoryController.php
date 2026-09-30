@@ -8,9 +8,16 @@ use Illuminate\Http\Request;
 
 class StoryController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
-        $stories = Story::where(function ($q) {
+        // Stories are private to the account that posted them: guests see
+        // none, and users only see their own.
+        $user = $request->user();
+        if (! $user) {
+            return response()->json(['data' => []]);
+        }
+
+        $stories = Story::where('user_id', $user->id)->where(function ($q) {
             $q->whereNull('expires_at')->orWhere('expires_at', '>', now());
         })->latest()->get();
 

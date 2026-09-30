@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { usePage } from "@inertiajs/react";
-import { httpApi } from "../utils/http";
+import { httpApi, csrfFetch } from "../utils/http";
 import { useToast } from "../context/ToastContext";
 import {
   DotsIcon, PencilIcon, TrashIcon, FlagIcon, LinkIcon, ReplyIcon,
@@ -10,10 +10,6 @@ import {
 const REACT_EMOJI = ["👍", "❤️", "😮", "😂", "🙏"];
 const REPORT_REASONS = ["spam", "harassment", "scam", "other"];
 const REPLY_PREVIEW = 3;
-
-function csrfToken() {
-  return document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '';
-}
 
 // Nest a flat embed list (parentId may be set) into top/replies shape.
 function nestFlat(list) {
@@ -47,11 +43,7 @@ async function uploadMedia(file) {
   if (file.size > max) throw new Error(isVideo ? "Video must be under 100MB." : "Image must be under 20MB.");
   const fd = new FormData();
   fd.append("file", file);
-  const res = await fetch("/uploads", {
-    method: "POST", credentials: "same-origin",
-    headers: { "X-CSRF-TOKEN": csrfToken(), "X-Requested-With": "XMLHttpRequest", Accept: "application/json" },
-    body: fd,
-  });
+  const res = await csrfFetch("/uploads", { formData: fd });
   const json = await res.json().catch(() => ({}));
   if (!res.ok) throw new Error(json?.message || `Upload failed (${res.status})`);
   return json;

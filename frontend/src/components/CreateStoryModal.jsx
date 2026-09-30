@@ -1,27 +1,14 @@
 import React, { useState } from 'react';
 import Modal from './Modal';
 import Button from './Button';
-import { httpApi } from '../utils/http';
+import { httpApi, csrfFetch } from '../utils/http';
 import { useToast } from '../context/ToastContext';
-
-function csrfToken() {
-  return document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '';
-}
 
 // Multipart upload to /uploads (expects { url, media_type }).
 async function uploadToServer(file) {
   const fd = new FormData();
   fd.append('file', file);
-  const res = await fetch('/uploads', {
-    method: 'POST',
-    credentials: 'same-origin',
-    headers: {
-      'X-CSRF-TOKEN': csrfToken(),
-      'X-Requested-With': 'XMLHttpRequest',
-      Accept: 'application/json',
-    },
-    body: fd,
-  });
+  const res = await csrfFetch('/uploads', { formData: fd });
   let json = null;
   try {
     json = await res.json();

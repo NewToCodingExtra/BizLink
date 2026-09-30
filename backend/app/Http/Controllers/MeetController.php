@@ -31,6 +31,22 @@ class MeetController extends Controller
         }
     }
 
+    /**
+     * The single redirect_uri sent to Google for the Meet/Calendar flow.
+     * Built from APP_URL (never from the browse host) so localhost vs
+     * 127.0.0.1 vs LAN IP can never cause a redirect_uri_mismatch.
+     * Override with GOOGLE_MEET_REDIRECT_URI when APP_URL differs from the
+     * URI registered in Google Console.
+     */
+    private function redirectUri(): string
+    {
+        $override = config('services.google.meet_redirect');
+        if ($override) {
+            return $override;
+        }
+        return rtrim(config('app.url'), '/') . '/meet/callback';
+    }
+
     public function connect(Request $request)
     {
         $user = $request->user();
@@ -59,7 +75,8 @@ class MeetController extends Controller
         $client = new GoogleClient();
         $client->setClientId($clientId);
         $client->setClientSecret($clientSecret);
-        $client->setRedirectUri(url('/meet/callback'));
+        $client->setRedirectUri($this->redirectUri());
+        Log::info('Meet OAuth connect', ['client_id' => $clientId, 'redirect_uri' => $this->redirectUri()]);
         $client->addScope('https://www.googleapis.com/auth/calendar.events');
         $client->setAccessType('offline');
         $client->setPrompt('consent');
@@ -104,7 +121,7 @@ class MeetController extends Controller
         $client = new GoogleClient();
         $client->setClientId(config('services.google.client_id'));
         $client->setClientSecret(config('services.google.client_secret'));
-        $client->setRedirectUri(url('/meet/callback'));
+        $client->setRedirectUri($this->redirectUri());
 
         try {
             $token = $client->fetchAccessTokenWithAuthCode($code);

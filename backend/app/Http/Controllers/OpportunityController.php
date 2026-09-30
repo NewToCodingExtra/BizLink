@@ -147,7 +147,10 @@ class OpportunityController extends Controller
         $this->authorize('update', $opportunity);
 
         return Inertia::render('Opportunities/Edit', [
-            'opportunity' => new OpportunityResource($opportunity),
+            // Resolve to a plain array: a raw JsonResource prop gets
+            // re-wrapped as {data: {...}} by the response pipeline,
+            // which blanked the form and broke id-based PUT/DELETE URLs.
+            'opportunity' => (new OpportunityResource($opportunity))->resolve(),
         ]);
     }
 

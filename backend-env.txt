@@ -23,10 +23,10 @@ LOG_LEVEL=debug
 
 DB_CONNECTION=mysql
 DB_HOST=127.0.0.1
-DB_PORT=3307
+DB_PORT=3306
 DB_DATABASE=bizlink
 DB_USERNAME=bizlink
-DB_PASSWORD=Bizlink123!
+DB_PASSWORD=
 
 SESSION_DRIVER=database
 SESSION_LIFETIME=120
@@ -78,16 +78,15 @@ AWS_USE_PATH_STYLE_ENDPOINT=false
 
 VITE_APP_NAME="${APP_NAME}"
 
-GOOGLE_CLIENT_ID=
+GOOGLE_CLIENT_ID=902483433376-jlela59q0assnh7a4f8a2618l5sa0dqq.apps.googleusercontent.com
 GOOGLE_CLIENT_SECRET=
 GOOGLE_REDIRECT_URI=http://localhost:8000/api/auth/google/callback
 GOOGLE_FRONTEND_SUCCESS=http://localhost:5173/auth/social/callback
-# Meet/Calendar OAuth sends APP_URL + /meet/callback by default.
-# Set this ONLY if the URI registered in Google Console differs.
+# Meet/Calendar OAuth sends APP_URL + /meet/callback by default
+# (= http://localhost:8000/meet/callback, already registered in Console).
 #GOOGLE_MEET_REDIRECT_URI=http://localhost:8000/meet/callback
 FACEBOOK_CLIENT_ID=
 FACEBOOK_CLIENT_SECRET=
-FACEBOOK_REDIRECT_URI=http://localhost:8000/api/auth/facebook/callback
 GOOGLE_CLOUD_PROJECT_ID=
 GOOGLE_CLOUD_STORAGE_BUCKET=
 GOOGLE_CLOUD_KEY_FILE=

@@ -50,6 +50,12 @@ Route::get('/auth/{provider}/callback', [SocialAuthController::class, 'webCallba
     ->where('provider', 'google|facebook')
     ->name('social.callback');
 
+// Fresh CSRF token for long-lived SPA pages (e.g. tab was open across
+// logout/login as another account). Retry-once target for 419s.
+Route::get('/csrf-token', function () {
+    return response()->json(['token' => csrf_token()]);
+})->name('csrf.token');
+
 // Authenticated pages
 Route::middleware('auth')->group(function () {
     Route::middleware(['auth', 'role:Admin|Manager'])->get('/create', [PageController::class, 'create'])->name('opportunities.create');
