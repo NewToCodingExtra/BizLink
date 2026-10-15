@@ -21,6 +21,7 @@ import {
   EyeIcon,
   XIcon,
   SpinnerIcon,
+  ExternalLinkIcon,
 } from "../../Components/icons";
 
 export default function AdminUsers({
@@ -310,9 +311,9 @@ export default function AdminUsers({
 
       {/* Filter and Search Toolbar */}
       <section className="mb-4 p-4 rounded-2xl bg-surface border border-border/80 shadow-xs">
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3">
+        <div className="flex flex-col lg:flex-row gap-3">
           {/* Search Box - Live AJAX Debounced */}
-          <div className="lg:col-span-2 relative flex items-center">
+          <div className="flex-1 relative flex items-center min-w-0">
             <input
               type="text"
               value={searchDraft}
@@ -339,44 +340,47 @@ export default function AdminUsers({
             )}
           </div>
 
-          {/* Role Filter */}
-          <select
-            value={localFilters.role}
-            onChange={(e) => applyFilters({ role: e.target.value })}
-            className="bg-bg border border-border rounded-xl px-3 py-2 text-xs sm:text-sm text-text-primary outline-none focus:border-action cursor-pointer"
-            aria-label="Role"
-          >
-            <option value="all">All Roles</option>
-            <option value="Admin">Admin</option>
-            <option value="Manager">Brand (Manager)</option>
-            <option value="User">Entrepreneur (User)</option>
-          </select>
+          {/* Filter Dropdowns */}
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5 shrink-0">
+            {/* Role Filter */}
+            <select
+              value={localFilters.role}
+              onChange={(e) => applyFilters({ role: e.target.value })}
+              className="bg-bg border border-border rounded-xl px-3 py-2.5 text-xs sm:text-sm text-text-primary outline-none focus:border-action cursor-pointer min-h-[42px]"
+              aria-label="Role"
+            >
+              <option value="all">All Roles</option>
+              <option value="Admin">Admin</option>
+              <option value="Manager">Brand (Manager)</option>
+              <option value="User">Entrepreneur (User)</option>
+            </select>
 
-          {/* Verified Filter */}
-          <select
-            value={localFilters.verified}
-            onChange={(e) => applyFilters({ verified: e.target.value })}
-            className="bg-bg border border-border rounded-xl px-3 py-2 text-xs sm:text-sm text-text-primary outline-none focus:border-action cursor-pointer"
-            aria-label="Verification status"
-          >
-            <option value="all">All Verification</option>
-            <option value="1">Verified Brands Only</option>
-            <option value="0">Unverified Only</option>
-          </select>
+            {/* Verified Filter */}
+            <select
+              value={localFilters.verified}
+              onChange={(e) => applyFilters({ verified: e.target.value })}
+              className="bg-bg border border-border rounded-xl px-3 py-2.5 text-xs sm:text-sm text-text-primary outline-none focus:border-action cursor-pointer min-h-[42px]"
+              aria-label="Verification status"
+            >
+              <option value="all">All Verification</option>
+              <option value="1">Verified Brands Only</option>
+              <option value="0">Unverified Only</option>
+            </select>
 
-          {/* Sort Filter */}
-          <select
-            value={localFilters.sort}
-            onChange={(e) => applyFilters({ sort: e.target.value })}
-            className="bg-bg border border-border rounded-xl px-3 py-2 text-xs sm:text-sm text-text-primary outline-none focus:border-action cursor-pointer"
-            aria-label="Sort users"
-          >
-            <option value="newest">Sort: Newest First</option>
-            <option value="strikes">Sort: Most Strikes</option>
-            <option value="warnings">Sort: Most Warnings</option>
-            <option value="posts">Sort: Most Posts</option>
-            <option value="name">Sort: Alphabetical</option>
-          </select>
+            {/* Sort Filter */}
+            <select
+              value={localFilters.sort}
+              onChange={(e) => applyFilters({ sort: e.target.value })}
+              className="bg-bg border border-border rounded-xl px-3 py-2.5 text-xs sm:text-sm text-text-primary outline-none focus:border-action cursor-pointer min-h-[42px]"
+              aria-label="Sort users"
+            >
+              <option value="newest">Sort: Newest First</option>
+              <option value="strikes">Sort: Most Strikes</option>
+              <option value="warnings">Sort: Most Warnings</option>
+              <option value="posts">Sort: Most Posts</option>
+              <option value="name">Sort: Alphabetical</option>
+            </select>
+          </div>
         </div>
       </section>
 
@@ -386,14 +390,14 @@ export default function AdminUsers({
           <table className="w-full text-left text-xs sm:text-sm border-collapse">
             <thead>
               <tr className="border-b border-border bg-bg/40 text-[11px] font-bold text-text-secondary uppercase tracking-wider">
-                <th className="py-3 px-4">User</th>
-                <th className="py-3 px-3">Role</th>
-                <th className="py-3 px-3">Status</th>
-                <th className="py-3 px-3 text-center">Warnings</th>
-                <th className="py-3 px-3 text-center">Strikes</th>
-                <th className="py-3 px-3 text-center">Posts</th>
-                <th className="py-3 px-3">Joined</th>
-                <th className="py-3 px-4 text-right">Actions</th>
+                <th className="py-3 px-3 sm:px-4">User</th>
+                <th className="py-3 px-3 hidden sm:table-cell">Role</th>
+                <th className="py-3 px-3 hidden sm:table-cell">Status</th>
+                <th className="py-3 px-3 text-center hidden md:table-cell">Warnings</th>
+                <th className="py-3 px-3 text-center hidden lg:table-cell">Strikes</th>
+                <th className="py-3 px-3 text-center hidden lg:table-cell">Posts</th>
+                <th className="py-3 px-3 hidden xl:table-cell">Joined</th>
+                <th className="py-3 px-3 sm:px-4 text-right">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-border/60">
@@ -410,20 +414,20 @@ export default function AdminUsers({
                     className="hover:bg-bg/40 transition-colors group"
                   >
                     {/* User Profile */}
-                    <td className="py-3 px-4">
-                      <div className="flex items-center gap-3 min-w-0">
+                    <td className="py-3 px-3 sm:px-4">
+                      <div className="flex items-center gap-2.5 sm:gap-3 min-w-0">
                         <Link href={profilePath(u)} className="shrink-0 cursor-pointer">
                           <img
                             src={u.avatar}
                             alt=""
-                            className="w-9 h-9 rounded-full object-cover bg-bg border border-border shrink-0 shadow-xs hover:border-action transition-all"
+                            className="w-9 h-9 sm:w-10 sm:h-10 rounded-full object-cover bg-bg border border-border shrink-0 shadow-xs hover:border-action transition-all"
                           />
                         </Link>
-                        <div className="min-w-0">
+                        <div className="min-w-0 flex-1">
                           <div className="flex items-center gap-1.5">
                             <Link
                               href={profilePath(u)}
-                              className="font-bold text-text-primary hover:text-action hover:underline cursor-pointer truncate transition-colors block"
+                              className="font-bold text-text-primary hover:text-action hover:underline cursor-pointer truncate transition-colors block text-xs sm:text-sm"
                               title={`View ${u.name}'s profile`}
                             >
                               {u.name}
@@ -431,27 +435,59 @@ export default function AdminUsers({
                             {u.isBrandVerified && (
                               <span
                                 title="Verified Brand"
-                                className="w-4 h-4 rounded-full bg-action text-white grid place-items-center shrink-0 shadow-xs"
+                                className="w-3.5 h-3.5 sm:w-4 sm:h-4 rounded-full bg-action text-white grid place-items-center shrink-0 shadow-xs"
                               >
-                                <CheckIcon className="w-2.5 h-2.5" />
+                                <CheckIcon className="w-2 sm:w-2.5 h-2 sm:h-2.5" />
                               </span>
                             )}
                           </div>
-                          <p className="text-xs text-text-secondary truncate">
+                          <p className="text-[11px] sm:text-xs text-text-secondary truncate">
                             <Link
                               href={profilePath(u)}
                               className="hover:text-action hover:underline cursor-pointer transition-colors"
                             >
                               @{u.username}
                             </Link>
-                            {" "}· {u.email}
+                            {" "}· <span className="hidden sm:inline">{u.email}</span>
                           </p>
+
+                          {/* Mobile-only inline badges: Role + Status (prevents horizontal overflow on phones) */}
+                          <div className="flex flex-wrap items-center gap-1 mt-1 sm:hidden">
+                            <span
+                              className={`inline-flex items-center text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded border ${
+                                u.role === "Admin"
+                                  ? "bg-purple-500/10 text-purple-600 dark:text-purple-400 border-purple-500/20"
+                                  : u.role === "Manager"
+                                  ? "bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-500/20"
+                                  : "bg-bg text-text-secondary border-border"
+                              }`}
+                            >
+                              {u.role}
+                            </span>
+                            {u.isLocked ? (
+                              <span className="inline-flex items-center gap-0.5 text-[9px] font-bold px-1.5 py-0.5 rounded bg-rose-500/15 text-rose-700 dark:text-rose-400 border border-rose-500/30">
+                                <LockIcon className="w-2.5 h-2.5" /> Locked
+                              </span>
+                            ) : u.status === "banned" ? (
+                              <span className="inline-flex items-center text-[9px] font-bold px-1.5 py-0.5 rounded bg-rose-500/10 text-rose-600 dark:text-rose-400 border border-rose-500/20">
+                                Banned
+                              </span>
+                            ) : u.status === "suspended" ? (
+                              <span className="inline-flex items-center text-[9px] font-bold px-1.5 py-0.5 rounded bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20">
+                                Suspended
+                              </span>
+                            ) : (
+                              <span className="inline-flex items-center gap-1 text-[9px] font-bold px-1.5 py-0.5 rounded bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
+                                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 inline-block" /> Active
+                              </span>
+                            )}
+                          </div>
                         </div>
                       </div>
                     </td>
 
-                    {/* Role */}
-                    <td className="py-3 px-3">
+                    {/* Role (Tablet & Desktop) */}
+                    <td className="py-3 px-3 hidden sm:table-cell">
                       <span
                         className={`inline-flex items-center text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full border ${
                           u.role === "Admin"
@@ -465,8 +501,8 @@ export default function AdminUsers({
                       </span>
                     </td>
 
-                    {/* Status */}
-                    <td className="py-3 px-3">
+                    {/* Status (Tablet & Desktop) */}
+                    <td className="py-3 px-3 hidden sm:table-cell">
                       {u.isLocked ? (
                         <span className="inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full bg-rose-500/15 text-rose-700 dark:text-rose-400 border border-rose-500/30">
                           <LockIcon className="w-3 h-3" /> Locked
@@ -489,8 +525,8 @@ export default function AdminUsers({
                       )}
                     </td>
 
-                    {/* Warnings */}
-                    <td className="py-3 px-3 text-center tabular-nums">
+                    {/* Warnings (Hidden below md) */}
+                    <td className="py-3 px-3 text-center tabular-nums hidden md:table-cell">
                       {u.warningCount > 0 ? (
                         <span className="inline-flex items-center justify-center min-w-[20px] h-5 px-1.5 rounded-full text-[11px] font-bold bg-amber-500/15 text-amber-700 dark:text-amber-400 border border-amber-500/30">
                           {u.warningCount}
@@ -500,8 +536,8 @@ export default function AdminUsers({
                       )}
                     </td>
 
-                    {/* Strikes */}
-                    <td className="py-3 px-3 text-center tabular-nums">
+                    {/* Strikes (Hidden below lg) */}
+                    <td className="py-3 px-3 text-center tabular-nums hidden lg:table-cell">
                       {u.strikesCount > 0 ? (
                         <span className="inline-flex items-center justify-center min-w-[20px] h-5 px-1.5 rounded-full text-[11px] font-bold bg-rose-500/15 text-rose-700 dark:text-rose-400 border border-rose-500/30">
                           {u.strikesCount}
@@ -511,19 +547,33 @@ export default function AdminUsers({
                       )}
                     </td>
 
-                    {/* Posts Count */}
-                    <td className="py-3 px-3 text-center tabular-nums font-semibold text-text-primary">
+                    {/* Posts Count (Hidden below lg) */}
+                    <td className="py-3 px-3 text-center tabular-nums font-semibold text-text-primary hidden lg:table-cell">
                       {u.opportunitiesCount}
                     </td>
 
-                    {/* Joined Date */}
-                    <td className="py-3 px-3 text-text-secondary text-xs tabular-nums">
+                    {/* Joined Date (Hidden below xl) */}
+                    <td className="py-3 px-3 text-text-secondary text-xs tabular-nums hidden xl:table-cell">
                       {u.createdAtHuman}
                     </td>
 
                     {/* Actions */}
-                    <td className="py-3 px-4 text-right">
-                      <div className="flex items-center justify-end gap-1.5">
+                    <td className="py-3 px-3 sm:px-4 text-right">
+                      {/* Mobile View: Clean show icon button as user requested */}
+                      <div className="flex items-center justify-end sm:hidden">
+                        <button
+                          onClick={() => openDrawer(u)}
+                          title="Show user details & actions"
+                          aria-label={`Show ${u.name} details`}
+                          className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-xl bg-action/10 hover:bg-action text-action hover:text-white border border-action/25 active:scale-95 transition-all cursor-pointer shadow-xs font-semibold text-xs"
+                        >
+                          <EyeIcon className="w-4 h-4" />
+                          <span className="text-[11px]">Show</span>
+                        </button>
+                      </div>
+
+                      {/* Desktop View: Full action button cluster */}
+                      <div className="hidden sm:flex items-center justify-end gap-1.5">
                         <button
                           onClick={() => openDrawer(u)}
                           title="Inspect User Details"
@@ -622,205 +672,507 @@ export default function AdminUsers({
         title={selectedUser ? `User: ${selectedUser.name}` : "User Details"}
       >
         {selectedUser && (
-          <div className="space-y-4">
-            {/* Profile Snapshot Header */}
-            <div className="flex items-center gap-4 p-4 rounded-xl bg-bg border border-border">
-              <Link href={profilePath(selectedUser)} className="shrink-0 cursor-pointer">
-                <img
-                  src={selectedUser.avatar}
-                  alt=""
-                  className="w-14 h-14 rounded-full object-cover border border-border shadow-xs hover:border-action transition-all"
-                />
-              </Link>
-              <div className="min-w-0 flex-1">
-                <div className="flex items-center gap-2">
-                  <Link
-                    href={profilePath(selectedUser)}
-                    className="text-base font-bold text-text-primary hover:text-action hover:underline cursor-pointer truncate transition-colors"
-                    title={`Open ${selectedUser.name}'s public profile`}
-                  >
-                    {selectedUser.name}
-                  </Link>
-                  {selectedUser.isBrandVerified && (
-                    <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-action/10 text-action border border-action/20">
-                      Verified Brand
-                    </span>
-                  )}
+          <div>
+            {/* ============================================================== */}
+            {/* MOBILE OVERLAY MODAL VIEW (sm:hidden)                          */}
+            {/* Optimized for touch, mobile bottom-sheet ergonomics & clarity  */}
+            {/* ============================================================== */}
+            <div className="sm:hidden space-y-4">
+              {/* Mobile Profile Hero Card */}
+              <div className="p-4 rounded-2xl bg-gradient-to-br from-bg via-surface to-bg border border-border shadow-xs space-y-3">
+                <div className="flex items-start gap-3.5">
+                  <div className="relative shrink-0">
+                    <img
+                      src={selectedUser.avatar}
+                      alt=""
+                      className="w-14 h-14 rounded-full object-cover border-2 border-border shadow-xs"
+                    />
+                    {selectedUser.isBrandVerified && (
+                      <span
+                        title="Verified Brand"
+                        className="absolute -bottom-1 -right-1 w-5 h-5 rounded-full bg-action text-white grid place-items-center shadow-xs"
+                      >
+                        <CheckIcon className="w-3 h-3" />
+                      </span>
+                    )}
+                  </div>
+
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-center gap-1.5 flex-wrap">
+                      <h3 className="text-base font-bold text-text-primary truncate">
+                        {selectedUser.name}
+                      </h3>
+                      {selectedUser.isBrandVerified && (
+                        <span className="px-1.5 py-0.2 rounded-full text-[9px] font-bold bg-action/10 text-action border border-action/20">
+                          Verified
+                        </span>
+                      )}
+                    </div>
+                    <p className="text-xs text-text-secondary truncate mt-0.5">
+                      @{selectedUser.username}
+                    </p>
+                    <p className="text-[11px] text-text-secondary/80 truncate">
+                      {selectedUser.email}
+                    </p>
+                  </div>
                 </div>
-                <p className="text-xs text-text-secondary truncate mt-0.5">
-                  <Link
-                    href={profilePath(selectedUser)}
-                    className="hover:text-action hover:underline cursor-pointer"
+
+                {/* Mobile Badges Row */}
+                <div className="flex flex-wrap items-center gap-1.5 pt-2 border-t border-border/60">
+                  <span
+                    className={`inline-flex items-center text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full border ${
+                      selectedUser.role === "Admin"
+                        ? "bg-purple-500/10 text-purple-600 dark:text-purple-400 border-purple-500/20"
+                        : selectedUser.role === "Manager"
+                        ? "bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-500/20"
+                        : "bg-bg text-text-secondary border-border"
+                    }`}
                   >
-                    @{selectedUser.username}
-                  </Link>
-                  {" "}· {selectedUser.email}
-                </p>
-                <div className="flex items-center gap-2 mt-2">
-                  <span className="text-[11px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-md bg-surface border border-border">
                     {selectedUser.role}
                   </span>
-                  <span className="text-xs text-text-secondary">
+
+                  {selectedUser.isLocked ? (
+                    <span className="inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full bg-rose-500/15 text-rose-700 dark:text-rose-400 border border-rose-500/30">
+                      <LockIcon className="w-2.5 h-2.5" /> Locked
+                    </span>
+                  ) : selectedUser.status === "banned" ? (
+                    <span className="inline-flex items-center text-[10px] font-bold px-2 py-0.5 rounded-full bg-rose-500/10 text-rose-600 dark:text-rose-400 border border-rose-500/20">
+                      Banned
+                    </span>
+                  ) : selectedUser.status === "suspended" ? (
+                    <span className="inline-flex items-center text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20">
+                      Suspended
+                    </span>
+                  ) : (
+                    <span className="inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
+                      <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 inline-block" /> Active
+                    </span>
+                  )}
+
+                  <span className="text-[11px] text-text-secondary ml-auto">
                     Joined {selectedUser.createdAtHuman}
                   </span>
                 </div>
+
+                {/* View Public Profile Link Button */}
+                <Link
+                  href={profilePath(selectedUser)}
+                  className="w-full inline-flex items-center justify-center gap-1.5 py-2 px-3 rounded-xl bg-surface border border-border text-xs font-semibold text-text-primary hover:text-action hover:border-action/40 active:scale-98 transition-all cursor-pointer shadow-2xs"
+                >
+                  <span>View Public Profile</span>
+                  <ExternalLinkIcon className="w-3.5 h-3.5" />
+                </Link>
               </div>
-            </div>
 
-            {loadingDetail ? (
-              <p className="p-8 text-center text-xs text-text-secondary">Loading details...</p>
-            ) : detailData ? (
-              <>
-                {/* Moderation & Strikes Panel */}
-                <div className="p-4 rounded-xl bg-bg border border-border">
-                  <h4 className="text-xs font-bold text-text-secondary uppercase tracking-wider mb-2">
-                    Moderation &amp; Enforcement History
-                  </h4>
-                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-center">
-                    <div className="p-2 rounded-lg bg-surface border border-border">
-                      <span className="text-base font-bold text-text-primary tabular-nums">
-                        {detailData.offenderHistory?.totalReports ?? 0}
-                      </span>
-                      <p className="text-[10px] text-text-secondary">Total Reports</p>
-                    </div>
-                    <div className="p-2 rounded-lg bg-surface border border-border">
-                      <span className="text-base font-bold text-rose-600 tabular-nums">
-                        {detailData.offenderHistory?.accepted ?? 0}
-                      </span>
-                      <p className="text-[10px] text-text-secondary">Accepted (Strikes)</p>
-                    </div>
-                    <div className="p-2 rounded-lg bg-surface border border-border">
-                      <span className="text-base font-bold text-text-secondary tabular-nums">
-                        {detailData.offenderHistory?.rejected ?? 0}
-                      </span>
-                      <p className="text-[10px] text-text-secondary">Rejected</p>
-                    </div>
-                    <div className="p-2 rounded-lg bg-surface border border-border">
-                      <span className="text-base font-bold text-amber-600 tabular-nums">
-                        {selectedUser.warningCount ?? 0}
-                      </span>
-                      <p className="text-[10px] text-text-secondary">Warnings Issued</p>
+              {/* Status Alert Banners on Mobile */}
+              {selectedUser.isLocked && (
+                <div className="p-3.5 rounded-xl bg-rose-500/10 border border-rose-500/25 flex items-center justify-between gap-2">
+                  <div className="flex items-center gap-2 min-w-0">
+                    <span className="p-1.5 rounded-lg bg-rose-500/20 text-rose-600 shrink-0">
+                      <LockIcon className="w-4 h-4" />
+                    </span>
+                    <div className="min-w-0">
+                      <p className="text-xs font-bold text-rose-700 dark:text-rose-400">Account Locked</p>
+                      <p className="text-[11px] text-rose-600/80 truncate">Rate limit protection triggered</p>
                     </div>
                   </div>
+                  <button
+                    onClick={() => handleUnlock(selectedUser)}
+                    className="px-3 py-1.5 text-xs font-bold rounded-lg bg-rose-600 text-white active:scale-95 transition-all cursor-pointer shrink-0"
+                  >
+                    Clear Lockout
+                  </button>
                 </div>
+              )}
 
-                {/* Recent Login Attempts */}
-                <div className="p-4 rounded-xl bg-bg border border-border">
-                  <div className="flex items-center justify-between mb-2">
-                    <h4 className="text-xs font-bold text-text-secondary uppercase tracking-wider">
-                      Recent Login Activity
-                    </h4>
-                    {selectedUser.isLocked && (
-                      <button
-                        onClick={() => handleUnlock(selectedUser)}
-                        className="text-xs font-bold text-action hover:underline cursor-pointer"
-                      >
-                        Clear Lockout
-                      </button>
-                    )}
+              {selectedUser.status === "suspended" && (
+                <div className="p-3.5 rounded-xl bg-amber-500/10 border border-amber-500/25 flex items-center justify-between gap-2">
+                  <div className="flex items-center gap-2 min-w-0">
+                    <span className="p-1.5 rounded-lg bg-amber-500/20 text-amber-600 shrink-0">
+                      <AlertTriangleIcon className="w-4 h-4" />
+                    </span>
+                    <div className="min-w-0">
+                      <p className="text-xs font-bold text-amber-700 dark:text-amber-400">Temporarily Suspended</p>
+                      <p className="text-[11px] text-amber-600/80 truncate">Until {selectedUser.suspendedUntil}</p>
+                    </div>
                   </div>
-                  {(detailData.loginAttempts || []).length === 0 ? (
-                    <p className="text-xs text-text-secondary">No recorded login attempts.</p>
-                  ) : (
-                    <div className="space-y-1.5 max-h-36 overflow-y-auto pr-1">
-                      {detailData.loginAttempts.map((att) => (
-                        <div
-                          key={att.id}
-                          className="flex items-center justify-between text-xs p-2 rounded-lg bg-surface border border-border/60"
-                        >
-                          <div className="flex items-center gap-2">
-                            <span
-                              className={`w-2 h-2 rounded-full ${
-                                att.successful ? "bg-emerald-500" : "bg-rose-500"
-                              }`}
-                            />
-                            <span className="font-mono text-[11px]">{att.ip}</span>
-                            <span className="text-text-secondary truncate max-w-[150px]">
-                              {att.userAgent}
+                  <button
+                    onClick={() => handleUnsuspend(selectedUser)}
+                    className="px-3 py-1.5 text-xs font-bold rounded-lg bg-emerald-600 text-white active:scale-95 transition-all cursor-pointer shrink-0"
+                  >
+                    Unsuspend
+                  </button>
+                </div>
+              )}
+
+              {loadingDetail ? (
+                <div className="p-8 text-center text-xs text-text-secondary">
+                  <SpinnerIcon className="w-5 h-5 text-action animate-spin mx-auto mb-2" />
+                  Loading user records…
+                </div>
+              ) : detailData ? (
+                <>
+                  {/* Mobile 2x2 Moderation & Activity Tiles */}
+                  <div className="space-y-2">
+                    <span className="text-[11px] font-bold text-text-secondary uppercase tracking-wider block px-1">
+                      Enforcement &amp; Activity
+                    </span>
+                    <div className="grid grid-cols-2 gap-2">
+                      <div className="p-3 rounded-xl bg-surface border border-border text-center shadow-2xs">
+                        <span className="text-lg font-bold text-text-primary tabular-nums block">
+                          {detailData.offenderHistory?.totalReports ?? 0}
+                        </span>
+                        <span className="text-[10px] font-medium text-text-secondary">Total Reports</span>
+                      </div>
+                      <div className="p-3 rounded-xl bg-rose-500/10 border border-rose-500/20 text-center shadow-2xs">
+                        <span className="text-lg font-bold text-rose-600 dark:text-rose-400 tabular-nums block">
+                          {detailData.offenderHistory?.accepted ?? 0}
+                        </span>
+                        <span className="text-[10px] font-medium text-rose-700 dark:text-rose-400">Accepted Strikes</span>
+                      </div>
+                      <div className="p-3 rounded-xl bg-amber-500/10 border border-amber-500/20 text-center shadow-2xs">
+                        <span className="text-lg font-bold text-amber-600 dark:text-amber-400 tabular-nums block">
+                          {selectedUser.warningCount ?? 0}
+                        </span>
+                        <span className="text-[10px] font-medium text-amber-700 dark:text-amber-400">Warnings Issued</span>
+                      </div>
+                      <div className="p-3 rounded-xl bg-action/10 border border-action/20 text-center shadow-2xs">
+                        <span className="text-lg font-bold text-action tabular-nums block">
+                          {selectedUser.opportunitiesCount ?? 0}
+                        </span>
+                        <span className="text-[10px] font-medium text-action">Total Posts</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Mobile Recent Login Activity */}
+                  <div className="p-3.5 rounded-xl bg-surface border border-border shadow-2xs">
+                    <span className="text-[11px] font-bold text-text-secondary uppercase tracking-wider block mb-2">
+                      Recent Login Activity
+                    </span>
+                    {(detailData.loginAttempts || []).length === 0 ? (
+                      <p className="text-xs text-text-secondary italic">No recent login attempts recorded.</p>
+                    ) : (
+                      <div className="space-y-1.5 max-h-32 overflow-y-auto pr-1">
+                        {detailData.loginAttempts.slice(0, 3).map((att) => (
+                          <div
+                            key={att.id}
+                            className="flex items-center justify-between text-xs p-2 rounded-lg bg-bg border border-border/60"
+                          >
+                            <div className="flex items-center gap-2 min-w-0">
+                              <span
+                                className={`w-2 h-2 rounded-full shrink-0 ${
+                                  att.successful ? "bg-emerald-500" : "bg-rose-500"
+                                }`}
+                              />
+                              <span className="font-mono text-[11px] truncate">{att.ip}</span>
+                            </div>
+                            <span className="text-text-secondary tabular-nums text-[10px] shrink-0">
+                              {att.createdAtHuman}
                             </span>
                           </div>
-                          <span className="text-text-secondary tabular-nums text-[11px]">
-                            {att.createdAtHuman}
-                          </span>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Mobile Quick Action Hub (Thumb-Optimized Touch Targets) */}
+                  <div className="pt-2 space-y-2">
+                    <span className="text-[11px] font-bold text-text-secondary uppercase tracking-wider block px-1">
+                      Account Actions
+                    </span>
+
+                    {currentUser && (Number(currentUser.id) === Number(selectedUser.id) || currentUser.email === selectedUser.email) ? (
+                      <div className="p-3.5 rounded-xl bg-blue-500/10 border border-blue-500/25 text-blue-900 dark:text-blue-300 text-xs flex items-center gap-2.5">
+                        <span className="p-1.5 rounded-lg bg-blue-500/20 text-action shrink-0">
+                          <ShieldIcon className="w-4 h-4" />
+                        </span>
+                        <p className="leading-relaxed">
+                          <strong className="font-semibold">Your Account:</strong> Self-moderation is disabled on your own administrator account.
+                        </p>
+                      </div>
+                    ) : (
+                      <div className="space-y-2">
+                        {/* Row 1: Moderation Buttons */}
+                        <div className="grid grid-cols-2 gap-2">
+                          <button
+                            onClick={() => setWarnModalOpen(true)}
+                            className="min-h-[44px] px-3 py-2.5 rounded-xl text-xs font-bold bg-amber-500/15 text-amber-700 dark:text-amber-400 border border-amber-500/30 hover:bg-amber-500/25 active:scale-95 transition-all cursor-pointer flex items-center justify-center gap-1.5 shadow-xs"
+                          >
+                            <AlertTriangleIcon className="w-3.5 h-3.5" />
+                            <span>Issue Warning</span>
+                          </button>
+
+                          {selectedUser.status === "suspended" ? (
+                            <button
+                              onClick={() => handleUnsuspend(selectedUser)}
+                              className="min-h-[44px] px-3 py-2.5 rounded-xl text-xs font-bold bg-emerald-500/15 text-emerald-700 dark:text-emerald-400 border border-emerald-500/30 hover:bg-emerald-500/25 active:scale-95 transition-all cursor-pointer flex items-center justify-center gap-1.5 shadow-xs"
+                            >
+                              <CheckIcon className="w-3.5 h-3.5" />
+                              <span>Lift Suspension</span>
+                            </button>
+                          ) : (
+                            <button
+                              onClick={() => setSuspendModalOpen(true)}
+                              className="min-h-[44px] px-3 py-2.5 rounded-xl text-xs font-bold bg-rose-500/10 text-rose-700 dark:text-rose-400 border border-rose-500/30 hover:bg-rose-500/20 active:scale-95 transition-all cursor-pointer flex items-center justify-center gap-1.5 shadow-xs"
+                            >
+                              <LockIcon className="w-3.5 h-3.5" />
+                              <span>Suspend User</span>
+                            </button>
+                          )}
                         </div>
-                      ))}
+
+                        {/* Row 2: Ban / Lift Ban */}
+                        {selectedUser.status === "banned" ? (
+                          <button
+                            onClick={() => handleUnban(selectedUser)}
+                            className="min-h-[44px] w-full px-3 py-2.5 rounded-xl text-xs font-bold bg-emerald-500/15 text-emerald-700 dark:text-emerald-400 border border-emerald-500/30 hover:bg-emerald-500/25 active:scale-95 transition-all cursor-pointer flex items-center justify-center gap-1.5 shadow-xs"
+                          >
+                            <CheckIcon className="w-3.5 h-3.5" />
+                            <span>Lift Ban</span>
+                          </button>
+                        ) : (
+                          <button
+                            onClick={() => setBanModalOpen(true)}
+                            className="min-h-[44px] w-full px-3 py-2.5 rounded-xl text-xs font-bold bg-rose-600 text-white hover:bg-rose-700 active:scale-95 transition-all cursor-pointer flex items-center justify-center gap-1.5 shadow-xs"
+                          >
+                            <ShieldIcon className="w-3.5 h-3.5" />
+                            <span>Ban Account</span>
+                          </button>
+                        )}
+
+                        {/* Row 3: Role & Password */}
+                        <div className="grid grid-cols-2 gap-2">
+                          <button
+                            onClick={() => {
+                              setSelectedRole(selectedUser.role);
+                              setRoleModalOpen(true);
+                            }}
+                            className="min-h-[42px] px-3 py-2 rounded-xl text-xs font-semibold bg-surface border border-border text-text-primary hover:bg-bg active:scale-95 transition-all cursor-pointer flex items-center justify-center gap-1.5 shadow-2xs"
+                          >
+                            <UsersIcon className="w-3.5 h-3.5 text-text-secondary" />
+                            <span>Change Role</span>
+                          </button>
+
+                          <button
+                            onClick={() => handleResetPassword(selectedUser)}
+                            className="min-h-[42px] px-3 py-2 rounded-xl text-xs font-semibold bg-surface border border-border text-text-primary hover:bg-bg active:scale-95 transition-all cursor-pointer flex items-center justify-center gap-1.5 shadow-2xs"
+                          >
+                            <KeyIcon className="w-3.5 h-3.5 text-text-secondary" />
+                            <span>Reset Password</span>
+                          </button>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </>
+              ) : null}
+            </div>
+
+            {/* ============================================================== */}
+            {/* DESKTOP MODAL VIEW (hidden sm:block)                           */}
+            {/* Multi-column layout optimized for wide desktop screens         */}
+            {/* ============================================================== */}
+            <div className="hidden sm:block space-y-4">
+              {/* Profile Snapshot Header */}
+              <div className="flex items-center gap-4 p-4 rounded-xl bg-bg border border-border">
+                <Link href={profilePath(selectedUser)} className="shrink-0 cursor-pointer">
+                  <img
+                    src={selectedUser.avatar}
+                    alt=""
+                    className="w-14 h-14 rounded-full object-cover border border-border shadow-xs hover:border-action transition-all"
+                  />
+                </Link>
+                <div className="min-w-0 flex-1">
+                  <div className="flex items-center gap-2">
+                    <Link
+                      href={profilePath(selectedUser)}
+                      className="text-base font-bold text-text-primary hover:text-action hover:underline cursor-pointer truncate transition-colors"
+                      title={`Open ${selectedUser.name}'s public profile`}
+                    >
+                      {selectedUser.name}
+                    </Link>
+                    {selectedUser.isBrandVerified && (
+                      <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-action/10 text-action border border-action/20">
+                        Verified Brand
+                      </span>
+                    )}
+                  </div>
+                  <p className="text-xs text-text-secondary truncate mt-0.5">
+                    <Link
+                      href={profilePath(selectedUser)}
+                      className="hover:text-action hover:underline cursor-pointer"
+                    >
+                      @{selectedUser.username}
+                    </Link>
+                    {" "}· {selectedUser.email}
+                  </p>
+                  <div className="flex items-center gap-2 mt-2">
+                    <span className="text-[11px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-md bg-surface border border-border">
+                      {selectedUser.role}
+                    </span>
+                    <span className="text-xs text-text-secondary">
+                      Joined {selectedUser.createdAtHuman}
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              {loadingDetail ? (
+                <p className="p-8 text-center text-xs text-text-secondary">Loading details...</p>
+              ) : detailData ? (
+                <>
+                  {/* Moderation & Strikes Panel */}
+                  <div className="p-4 rounded-xl bg-bg border border-border">
+                    <h4 className="text-xs font-bold text-text-secondary uppercase tracking-wider mb-2">
+                      Moderation &amp; Enforcement History
+                    </h4>
+                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-center">
+                      <div className="p-2 rounded-lg bg-surface border border-border">
+                        <span className="text-base font-bold text-text-primary tabular-nums">
+                          {detailData.offenderHistory?.totalReports ?? 0}
+                        </span>
+                        <p className="text-[10px] text-text-secondary">Total Reports</p>
+                      </div>
+                      <div className="p-2 rounded-lg bg-surface border border-border">
+                        <span className="text-base font-bold text-rose-600 tabular-nums">
+                          {detailData.offenderHistory?.accepted ?? 0}
+                        </span>
+                        <p className="text-[10px] text-text-secondary">Accepted (Strikes)</p>
+                      </div>
+                      <div className="p-2 rounded-lg bg-surface border border-border">
+                        <span className="text-base font-bold text-text-secondary tabular-nums">
+                          {detailData.offenderHistory?.rejected ?? 0}
+                        </span>
+                        <p className="text-[10px] text-text-secondary">Rejected</p>
+                      </div>
+                      <div className="p-2 rounded-lg bg-surface border border-border">
+                        <span className="text-base font-bold text-amber-600 tabular-nums">
+                          {selectedUser.warningCount ?? 0}
+                        </span>
+                        <p className="text-[10px] text-text-secondary">Warnings Issued</p>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Recent Login Attempts */}
+                  <div className="p-4 rounded-xl bg-bg border border-border">
+                    <div className="flex items-center justify-between mb-2">
+                      <h4 className="text-xs font-bold text-text-secondary uppercase tracking-wider">
+                        Recent Login Activity
+                      </h4>
+                      {selectedUser.isLocked && (
+                        <button
+                          onClick={() => handleUnlock(selectedUser)}
+                          className="text-xs font-bold text-action hover:underline cursor-pointer"
+                        >
+                          Clear Lockout
+                        </button>
+                      )}
+                    </div>
+                    {(detailData.loginAttempts || []).length === 0 ? (
+                      <p className="text-xs text-text-secondary">No recorded login attempts.</p>
+                    ) : (
+                      <div className="space-y-1.5 max-h-36 overflow-y-auto pr-1">
+                        {detailData.loginAttempts.map((att) => (
+                          <div
+                            key={att.id}
+                            className="flex items-center justify-between text-xs p-2 rounded-lg bg-surface border border-border/60"
+                          >
+                            <div className="flex items-center gap-2">
+                              <span
+                                className={`w-2 h-2 rounded-full ${
+                                  att.successful ? "bg-emerald-500" : "bg-rose-500"
+                                }`}
+                              />
+                              <span className="font-mono text-[11px]">{att.ip}</span>
+                              <span className="text-text-secondary truncate max-w-[150px]">
+                                {att.userAgent}
+                              </span>
+                            </div>
+                            <span className="text-text-secondary tabular-nums text-[11px]">
+                              {att.createdAtHuman}
+                            </span>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Quick Management Actions Button Bar */}
+                  {currentUser && (Number(currentUser.id) === Number(selectedUser.id) || currentUser.email === selectedUser.email) ? (
+                    <div className="pt-2">
+                      <div className="p-3.5 rounded-xl bg-blue-500/10 border border-blue-500/25 text-blue-900 dark:text-blue-300 text-xs flex items-center gap-2.5">
+                        <span className="p-1.5 rounded-lg bg-blue-500/20 text-action shrink-0">
+                          <ShieldIcon className="w-4 h-4" />
+                        </span>
+                        <p className="leading-relaxed">
+                          <strong className="font-semibold">Your Administrator Account:</strong> Self-moderation actions (warning, suspension, banning, and role modification) are disabled on your own account.
+                        </p>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="pt-2 flex flex-wrap gap-2">
+                      <button
+                        onClick={() => setWarnModalOpen(true)}
+                        className="px-3 py-2 rounded-xl text-xs font-semibold bg-amber-500/10 text-amber-700 dark:text-amber-400 border border-amber-500/30 hover:bg-amber-500/20 active:scale-95 transition-all cursor-pointer"
+                      >
+                        Issue Warning
+                      </button>
+
+                      {selectedUser.status === "suspended" ? (
+                        <button
+                          onClick={() => handleUnsuspend(selectedUser)}
+                          className="px-3 py-2 rounded-xl text-xs font-semibold bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border border-emerald-500/30 hover:bg-emerald-500/20 active:scale-95 transition-all cursor-pointer"
+                        >
+                          Lift Suspension
+                        </button>
+                      ) : (
+                        <button
+                          onClick={() => setSuspendModalOpen(true)}
+                          className="px-3 py-2 rounded-xl text-xs font-semibold bg-rose-500/10 text-rose-700 dark:text-rose-400 border border-rose-500/30 hover:bg-rose-500/20 active:scale-95 transition-all cursor-pointer"
+                        >
+                          Suspend User
+                        </button>
+                      )}
+
+                      {selectedUser.status === "banned" ? (
+                        <button
+                          onClick={() => handleUnban(selectedUser)}
+                          className="px-3 py-2 rounded-xl text-xs font-semibold bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border border-emerald-500/30 hover:bg-emerald-500/20 active:scale-95 transition-all cursor-pointer"
+                        >
+                          Lift Ban
+                        </button>
+                      ) : (
+                        <button
+                          onClick={() => setBanModalOpen(true)}
+                          className="px-3 py-2 rounded-xl text-xs font-semibold bg-rose-600 text-white hover:bg-rose-700 active:scale-95 transition-all cursor-pointer"
+                        >
+                          Ban Account
+                        </button>
+                      )}
+
+                      <button
+                        onClick={() => {
+                          setSelectedRole(selectedUser.role);
+                          setRoleModalOpen(true);
+                        }}
+                        className="px-3 py-2 rounded-xl text-xs font-semibold bg-surface border border-border text-text-primary hover:bg-bg active:scale-95 transition-all cursor-pointer"
+                      >
+                        Change Role
+                      </button>
+
+                      <button
+                        onClick={() => handleResetPassword(selectedUser)}
+                        className="px-3 py-2 rounded-xl text-xs font-semibold bg-surface border border-border text-text-primary hover:bg-bg active:scale-95 transition-all cursor-pointer"
+                      >
+                        Reset Password
+                      </button>
                     </div>
                   )}
-                </div>
-
-                {/* Quick Management Actions Button Bar */}
-                {currentUser && (Number(currentUser.id) === Number(selectedUser.id) || currentUser.email === selectedUser.email) ? (
-                  <div className="pt-2">
-                    <div className="p-3.5 rounded-xl bg-blue-500/10 border border-blue-500/25 text-blue-900 dark:text-blue-300 text-xs flex items-center gap-2.5">
-                      <span className="p-1.5 rounded-lg bg-blue-500/20 text-action shrink-0">
-                        <ShieldIcon className="w-4 h-4" />
-                      </span>
-                      <p className="leading-relaxed">
-                        <strong className="font-semibold">Your Administrator Account:</strong> Self-moderation actions (warning, suspension, banning, and role modification) are disabled on your own account.
-                      </p>
-                    </div>
-                  </div>
-                ) : (
-                  <div className="pt-2 flex flex-wrap gap-2">
-                    <button
-                      onClick={() => setWarnModalOpen(true)}
-                      className="px-3 py-2 rounded-xl text-xs font-semibold bg-amber-500/10 text-amber-700 dark:text-amber-400 border border-amber-500/30 hover:bg-amber-500/20 active:scale-95 transition-all cursor-pointer"
-                    >
-                      Issue Warning
-                    </button>
-
-                    {selectedUser.status === "suspended" ? (
-                      <button
-                        onClick={() => handleUnsuspend(selectedUser)}
-                        className="px-3 py-2 rounded-xl text-xs font-semibold bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border border-emerald-500/30 hover:bg-emerald-500/20 active:scale-95 transition-all cursor-pointer"
-                      >
-                        Lift Suspension
-                      </button>
-                    ) : (
-                      <button
-                        onClick={() => setSuspendModalOpen(true)}
-                        className="px-3 py-2 rounded-xl text-xs font-semibold bg-rose-500/10 text-rose-700 dark:text-rose-400 border border-rose-500/30 hover:bg-rose-500/20 active:scale-95 transition-all cursor-pointer"
-                      >
-                        Suspend User
-                      </button>
-                    )}
-
-                    {selectedUser.status === "banned" ? (
-                      <button
-                        onClick={() => handleUnban(selectedUser)}
-                        className="px-3 py-2 rounded-xl text-xs font-semibold bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border border-emerald-500/30 hover:bg-emerald-500/20 active:scale-95 transition-all cursor-pointer"
-                      >
-                        Lift Ban
-                      </button>
-                    ) : (
-                      <button
-                        onClick={() => setBanModalOpen(true)}
-                        className="px-3 py-2 rounded-xl text-xs font-semibold bg-rose-600 text-white hover:bg-rose-700 active:scale-95 transition-all cursor-pointer"
-                      >
-                        Ban Account
-                      </button>
-                    )}
-
-                    <button
-                      onClick={() => {
-                        setSelectedRole(selectedUser.role);
-                        setRoleModalOpen(true);
-                      }}
-                      className="px-3 py-2 rounded-xl text-xs font-semibold bg-surface border border-border text-text-primary hover:bg-bg active:scale-95 transition-all cursor-pointer"
-                    >
-                      Change Role
-                    </button>
-
-                    <button
-                      onClick={() => handleResetPassword(selectedUser)}
-                      className="px-3 py-2 rounded-xl text-xs font-semibold bg-surface border border-border text-text-primary hover:bg-bg active:scale-95 transition-all cursor-pointer"
-                    >
-                      Reset Password
-                    </button>
-                  </div>
-                )}
-              </>
-            ) : null}
+                </>
+              ) : null}
+            </div>
           </div>
         )}
       </Modal>

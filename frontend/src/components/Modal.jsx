@@ -37,7 +37,7 @@ export default function Modal({
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-4 sm:p-6 pb-[max(1rem,env(safe-area-inset-bottom))] bg-black/60 backdrop-blur-sm"
+      className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-6 pb-[max(0rem,env(safe-area-inset-bottom))] bg-black/60 backdrop-blur-sm"
       onClick={handleBackdropClick}
       role="presentation"
     >
@@ -46,16 +46,21 @@ export default function Modal({
         role="dialog"
         aria-modal="true"
         aria-label={typeof title === "string" ? title : "Dialog"}
-        className={`bg-[var(--color-surface)] w-full ${maxWidth} rounded-2xl shadow-xl border border-[var(--color-border)] flex flex-col max-h-[90dvh] overflow-hidden animate-in fade-in zoom-in-95 duration-200`}
+        className={`bg-[var(--color-surface)] w-full ${maxWidth} rounded-t-3xl sm:rounded-2xl shadow-2xl border-t sm:border border-[var(--color-border)] flex flex-col max-h-[92dvh] sm:max-h-[85vh] overflow-hidden animate-in slide-in-from-bottom-8 sm:slide-in-from-bottom-0 sm:zoom-in-95 duration-200`}
       >
+        {/* Mobile Grab / Pull Handle Indicator */}
+        <div className="sm:hidden pt-3 pb-1 flex justify-center shrink-0">
+          <div className="w-12 h-1.5 bg-[var(--color-border)] rounded-full" />
+        </div>
+
         {/* Header */}
         {(title || onClose) && (
-          <div className="flex items-center justify-between p-4 border-b border-[var(--color-border)]">
-            <h2 className="text-lg font-semibold text-[var(--color-text-primary)]">{title}</h2>
+          <div className="flex items-center justify-between px-4 py-3 sm:p-4 border-b border-[var(--color-border)]">
+            <h2 className="text-base sm:text-lg font-bold text-[var(--color-text-primary)] truncate">{title}</h2>
             {onClose && (
               <button
                 onClick={onClose}
-                className="p-2 -mr-2 min-w-[44px] min-h-[44px] grid place-items-center text-text-secondary hover:text-text-secondary rounded-full hover:bg-bg active:bg-bg active:scale-[0.97] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-action"
+                className="p-1.5 -mr-1.5 min-w-[36px] min-h-[36px] grid place-items-center text-text-secondary hover:text-text-primary rounded-full hover:bg-bg active:bg-bg active:scale-[0.97] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-action cursor-pointer"
                 aria-label="Close"
               >
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">

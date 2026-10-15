@@ -312,12 +312,12 @@ export default function AdminDashboard({
 
       {/* Breakdown Metrics Ribbon */}
       <section className="mb-6 p-4 rounded-2xl bg-surface border border-border/80 shadow-xs">
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 divide-y sm:divide-y-0 sm:divide-x divide-border">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 divide-y sm:divide-y-0 sm:divide-x divide-border/60">
           <div className="px-2">
             <span className="text-[11px] font-semibold text-text-secondary uppercase tracking-wider">
               Account Roles
             </span>
-            <div className="flex items-center gap-2 mt-1">
+            <div className="flex flex-wrap items-center gap-x-2 gap-y-1 mt-1">
               <span className="text-base font-bold text-text-primary tabular-nums">
                 {stats.users?.managers ?? 0}
               </span>
@@ -334,7 +334,7 @@ export default function AdminDashboard({
             <span className="text-[11px] font-semibold text-text-secondary uppercase tracking-wider">
               Listing Types
             </span>
-            <div className="flex items-center gap-2 mt-1">
+            <div className="flex flex-wrap items-center gap-x-2 gap-y-1 mt-1">
               <span className="text-base font-bold text-text-primary tabular-nums">
                 {stats.content?.franchise ?? 0}
               </span>
@@ -356,7 +356,7 @@ export default function AdminDashboard({
             <span className="text-[11px] font-semibold text-text-secondary uppercase tracking-wider">
               Saves &amp; Follows
             </span>
-            <div className="flex items-center gap-2 mt-1">
+            <div className="flex flex-wrap items-center gap-x-2 gap-y-1 mt-1">
               <span className="text-base font-bold text-text-primary tabular-nums">
                 {stats.engagement?.saves ?? 0}
               </span>
@@ -373,7 +373,7 @@ export default function AdminDashboard({
             <span className="text-[11px] font-semibold text-text-secondary uppercase tracking-wider">
               Flagged Comments
             </span>
-            <div className="flex items-center gap-2 mt-1">
+            <div className="flex flex-wrap items-center gap-x-2 gap-y-1 mt-1">
               <span className="text-base font-bold text-text-primary tabular-nums">
                 {stats.moderation?.reportedComments ?? 0}
               </span>

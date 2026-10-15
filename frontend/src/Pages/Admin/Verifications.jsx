@@ -262,12 +262,12 @@ export default function AdminVerifications({
           <table className="w-full text-left text-xs sm:text-sm border-collapse">
             <thead>
               <tr className="border-b border-border bg-bg/40 text-[11px] font-bold text-text-secondary uppercase tracking-wider">
-                <th className="py-3 px-4">Business &amp; Applicant</th>
-                <th className="py-3 px-3">Document</th>
-                <th className="py-3 px-3">Status</th>
-                <th className="py-3 px-3">Notes</th>
-                <th className="py-3 px-3">Submitted</th>
-                <th className="py-3 px-4 text-right">Actions</th>
+                <th className="py-3 px-3 sm:px-4">Business &amp; Applicant</th>
+                <th className="py-3 px-3 hidden sm:table-cell">Document</th>
+                <th className="py-3 px-3 hidden sm:table-cell">Status</th>
+                <th className="py-3 px-3 hidden md:table-cell">Notes</th>
+                <th className="py-3 px-3 hidden lg:table-cell">Submitted</th>
+                <th className="py-3 px-3 sm:px-4 text-right">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-border/60">
@@ -281,51 +281,77 @@ export default function AdminVerifications({
                 rows.map((r) => (
                   <tr key={r.id} className="hover:bg-bg/40 transition-colors">
                     {/* Business Name and User */}
-                    <td className="py-3 px-4">
-                      <div className="flex items-center gap-3">
+                    <td className="py-3 px-3 sm:px-4">
+                      <div className="flex items-center gap-2.5 sm:gap-3">
                         {r.user?.avatar ? (
                           <Link href={profilePath(r.user)} className="shrink-0 cursor-pointer">
                             <img
                               src={r.user.avatar}
                               alt=""
-                              className="w-9 h-9 rounded-full object-cover border border-border shrink-0 shadow-xs hover:border-action transition-all"
+                              className="w-9 h-9 sm:w-10 sm:h-10 rounded-full object-cover border border-border shrink-0 shadow-xs hover:border-action transition-all"
                             />
                           </Link>
                         ) : (
-                          <div className="w-9 h-9 rounded-full bg-action/10 text-action grid place-items-center font-bold">
+                          <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-action/10 text-action grid place-items-center font-bold shrink-0">
                             {r.businessName?.charAt(0) ?? "B"}
                           </div>
                         )}
-                        <div className="min-w-0">
+                        <div className="min-w-0 flex-1">
                           {r.user ? (
                             <Link
                               href={profilePath(r.user)}
-                              className="font-bold text-text-primary hover:text-action hover:underline cursor-pointer truncate block transition-colors"
+                              className="font-bold text-text-primary hover:text-action hover:underline cursor-pointer truncate block transition-colors text-xs sm:text-sm"
                               title={`View ${r.businessName} profile`}
                             >
                               {r.businessName}
                             </Link>
                           ) : (
-                            <p className="font-bold text-text-primary truncate">
+                            <p className="font-bold text-text-primary truncate text-xs sm:text-sm">
                               {r.businessName}
                             </p>
                           )}
                           {r.user ? (
                             <Link
                               href={profilePath(r.user)}
-                              className="text-xs text-text-secondary hover:text-action hover:underline truncate cursor-pointer block transition-colors"
+                              className="text-[11px] sm:text-xs text-text-secondary hover:text-action hover:underline truncate cursor-pointer block transition-colors"
                             >
                               {r.user.name} (@{r.user.username})
                             </Link>
                           ) : (
-                            <p className="text-xs text-text-secondary">Account removed</p>
+                            <p className="text-[11px] text-text-secondary">Account removed</p>
                           )}
+
+                          {/* Mobile inline badges: Status + Document Link */}
+                          <div className="flex flex-wrap items-center gap-1.5 mt-1 sm:hidden">
+                            <span
+                              className={`inline-flex items-center text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.2 rounded-full border ${
+                                r.status === "approved"
+                                  ? "bg-emerald-500/15 text-emerald-700 dark:text-emerald-400 border-emerald-500/30"
+                                  : r.status === "rejected"
+                                  ? "bg-rose-500/15 text-rose-700 dark:text-rose-400 border-rose-500/30"
+                                  : "bg-amber-500/15 text-amber-700 dark:text-amber-400 border-amber-500/30"
+                              }`}
+                            >
+                              {r.status}
+                            </span>
+                            {r.documentUrl && (
+                              <a
+                                href={r.documentUrl}
+                                target="_blank"
+                                rel="noreferrer"
+                                className="inline-flex items-center gap-0.5 text-[10px] font-bold text-action hover:underline cursor-pointer"
+                              >
+                                <span>Doc</span>
+                                <ExternalLinkIcon className="w-2.5 h-2.5" />
+                              </a>
+                            )}
+                          </div>
                         </div>
                       </div>
                     </td>
 
-                    {/* Document Link */}
-                    <td className="py-3 px-3">
+                    {/* Document Link (Tablet & Desktop) */}
+                    <td className="py-3 px-3 hidden sm:table-cell">
                       {r.documentUrl ? (
                         <a
                           href={r.documentUrl}
@@ -342,8 +368,8 @@ export default function AdminVerifications({
                       )}
                     </td>
 
-                    {/* Status Pill */}
-                    <td className="py-3 px-3">
+                    {/* Status Pill (Tablet & Desktop) */}
+                    <td className="py-3 px-3 hidden sm:table-cell">
                       <span
                         className={`inline-flex items-center text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full border ${
                           r.status === "approved"
@@ -357,20 +383,20 @@ export default function AdminVerifications({
                       </span>
                     </td>
 
-                    {/* Notes */}
-                    <td className="py-3 px-3 max-w-[200px]">
+                    {/* Notes (Hidden below md) */}
+                    <td className="py-3 px-3 max-w-[200px] hidden md:table-cell">
                       <p className="text-xs text-text-secondary line-clamp-1" title={r.notes}>
                         {r.notes || "—"}
                       </p>
                     </td>
 
-                    {/* Submitted time */}
-                    <td className="py-3 px-3 text-xs text-text-secondary tabular-nums">
+                    {/* Submitted time (Hidden below lg) */}
+                    <td className="py-3 px-3 text-xs text-text-secondary tabular-nums hidden lg:table-cell">
                       {r.createdAtHuman}
                     </td>
 
                     {/* Actions */}
-                    <td className="py-3 px-4 text-right">
+                    <td className="py-3 px-3 sm:px-4 text-right">
                       <div className="flex items-center justify-end gap-1.5">
                         {r.status === "pending" && (
                           <>
@@ -379,7 +405,7 @@ export default function AdminVerifications({
                                 setSelectedRequest(r);
                                 setApproveOpen(true);
                               }}
-                              className="px-2.5 py-1 rounded-lg text-xs font-semibold bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border border-emerald-500/20 hover:bg-emerald-500/20 active:scale-95 transition-all cursor-pointer"
+                              className="px-2.5 py-1.5 rounded-lg text-xs font-semibold bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border border-emerald-500/20 hover:bg-emerald-500/20 active:scale-95 transition-all cursor-pointer"
                             >
                               Approve
                             </button>
@@ -388,7 +414,7 @@ export default function AdminVerifications({
                                 setSelectedRequest(r);
                                 setRejectOpen(true);
                               }}
-                              className="px-2.5 py-1 rounded-lg text-xs font-semibold bg-rose-500/10 text-rose-700 dark:text-rose-400 border border-rose-500/20 hover:bg-rose-500/20 active:scale-95 transition-all cursor-pointer"
+                              className="px-2.5 py-1.5 rounded-lg text-xs font-semibold bg-rose-500/10 text-rose-700 dark:text-rose-400 border border-rose-500/20 hover:bg-rose-500/20 active:scale-95 transition-all cursor-pointer"
                             >
                               Reject
                             </button>
@@ -401,7 +427,7 @@ export default function AdminVerifications({
                               setSelectedRequest(r);
                               setRevokeOpen(true);
                             }}
-                            className="px-2.5 py-1 rounded-lg text-xs font-semibold bg-bg text-text-secondary border border-border hover:text-rose-600 hover:border-rose-500/30 active:scale-95 transition-all cursor-pointer"
+                            className="px-2.5 py-1.5 rounded-lg text-xs font-semibold bg-bg text-text-secondary border border-border hover:text-rose-600 hover:border-rose-500/30 active:scale-95 transition-all cursor-pointer"
                           >
                             Revoke
                           </button>
