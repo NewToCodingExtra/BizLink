@@ -94,7 +94,7 @@ export default function Preferences({ prefs: initialPrefs }) {
     <div className="max-w-2xl mx-auto px-4 sm:px-6 py-6">
       <Head title="Preferences" />
       <h1 className="text-2xl font-semibold text-text-primary">Preferences</h1>
-      <p className="text-sm text-text-secondary mt-1">Persisted in MySQL. Drives the auto-sort bonus on the feed.</p>
+      <p className="text-sm text-text-secondary mt-1">Saved to your account. Powers your personalized feed ranking.</p>
 
       {saved && <p className="mt-4 text-sm text-success bg-success/10 border border-success/20 rounded-lg px-3 py-2">Preferences saved.</p>}
 

@@ -142,7 +142,7 @@ export default function CreateOpportunity() {
     <div className="max-w-2xl mx-auto px-4 sm:px-6 py-6">
       <Head title="Post an Opportunity" />
       <h1 className="text-2xl font-semibold text-text-primary">Post an Opportunity</h1>
-      <p className="text-sm text-text-secondary mt-1">Saved to MySQL via Laravel. Images and videos go to Google Cloud Storage when configured, otherwise the app server.</p>
+      <p className="text-sm text-text-secondary mt-1">Your listing goes live the moment you publish. Photos and videos are stored securely.</p>
 
       <form onSubmit={submit} className="mt-6 bg-surface rounded-xl border border-border shadow-sm p-6 space-y-4">
         <div className="flex gap-2">

@@ -70,7 +70,7 @@ export default function Login() {
       <div className="bg-surface rounded-2xl border border-border shadow-sm p-6 md:p-8">
         <p className="text-[11px] tracking-[0.16em] font-semibold text-text-secondary">BIZLINK · LOGIN</p>
         <h1 className="text-2xl font-bold text-text-primary mt-2">Welcome back</h1>
-        <p className="text-sm text-text-secondary mt-1">Session is issued by Laravel Sanctum and stored in MySQL.</p>
+        <p className="text-sm text-text-secondary mt-1">Bank-grade sign-in keeps you securely logged in.</p>
 
         <form onSubmit={handleSubmit} className="mt-6 space-y-4">
           <div>

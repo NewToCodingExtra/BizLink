@@ -44,7 +44,7 @@ export default function Saved({ opportunities: initialOpps = [] }) {
     <div className="max-w-2xl mx-auto px-4 sm:px-6 py-6">
       <Head title="Saved Opportunities" />
       <h1 className="text-2xl font-semibold text-text-primary">Saved Opportunities</h1>
-      <p className="text-sm text-text-secondary mt-1">Bookmarked posts from MySQL — quick access to your shortlist.</p>
+      <p className="text-sm text-text-secondary mt-1">Your shortlist, synced to your account on every device.</p>
       <div className="mt-6 space-y-4">
         {opps.length === 0 && <div className="bg-surface rounded-xl border border-border p-8 text-center"><p className="inline-flex items-center gap-1.5 text-sm text-text-secondary">No saves yet. Tap <BookmarkIcon className="w-3.5 h-3.5" /> Save on any card.</p></div>}
         {opps.map((o) => (

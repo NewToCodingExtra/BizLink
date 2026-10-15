@@ -164,7 +164,7 @@ export default function HomeFeed({ opportunities, stories, preferences }) {
       <div className="max-w-6xl mx-auto px-4 sm:px-6 py-6">
         {!user && (
           <div className="mb-4 bg-warning/10 border border-amber-100 rounded-xl px-4 py-3 flex flex-wrap items-center gap-3">
-            <p className="text-sm text-warning flex-1 min-w-[200px]">Browsing as guest — feed is live from Laravel + MySQL. Log in to like, save, comment and inquire.</p>
+            <p className="text-sm text-warning flex-1 min-w-[200px]">Browsing as guest — fresh opportunities, updated in real time. Log in to like, save, comment and inquire.</p>
             <Link href="/login" className="px-4 py-1.5 rounded-lg bg-primary text-white text-sm font-medium">Log in</Link>
             <Link href="/" className="px-4 py-1.5 rounded-lg bg-surface border border-amber-200 text-warning text-sm font-medium">About BizLink</Link>
           </div>

@@ -24,28 +24,28 @@ export default function Footer() {
           </div>
           <div className="md:col-span-2 lg:col-span-2 lg:col-start-7">
             <p className="text-white text-sm font-semibold">Explore</p>
-            <ul className="mt-1 sm:mt-3 space-y-0.5 sm:space-y-2.5 text-sm">
-              <li><Link href="/" className="inline-flex items-center justify-center md:justify-start min-h-[44px] px-2 -mx-2 hover:text-white active:text-white transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-300 focus-visible:rounded">Feed</Link></li>
-              <li><Link href="/about" className="inline-flex items-center justify-center md:justify-start min-h-[44px] px-2 -mx-2 hover:text-white active:text-white transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-300 focus-visible:rounded">About</Link></li>
-              <li><Link href="/reels" className="inline-flex items-center justify-center md:justify-start min-h-[44px] px-2 -mx-2 hover:text-white active:text-white transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-300 focus-visible:rounded">Reels</Link></li>
-              <li><Link href="/search" className="inline-flex items-center justify-center md:justify-start min-h-[44px] px-2 -mx-2 hover:text-white active:text-white transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-300 focus-visible:rounded">Search</Link></li>
+            <ul className="mt-1 sm:mt-2 space-y-0 text-sm">
+              <li><Link href="/" className="inline-flex items-center justify-center md:justify-start min-h-[38px] py-1 px-2 -mx-2 hover:text-white active:text-white transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-300 focus-visible:rounded">Feed</Link></li>
+              <li><Link href="/about" className="inline-flex items-center justify-center md:justify-start min-h-[38px] py-1 px-2 -mx-2 hover:text-white active:text-white transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-300 focus-visible:rounded">About</Link></li>
+              <li><Link href="/reels" className="inline-flex items-center justify-center md:justify-start min-h-[38px] py-1 px-2 -mx-2 hover:text-white active:text-white transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-300 focus-visible:rounded">Reels</Link></li>
+              <li><Link href="/search" className="inline-flex items-center justify-center md:justify-start min-h-[38px] py-1 px-2 -mx-2 hover:text-white active:text-white transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-300 focus-visible:rounded">Search</Link></li>
             </ul>
           </div>
           <div className="md:col-span-2 lg:col-span-2">
             <p className="text-white text-sm font-semibold">Support</p>
-            <ul className="mt-1 sm:mt-3 space-y-0.5 sm:space-y-2.5 text-sm">
-              <li><Link href="/contact" className="inline-flex items-center justify-center md:justify-start min-h-[44px] px-2 -mx-2 hover:text-white active:text-white transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-300 focus-visible:rounded">Contact</Link></li>
-              <li><Link href="/settings/preferences" className="inline-flex items-center justify-center md:justify-start min-h-[44px] px-2 -mx-2 hover:text-white active:text-white transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-300 focus-visible:rounded">Preferences</Link></li>
-              <li><Link href="/saved" className="inline-flex items-center justify-center md:justify-start min-h-[44px] px-2 -mx-2 hover:text-white active:text-white transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-300 focus-visible:rounded">Saved Opportunities</Link></li>
-              <li><Link href="/messages" className="inline-flex items-center justify-center md:justify-start min-h-[44px] px-2 -mx-2 hover:text-white active:text-white transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-300 focus-visible:rounded">Consultation Inbox</Link></li>
+            <ul className="mt-1 sm:mt-2 space-y-0 text-sm">
+              <li><Link href="/contact" className="inline-flex items-center justify-center md:justify-start min-h-[38px] py-1 px-2 -mx-2 hover:text-white active:text-white transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-300 focus-visible:rounded">Contact</Link></li>
+              <li><Link href="/settings/preferences" className="inline-flex items-center justify-center md:justify-start min-h-[38px] py-1 px-2 -mx-2 hover:text-white active:text-white transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-300 focus-visible:rounded">Preferences</Link></li>
+              <li><Link href="/saved" className="inline-flex items-center justify-center md:justify-start min-h-[38px] py-1 px-2 -mx-2 hover:text-white active:text-white transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-300 focus-visible:rounded">Saved Opportunities</Link></li>
+              <li><Link href="/messages" className="inline-flex items-center justify-center md:justify-start min-h-[38px] py-1 px-2 -mx-2 hover:text-white active:text-white transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-300 focus-visible:rounded">Consultation Inbox</Link></li>
             </ul>
           </div>
           <div className="md:col-span-3 lg:col-span-2">
             <p className="text-white text-sm font-semibold">Terms &amp; Agreements</p>
-            <ul className="mt-1 sm:mt-3 space-y-0.5 sm:space-y-2.5 text-sm">
-              <li><Link href="/privacy" className="inline-flex items-center justify-center md:justify-start min-h-[44px] px-2 -mx-2 hover:text-white active:text-white transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-300 focus-visible:rounded">Privacy Policy</Link></li>
-              <li><Link href="/terms" className="inline-flex items-center justify-center md:justify-start min-h-[44px] px-2 -mx-2 hover:text-white active:text-white transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-300 focus-visible:rounded">Terms of Service</Link></li>
-              <li><Link href="/acceptable-use" className="inline-flex items-center justify-center md:justify-start min-h-[44px] px-2 -mx-2 hover:text-white active:text-white transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-300 focus-visible:rounded">Acceptable Use</Link></li>
+            <ul className="mt-1 sm:mt-2 space-y-0 text-sm">
+              <li><Link href="/privacy" className="inline-flex items-center justify-center md:justify-start min-h-[38px] py-1 px-2 -mx-2 hover:text-white active:text-white transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-300 focus-visible:rounded">Privacy Policy</Link></li>
+              <li><Link href="/terms" className="inline-flex items-center justify-center md:justify-start min-h-[38px] py-1 px-2 -mx-2 hover:text-white active:text-white transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-300 focus-visible:rounded">Terms of Service</Link></li>
+              <li><Link href="/acceptable-use" className="inline-flex items-center justify-center md:justify-start min-h-[38px] py-1 px-2 -mx-2 hover:text-white active:text-white transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-300 focus-visible:rounded">Acceptable Use</Link></li>
             </ul>
           </div>
         </div>

@@ -42,7 +42,7 @@ export default function SitePrivacy() {
       <h2>3. Cookies and Tracking</h2>
       <p>
         BizLink uses <strong>strictly necessary cookies</strong> required to securely authenticate your
-        login sessions (via Laravel Sanctum). We do not currently use third-party analytics trackers,
+        login sessions (encrypted server-side sessions). We do not currently use third-party analytics trackers,
         advertising cookies, or cross-site marketing trackers. If this changes in the future, we will
         update this policy and request your consent where legally required.
       </p>

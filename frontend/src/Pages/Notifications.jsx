@@ -69,7 +69,7 @@ export default function Notifications({ notifications: initial = [], unread: ini
       <div className="flex items-center gap-3">
         <div className="flex-1">
           <h1 className="text-2xl font-semibold text-text-primary">Notifications{unread > 0 ? ` (${unread})` : ""}</h1>
-          <p className="text-sm text-text-secondary mt-1">Live from Laravel + MySQL.</p>
+          <p className="text-sm text-text-secondary mt-1">The moment something happens, you'll know.</p>
         </div>
         {unread > 0 && <button onClick={onMarkAll} className="text-xs font-medium text-action hover:text-[#1D4ED8] border border-action/20 bg-action/10 rounded-full px-3 py-1.5">Mark all read</button>}
       </div>

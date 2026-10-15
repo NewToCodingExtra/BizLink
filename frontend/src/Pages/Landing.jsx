@@ -40,8 +40,8 @@ export default function Landing() {
             </h2>
             <p className="text-sm text-slate-300 mt-2 leading-relaxed">
               {user
-                ? "Your feed is live from the backend. Continue exploring franchises, wholesale hubs and resell drops."
-                : "Create a free account to like, save, comment, inquire and message brands directly. Test data is now served from Laravel + MySQL."}
+                ? "Your marketplace is live. Continue exploring franchises, wholesale hubs and resell drops."
+                : "Create a free account to like, save, comment, inquire and message brands directly. Real listings, updated daily."}
             </p>
           </div>
           <div className="flex flex-wrap gap-3 shrink-0 relative z-10">
@@ -80,7 +80,7 @@ export default function Landing() {
           <div className="bg-surface border border-border rounded-xl p-5 shadow-sm">
             <p className="text-xs font-bold tracking-widest text-accent">GOOGLE</p>
             <p className="font-semibold text-text-primary mt-1">Continue with Google</p>
-            <p className="text-text-secondary mt-1">Requires GOOGLE_CLIENT_ID in backend/.env</p>
+            <p className="text-text-secondary mt-1">One-tap sign-in with your Google account.</p>
             <Link href="/login" className="text-action text-sm font-medium mt-2 inline-flex items-center gap-1">Try Google <ArrowRightIcon className="w-3.5 h-3.5" /></Link>
           </div>
         </div>

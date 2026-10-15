@@ -147,7 +147,7 @@ export default function EditOpportunity({ opportunity }) {
       <Head title="Edit Opportunity" />
       <Link href={`/post/${opportunity.slug}`} className="text-sm text-text-secondary hover:text-text-primary">Back to post</Link>
       <h1 className="text-2xl font-semibold text-text-primary mt-2">Edit Opportunity</h1>
-      <p className="text-sm text-text-secondary mt-1">Update the listing. Changes save to MySQL and return you to the post.</p>
+      <p className="text-sm text-text-secondary mt-1">Update the listing. Changes go live instantly and return you to the post.</p>
 
       <form onSubmit={submit} className="mt-6 bg-surface rounded-xl border border-border shadow-sm p-6 space-y-4">
         <div className="flex gap-2">
