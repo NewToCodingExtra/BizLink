@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link, router, usePage } from "@inertiajs/react";
-import { can } from "../utils/can";
+import { can, hasRole } from "../utils/can";
 import NotificationBell from "./NotificationBell";
 import SearchBar from "./SearchBar";
 import ProfileMenu from "./ProfileMenu";
@@ -90,6 +90,7 @@ export default function Navbar() {
           <Link href="/about" className={linkClass("/about")}>About</Link>
           <Link href="/reels" className={linkClass("/reels")}>Reels</Link>
           {user && <Link href="/messages" className={linkClass("/messages")}>Messages</Link>}
+          {user && hasRole(page, "Admin") && <Link href="/admin" className={linkClass("/admin")}>Admin</Link>}
         </nav>
 
         <div className="hidden md:block flex-1 max-w-[360px] ml-auto">

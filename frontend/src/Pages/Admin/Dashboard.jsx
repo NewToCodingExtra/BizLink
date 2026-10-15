@@ -1,0 +1,168 @@
+import { Head, Link, usePage } from "@inertiajs/react";
+import { hasRole } from "../../utils/can";
+import { profilePath } from "../../utils/profilePath";
+import { ArrowLeftIcon, CheckIcon } from "../../Components/icons";
+
+function StatCard({ label, value, accent = false }) {
+  return (
+    <div className={`rounded-xl border p-4 ${accent ? "bg-action/5 border-action/30" : "bg-surface border-border"}`}>
+      <p className="text-2xl font-bold text-text-primary tabular-nums">{value}</p>
+      <p className="text-xs text-text-secondary mt-0.5">{label}</p>
+    </div>
+  );
+}
+
+export default function AdminDashboard({ stats = {}, recentUsers = [], topPosts = [], reportedComments = [] }) {
+  const { auth } = usePage().props;
+  const user = auth?.user ?? null;
+  const isAdmin = hasRole(usePage(), "Admin");
+
+  return (
+    <div className="max-w-6xl mx-auto px-4 sm:px-6 py-6">
+      <Head title="Admin Console" />
+
+      <div className="flex items-center gap-3">
+        <Link href="/feed" className="inline-flex items-center text-text-secondary hover:text-text-primary" aria-label="Back to feed">
+          <ArrowLeftIcon className="w-5 h-5" />
+        </Link>
+        <div>
+          <h1 className="text-2xl font-semibold text-text-primary">Admin Console</h1>
+          <p className="text-sm text-text-secondary mt-0.5">
+            Platform overview · signed in as {user?.name}
+          </p>
+        </div>
+        <span className="ml-auto inline-flex items-center gap-1 text-[11px] font-bold bg-action/10 text-action border border-action/20 rounded-full px-2.5 py-1">
+          ROLE: ADMIN
+        </span>
+      </div>
+
+      {!isAdmin ? (
+        <div className="mt-8 bg-error/5 border border-error/20 rounded-xl p-6 text-center">
+          <p className="text-sm font-semibold text-error">Admin access only</p>
+          <p className="text-sm text-text-secondary mt-1">This console is restricted to the Admin role.</p>
+        </div>
+      ) : (
+        <>
+          {/* Users */}
+          <section className="mt-6">
+            <h2 className="text-xs font-semibold tracking-widest text-text-secondary">USERS</h2>
+            <div className="mt-2 grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
+              <StatCard label="Total accounts" value={stats.users?.total ?? 0} accent />
+              <StatCard label="Admins" value={stats.users?.admins ?? 0} />
+              <StatCard label="Managers (brands)" value={stats.users?.managers ?? 0} />
+              <StatCard label="Entrepreneurs" value={stats.users?.entrepreneurs ?? 0} />
+              <StatCard label="New this week" value={stats.users?.newThisWeek ?? 0} />
+            </div>
+          </section>
+
+          {/* Content */}
+          <section className="mt-6">
+            <h2 className="text-xs font-semibold tracking-widest text-text-secondary">CONTENT</h2>
+            <div className="mt-2 grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
+              <StatCard label="Opportunities" value={stats.content?.opportunities ?? 0} />
+              <StatCard label="Live stories" value={stats.content?.liveStories ?? 0} />
+              <StatCard label="Franchise" value={stats.content?.franchise ?? 0} />
+              <StatCard label="Wholesale" value={stats.content?.wholesale ?? 0} />
+              <StatCard label="Resell" value={stats.content?.resell ?? 0} />
+            </div>
+          </section>
+
+          {/* Engagement + moderation */}
+          <section className="mt-6">
+            <h2 className="text-xs font-semibold tracking-widest text-text-secondary">ENGAGEMENT &amp; MODERATION</h2>
+            <div className="mt-2 grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
+              <StatCard label="Comments" value={stats.engagement?.comments ?? 0} />
+              <StatCard label="Likes" value={stats.engagement?.likes ?? 0} />
+              <StatCard label="Saves" value={stats.engagement?.saves ?? 0} />
+              <StatCard label="Follows" value={stats.engagement?.follows ?? 0} />
+              <StatCard label="Flagged comments" value={stats.moderation?.reportedComments ?? 0} />
+            </div>
+          </section>
+
+          <div className="mt-8 grid gap-6 lg:grid-cols-2">
+            {/* Recent users */}
+            <div className="bg-surface rounded-xl border border-border shadow-sm">
+              <div className="px-4 py-3 border-b border-border">
+                <h2 className="text-sm font-semibold text-text-primary">Newest accounts</h2>
+              </div>
+              <div className="divide-y divide-border">
+                {(recentUsers || []).length === 0 && <p className="p-6 text-sm text-text-secondary text-center">No users yet.</p>}
+                {(recentUsers || []).map((u) => (
+                  <div key={u.id} className="flex items-center gap-3 p-3">
+                    <Link href={profilePath({ username: u.username ?? null, authorId: u.id })}>
+                      <img src={u.avatar} alt={u.name} className="w-9 h-9 rounded-full object-cover bg-bg" />
+                    </Link>
+                    <div className="min-w-0 flex-1">
+                      <p className="text-sm font-medium text-text-primary truncate">{u.name}</p>
+                      <p className="text-xs text-text-secondary truncate">{u.email}</p>
+                    </div>
+                    <span className="text-[10px] font-bold uppercase tracking-wide text-text-secondary border border-border rounded-full px-2 py-0.5 shrink-0">
+                      {u.role}
+                    </span>
+                    <span className="text-xs text-text-secondary shrink-0">{u.createdAt}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Top posts */}
+            <div className="bg-surface rounded-xl border border-border shadow-sm">
+              <div className="px-4 py-3 border-b border-border">
+                <h2 className="text-sm font-semibold text-text-primary">Top posts by likes</h2>
+              </div>
+              <div className="divide-y divide-border">
+                {(topPosts || []).length === 0 && <p className="p-6 text-sm text-text-secondary text-center">No posts yet.</p>}
+                {(topPosts || []).map((p) => (
+                  <div key={p.id} className="flex items-start gap-3 p-3">
+                    <div className="min-w-0 flex-1">
+                      <Link href={`/post/${p.slug}`} className="text-sm font-medium text-text-primary hover:text-action line-clamp-1">
+                        {p.headline}
+                      </Link>
+                      <p className="text-xs text-text-secondary truncate mt-0.5">
+                        {p.brandName} · {p.type}
+                      </p>
+                    </div>
+                    {p.verified && (
+                      <span className="inline-flex items-center gap-1 text-[10px] font-bold text-success bg-success/10 border border-success/20 rounded-full px-2 py-0.5 shrink-0">
+                        <CheckIcon className="w-3 h-3" /> Verified
+                      </span>
+                    )}
+                    <span className="text-sm font-semibold text-text-primary shrink-0 tabular-nums">{p.likes}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Moderation queue */}
+            <div className="lg:col-span-2 bg-surface rounded-xl border border-border shadow-sm">
+              <div className="px-4 py-3 border-b border-border">
+                <h2 className="text-sm font-semibold text-text-primary">Flagged comments</h2>
+              </div>
+              <div className="divide-y divide-border">
+                {(reportedComments || []).length === 0 && (
+                  <p className="p-6 text-sm text-text-secondary text-center">Nothing flagged. Queue is clear.</p>
+                )}
+                {(reportedComments || []).map((c) => (
+                  <div key={c.id} className="flex items-start gap-3 p-3">
+                    <span className="shrink-0 mt-1 min-w-[20px] h-5 px-1 grid place-items-center rounded-full bg-error/10 text-error text-[10px] font-bold">
+                      {c.reports}
+                    </span>
+                    <div className="min-w-0 flex-1">
+                      <p className="text-sm text-text-primary line-clamp-2">{c.text}</p>
+                      <p className="text-xs text-text-secondary mt-0.5">
+                        by {c.author}
+                        {c.postHeadline ? (
+                          <> on <Link href={`/post/${c.postSlug}`} className="text-action hover:underline line-clamp-1">{c.postHeadline}</Link></>
+                        ) : null}
+                      </p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        </>
+      )}
+    </div>
+  );
+}

@@ -50,4 +50,11 @@ return [
         'redirect' => env('FACEBOOK_REDIRECT_URI', 'http://localhost:8000/api/auth/facebook/callback'),
     ],
 
+    // One-click "try the demo" sign-in on /login. The accounts are public
+    // seed data, so this leaks nothing — but set DEMO_LOGIN=false in any
+    // real deployment.
+    'demo' => [
+        'enabled' => env('DEMO_LOGIN', true),
+    ],
+
 ];

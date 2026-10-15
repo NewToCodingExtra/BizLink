@@ -59,9 +59,67 @@ class SessionAuthController extends Controller
 
         Preference::firstOrCreate(['user_id' => Auth::id()], ['categories' => []]);
 
+        // Land each role where its work starts. Without this, everyone
+        // dumps into /feed and an admin has no way to find the console —
+        // the classic "why is my admin login useless" problem.
         $user = Auth::user();
 
-        return redirect()->intended('/feed')->with('success', "Welcome back, {$user->name}!");
+        return redirect()->intended($this->homeFor($user))->with('success', "Welcome back, {$user->name}!");
+    }
+
+    /**
+     * Role-aware landing page. Managers (brands) start where they can post;
+     * admins start in the console; everyone else gets the feed.
+     */
+    private function homeFor(User $user): string
+    {
+        if ($user->hasRole('Admin')) {
+            return '/admin';
+        }
+        if ($user->hasRole('Manager')) {
+            return '/create';
+        }
+        return '/feed';
+    }
+
+    /**
+     * One-click demo sign-in for the seeded sample accounts.
+     *
+     * This is the standard "try the demo" flow real SaaS products ship
+     * (Stripe test mode, Shopify demo stores): the credentials are public,
+     * so there is nothing to leak. Restricted to the three known demo
+     * addresses and can be switched off entirely for a real deployment.
+     */
+    public function demoLogin(Request $request)
+    {
+        if (! config('services.demo.enabled')) {
+            abort(404);
+        }
+
+        $data = $request->validate([
+            'role' => 'required|string|in:admin,brand,entrepreneur',
+        ]);
+
+        $map = [
+            'admin' => 'admin@bizlink.ph',
+            'brand' => 'brand@bizlink.ph',
+            'entrepreneur' => 'demo@bizlink.ph',
+        ];
+        $email = $map[$data['role']];
+
+        $user = User::where('email', $email)->first();
+        if (!$user) {
+            throw ValidationException::withMessages([
+                'role' => ['That demo account has not been seeded yet. Run php artisan db:seed.'],
+            ]);
+        }
+
+        Auth::login($user, true);
+        $request->session()->regenerate();
+        $request->session()->put('last_activity_at', now());
+        Preference::firstOrCreate(['user_id' => $user->id], ['categories' => []]);
+
+        return redirect($this->homeFor($user))->with('success', "Signed in as {$user->name} ({$data['role']} demo).");
     }
 
     public function showRegister()

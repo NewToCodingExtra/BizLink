@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\AdminController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\ContactController;
 use App\Http\Controllers\FollowController;
@@ -8,6 +9,7 @@ use App\Http\Controllers\OpportunityController;
 use App\Http\Controllers\PageController;
 use App\Http\Controllers\PreferenceController;
 use App\Http\Controllers\SocialAuthController;
+use App\Http\Controllers\SessionAuthController;
 use App\Http\Controllers\StoryController;
 use App\Http\Controllers\UploadController;
 use Illuminate\Support\Facades\Route;
@@ -57,8 +59,17 @@ Route::get('/csrf-token', function () {
     return response()->json(['token' => csrf_token()]);
 })->name('csrf.token');
 
+// One-click demo sign-in (public seeded accounts). Disable in production
+// with DEMO_LOGIN=false — see config/services.php.
+Route::post('/demo-login', [SessionAuthController::class, 'demoLogin'])
+    ->middleware('throttle:20,1')
+    ->name('demo.login');
+
 // Authenticated pages
 Route::middleware('auth')->group(function () {
+    // Admin console: the route guard is role-based, the controller check is
+    // permission-based ('users.manage') — both layers are demonstrated.
+    Route::get('/admin', [AdminController::class, 'index'])->middleware('role:Admin')->name('admin.index');
     Route::middleware(['auth', 'role:Admin|Manager'])->get('/create', [OpportunityController::class, 'create'])->name('opportunities.create');
 
     Route::get('/notifications', [PageController::class, 'notifications'])->name('notifications.index');

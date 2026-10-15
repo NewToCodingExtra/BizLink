@@ -1,7 +1,16 @@
-import { Link, useForm, Head } from '@inertiajs/react';
+import { Link, useForm, Head, router } from '@inertiajs/react';
+import { useState } from 'react';
 import { useToast } from '../context/ToastContext';
 import PasswordInput from '../Components/PasswordInput';
 import { FacebookIcon, GoogleIcon } from '../Components/SocialIcons';
+
+// One-click demo sign-in for the seeded accounts. Mirrors the "try the demo"
+// pattern real SaaS products ship: the credentials are public seed data.
+const DEMO_ROLES = [
+  { role: 'entrepreneur', label: 'Entrepreneur', blurb: 'Browse, inquire, comment', avatar: 'https://i.pravatar.cc/100?img=12' },
+  { role: 'brand', label: 'Brand', blurb: 'Post & manage listings', avatar: 'https://i.pravatar.cc/100?img=11' },
+  { role: 'admin', label: 'Admin', blurb: 'Platform console', avatar: undefined },
+];
 
 export default function Login() {
   const toast = useToast();
@@ -9,6 +18,20 @@ export default function Login() {
     email: 'demo@bizlink.ph',
     password: '',
   });
+
+  const [demoLoading, setDemoLoading] = useState(null);
+
+  const signInAsDemo = (role) => {
+    setDemoLoading(role);
+    router.post('/demo-login', { role }, {
+      preserveState: false,
+      onError: (errs) => {
+        const first = errs ? Object.values(errs).flat()[0] : null;
+        toast.error(first || 'Demo sign-in failed.');
+      },
+      onFinish: () => setDemoLoading(null),
+    });
+  };
 
   const handleBlur = (field, e) => {
     if (!e.target.checkValidity()) {
@@ -67,6 +90,34 @@ export default function Login() {
             {processing ? 'Logging in...' : 'Log in'}
           </button>
         </form>
+
+        <div className="flex items-center gap-3 my-5">
+          <div className="flex-1 h-px bg-bg" />
+          <span className="text-xs text-text-secondary">or try a demo account</span>
+          <div className="flex-1 h-px bg-bg" />
+        </div>
+
+        <div className="grid grid-cols-3 gap-2">
+          {DEMO_ROLES.map(({ role, label, blurb, avatar }) => (
+            <button
+              key={role}
+              type="button"
+              onClick={() => signInAsDemo(role)}
+              disabled={demoLoading !== null}
+              className="flex flex-col items-center gap-1 px-2 py-3 rounded-xl border border-border bg-surface hover:bg-bg transition-colors disabled:opacity-60"
+            >
+              {avatar ? (
+                <img src={avatar} alt="" className="w-8 h-8 rounded-full object-cover" />
+              ) : (
+                <span className="w-8 h-8 rounded-full bg-action/10 text-action grid place-items-center text-xs font-bold">A</span>
+              )}
+              <span className="text-xs font-semibold text-text-primary">{label}</span>
+              <span className="text-[10px] text-text-secondary leading-tight text-center">
+                {demoLoading === role ? 'Signing in…' : blurb}
+              </span>
+            </button>
+          ))}
+        </div>
 
         <div className="flex items-center gap-3 my-5">
           <div className="flex-1 h-px bg-bg" />
