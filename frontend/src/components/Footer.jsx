@@ -38,6 +38,7 @@ export default function Footer() {
               <li><Link href="/settings/preferences" className="inline-flex items-center justify-center md:justify-start min-h-[38px] py-1 px-2 -mx-2 hover:text-white active:text-white transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-300 focus-visible:rounded">Preferences</Link></li>
               <li><Link href="/saved" className="inline-flex items-center justify-center md:justify-start min-h-[38px] py-1 px-2 -mx-2 hover:text-white active:text-white transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-300 focus-visible:rounded">Saved Opportunities</Link></li>
               <li><Link href="/messages" className="inline-flex items-center justify-center md:justify-start min-h-[38px] py-1 px-2 -mx-2 hover:text-white active:text-white transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-300 focus-visible:rounded">Consultation Inbox</Link></li>
+              <li><Link href="/help" className="inline-flex items-center justify-center md:justify-start min-h-[38px] py-1 px-2 -mx-2 hover:text-white active:text-white transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-300 focus-visible:rounded">Help Center</Link></li>
             </ul>
           </div>
           <div className="md:col-span-3 lg:col-span-2">

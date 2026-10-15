@@ -196,3 +196,33 @@ input[type="number"]::-webkit-outer-spin-button {
 input[type="number"] {
   -moz-appearance: textfield;
 }
+
+/* Help Center prose — product docs rendered from docs/*.md */
+.help-prose {
+  color: var(--color-text-primary);
+  font-size: 0.9375rem;
+  line-height: 1.75;
+  overflow-wrap: anywhere;
+}
+.help-prose > *:first-child { margin-top: 0; }
+.help-prose h1 { font-size: 1.5rem; font-weight: 700; letter-spacing: -0.01em; margin: 0 0 0.75rem; }
+.help-prose h2 { font-size: 1.125rem; font-weight: 700; margin: 1.75rem 0 0.5rem; padding-top: 1.25rem; border-top: 1px solid var(--color-border); }
+.help-prose h3 { font-size: 1rem; font-weight: 600; margin: 1.25rem 0 0.375rem; }
+.help-prose p { margin: 0.625rem 0; color: var(--color-text-primary); }
+.help-prose ul, .help-prose ol { margin: 0.625rem 0; padding-left: 1.375rem; display: grid; gap: 0.375rem; }
+.help-prose ul { list-style: disc; }
+.help-prose ol { list-style: decimal; }
+.help-prose li::marker { color: var(--color-text-secondary); }
+.help-prose a { color: var(--color-action); font-weight: 500; }
+.help-prose a:hover { text-decoration: underline; }
+.help-prose strong { font-weight: 600; }
+.help-prose blockquote { border-left: 3px solid var(--color-accent); background: var(--color-bg); border-radius: 0 0.5rem 0.5rem 0; padding: 0.625rem 0.875rem; margin: 0.875rem 0; color: var(--color-text-secondary); }
+.help-prose blockquote p { margin: 0; }
+.help-prose code { font-size: 0.8125em; background: var(--color-bg); border: 1px solid var(--color-border); border-radius: 0.375rem; padding: 0.125rem 0.375rem; }
+.help-prose pre { background: #0B1F3A; color: #E2E8F0; border-radius: 0.75rem; padding: 0.875rem 1rem; overflow-x: auto; margin: 0.875rem 0; font-size: 0.8125rem; line-height: 1.6; }
+.help-prose pre code { background: transparent; border: 0; padding: 0; color: inherit; }
+.help-prose table { width: 100%; border-collapse: collapse; margin: 0.875rem 0; font-size: 0.8125rem; display: block; overflow-x: auto; }
+.help-prose thead th { text-align: left; font-weight: 600; padding: 0.5rem 0.625rem; border-bottom: 2px solid var(--color-border); white-space: nowrap; }
+.help-prose tbody td { padding: 0.5rem 0.625rem; border-bottom: 1px solid var(--color-border); vertical-align: top; }
+.help-prose tbody tr:last-child td { border-bottom: 0; }
+.help-prose hr { border: 0; border-top: 1px solid var(--color-border); margin: 1.5rem 0; }

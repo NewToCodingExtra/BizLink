@@ -3,6 +3,7 @@
 use App\Http\Controllers\AdminController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\ContactController;
+use App\Http\Controllers\DocsController;
 use App\Http\Controllers\FollowController;
 use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\OpportunityController;
@@ -42,6 +43,10 @@ Route::post('/contact', [ContactController::class, 'submit'])->name('contact.sub
 Route::inertia('/privacy', 'Legal/SitePrivacy')->name('privacy');
 Route::inertia('/terms', 'Legal/SiteTerms')->name('terms');
 Route::inertia('/acceptable-use', 'Legal/SiteAcceptable')->name('acceptable-use');
+
+// Help Center (product docs ship with every deployment)
+Route::get('/help', [DocsController::class, 'index'])->name('help');
+Route::get('/help/content/{slug}', [DocsController::class, 'show'])->name('help.content');
 
 // Session authentication is owned by Laravel Fortify (login/register/forgot/reset/logout).
 // Logout is handled by Fortify's default POST /logout route.
