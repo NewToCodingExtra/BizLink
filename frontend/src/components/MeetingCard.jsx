@@ -2,6 +2,7 @@ import { useState } from "react";
 import { VideoIcon, CalendarIcon } from "./icons";
 import { httpApi } from "../utils/http";
 import { useToast } from "../context/ToastContext";
+import { useConfirm } from "../context/ConfirmContext";
 
 export default function MeetingCard({
   message,
@@ -11,6 +12,7 @@ export default function MeetingCard({
   onUpdated,
 }) {
   const toast = useToast();
+  const confirm = useConfirm();
   const [cancelling, setCancelling] = useState(false);
   const [ending, setEnding] = useState(false);
   const [editingLink, setEditingLink] = useState(false);
@@ -52,7 +54,13 @@ export default function MeetingCard({
   };
 
   const handleCancel = async () => {
-    if (!confirm("Are you sure you want to cancel this meeting?")) return;
+    const ok = await confirm({
+      title: "Cancel meeting?",
+      message: "Are you sure you want to cancel this scheduled meeting?",
+      confirmText: "Cancel Meeting",
+      variant: "danger",
+    });
+    if (!ok) return;
     setCancelling(true);
     try {
       const res = await httpApi.delete(`/conversations/${conversationId}/meet/${eventId}`);
@@ -66,7 +74,13 @@ export default function MeetingCard({
   };
 
   const handleEndMeeting = async () => {
-    if (!confirm("Are you sure you want to end this meeting for everyone?")) return;
+    const ok = await confirm({
+      title: "End meeting for everyone?",
+      message: "Are you sure you want to end this meeting for everyone? Participants will no longer be able to join.",
+      confirmText: "End Meeting",
+      variant: "danger",
+    });
+    if (!ok) return;
     setEnding(true);
     try {
       const res = await httpApi.post(`/conversations/${conversationId}/meet/${eventId}/end`);

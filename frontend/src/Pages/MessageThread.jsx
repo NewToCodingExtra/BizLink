@@ -33,6 +33,7 @@ import { httpApi, csrfFetch } from "../utils/http";
 import { getEcho, watchEchoHealth } from "../utils/echo";
 import { profilePath } from "../utils/profilePath";
 import { useToast } from "../context/ToastContext";
+import { useConfirm } from "../context/ConfirmContext";
 
 function getDateLabel(isoString) {
   if (!isoString) return "";
@@ -341,9 +342,17 @@ export default function MessageThread({ conv: initialConv, conversations = [], q
     }
   };
 
+  const confirm = useConfirm();
+
   const handleDeleteMessage = async (m) => {
     setActiveMenuId(null);
-    if (!confirm("Are you sure you want to delete this message?")) return;
+    const ok = await confirm({
+      title: "Delete message?",
+      message: "Are you sure you want to delete this message? It will be removed from this conversation.",
+      confirmText: "Delete",
+      variant: "danger",
+    });
+    if (!ok) return;
     try {
       await httpApi.delete(`/conversations/${conv.id}/messages/${m.id}`);
       setMessages((prev) => prev.filter((x) => Number(x.id) !== Number(m.id)));

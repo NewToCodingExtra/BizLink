@@ -3,6 +3,7 @@ import { Head, router, usePage } from "@inertiajs/react";
 import { hasRole } from "../../utils/can";
 import { httpApi } from "../../utils/http";
 import { useToast } from "../../context/ToastContext";
+import { useConfirm } from "../../context/ConfirmContext";
 import AdminHeader from "../../Components/Admin/AdminHeader";
 import Modal from "../../Components/Modal";
 import Button from "../../Components/Button";
@@ -22,6 +23,7 @@ export default function AdminSettings({
 }) {
   const page = usePage();
   const toast = useToast();
+  const confirm = useConfirm();
   const isAdmin = hasRole(page, "Admin");
 
   const [activeSubTab, setActiveSubTab] = useState("throttles"); // throttles, admins, system
@@ -78,7 +80,13 @@ export default function AdminSettings({
   };
 
   const handleRevokeAdmin = async (adminUser) => {
-    if (!confirm(`Are you sure you want to revoke admin privileges from ${adminUser.name}?`)) {
+    const ok = await confirm({
+      title: "Revoke Admin Privileges?",
+      message: `Are you sure you want to revoke administrator privileges from ${adminUser.name}? They will no longer have access to the Admin portal.`,
+      confirmText: "Revoke Privileges",
+      variant: "danger",
+    });
+    if (!ok) {
       return;
     }
     try {
