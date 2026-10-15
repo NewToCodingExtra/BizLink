@@ -22,6 +22,7 @@ frontend-env.txt
 skills-lock.json
 
 # Agent context, session, and planning files
+admin-improvement-plan.md
 implementation_plan.md
 quality-test-plan.md
 quality-test-progress.md
