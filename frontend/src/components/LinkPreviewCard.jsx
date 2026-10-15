@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { LinkIcon } from "./icons";
-import { csrfFetch } from "../utils/http";
+import { http } from "../utils/http";
 
 const URL_REGEX = /(https?:\/\/[^\s<]+[^<.,:;"')\]\s])/i;
 
@@ -43,13 +43,13 @@ export default function LinkPreviewCard({ url, dark = false }) {
     if (!url) return;
     let active = true;
 
-    csrfFetch("/link-preview", {
+    http("/link-preview", {
       method: "POST",
-      body: JSON.stringify({ url }),
+      body: { url },
     })
-      .then((res) => (res.ok ? res.json() : null))
-      .then((preview) => {
+      .then((res) => {
         if (!active) return;
+        const preview = res?.data ?? res;
         if (preview && (preview.title || preview.description)) {
           setData(preview);
         } else {

@@ -122,13 +122,13 @@ class GoogleCalendarAdapter implements CalendarAdapter
             } catch (\Throwable $e) {
                 Log::warning("Google Calendar createMeet attempt {$attempt} failed", ['error' => $e->getMessage()]);
                 if ($attempt >= $maxAttempts) {
-                    Log::info('Google Calendar API unavailable, generating direct Google Meet link fallback', ['error' => $e->getMessage()]);
-                    $eventId = 'meet_' . Str::random(16);
-                    $randomCode = strtolower(Str::random(3)) . '-' . strtolower(Str::random(4)) . '-' . strtolower(Str::random(3));
-                    return [
-                        'eventId' => $eventId,
-                        'link' => "https://meet.google.com/{$randomCode}",
-                    ];
+                    $msg = $e->getMessage();
+                    if (str_contains($msg, 'SERVICE_DISABLED') || str_contains($msg, 'accessNotConfigured') || str_contains($msg, 'Google Calendar API has not been used')) {
+                        throw new \RuntimeException(
+                            'Google Calendar API is disabled in your Google Cloud Project. Please enable it at https://console.developers.google.com/apis/api/calendar-json.googleapis.com/overview?project=902483433376 or provide a meeting link created via meet.google.com/new.'
+                        );
+                    }
+                    throw new \RuntimeException('Google Calendar API error: ' . $msg);
                 }
                 usleep(300000 * $attempt);
             }

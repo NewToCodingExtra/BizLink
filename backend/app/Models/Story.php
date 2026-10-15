@@ -14,6 +14,13 @@ class Story extends Model
         return 'slug';
     }
 
+    public function resolveRouteBinding($value, $field = null)
+    {
+        return is_numeric($value)
+            ? $this->where('id', $value)->first()
+            : $this->where('slug', $value)->first();
+    }
+
     protected $fillable = [
         'slug',
         'user_id',

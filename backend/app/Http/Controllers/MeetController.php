@@ -181,6 +181,7 @@ class MeetController extends Controller
             'title' => 'nullable|string|max:255',
             'start_at' => 'required|date',
             'duration' => 'required|integer|in:15,30,60',
+            'custom_meet_url' => 'nullable|string|max:500',
         ]);
 
         try {
@@ -202,6 +203,21 @@ class MeetController extends Controller
         }
     }
 
+    public function updateLink(Request $request, Conversation $conversation, string $eventId, MeetService $meetService)
+    {
+        $this->authorizeParticipant($request, $conversation);
+
+        $validated = $request->validate([
+            'meet_url' => 'required|string|url|max:500',
+        ]);
+
+        $message = $meetService->updateLink($request->user(), $conversation, $eventId, $validated['meet_url']);
+
+        return response()->json([
+            'data' => app(ConversationController::class)->serializeForBroadcast($message),
+        ]);
+    }
+
     public function cancel(Request $request, Conversation $conversation, string $eventId, MeetService $meetService)
     {
         $this->authorizeParticipant($request, $conversation);
@@ -213,3 +229,4 @@ class MeetController extends Controller
         ]);
     }
 }
+

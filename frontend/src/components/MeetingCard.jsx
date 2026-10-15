@@ -8,9 +8,13 @@ export default function MeetingCard({
   conversationId,
   isMe = false,
   onCancelled,
+  onUpdated,
 }) {
   const toast = useToast();
   const [cancelling, setCancelling] = useState(false);
+  const [editingLink, setEditingLink] = useState(false);
+  const [newUrl, setNewUrl] = useState(message.meetUrl || "");
+  const [savingLink, setSavingLink] = useState(false);
 
   const title = message.meetTitle || "Consultation Meeting";
   const meetUrl = message.meetUrl;
@@ -49,6 +53,29 @@ export default function MeetingCard({
       toast.error(err.message || "Failed to cancel meeting");
     } finally {
       setCancelling(false);
+    }
+  };
+
+  const handleSaveLink = async (e) => {
+    e.preventDefault();
+    const clean = newUrl.trim();
+    if (!clean) {
+      toast.error("Please enter a meeting URL");
+      return;
+    }
+    setSavingLink(true);
+    try {
+      const res = await httpApi.patch(`/conversations/${conversationId}/meet/${eventId}`, {
+        meet_url: clean,
+      });
+      toast.success("Meeting link updated");
+      setEditingLink(false);
+      const updated = res.data ?? res;
+      if (onUpdated) onUpdated(updated);
+    } catch (err) {
+      toast.error(err.message || "Failed to update meeting link");
+    } finally {
+      setSavingLink(false);
     }
   };
 
@@ -111,50 +138,119 @@ export default function MeetingCard({
         <span>{formatMeetingTime()}</span>
       </div>
 
-      <div className="flex items-center gap-2">
-        {isScheduled && meetUrl ? (
-          <a
-            href={meetUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-            className={`flex-1 py-1.5 px-3 rounded-lg text-xs font-semibold text-center transition-colors shadow-sm flex items-center justify-center gap-1.5 ${
+      {editingLink ? (
+        <form onSubmit={handleSaveLink} className="space-y-2 pt-2 border-t border-border/40">
+          <div className="flex items-center justify-between text-[11px]">
+            <label className="font-semibold opacity-90">Meeting URL:</label>
+            <a
+              href="https://meet.google.com/new"
+              target="_blank"
+              rel="noopener noreferrer"
+              className={`underline hover:opacity-80 flex items-center gap-1 ${isMe ? "text-white" : "text-action"}`}
+            >
+              Open meet.google.com/new ↗
+            </a>
+          </div>
+          <input
+            type="url"
+            required
+            value={newUrl}
+            onChange={(e) => setNewUrl(e.target.value)}
+            placeholder="https://meet.google.com/xxx-yyyy-zzz"
+            className={`w-full px-2.5 py-1.5 text-xs rounded-lg border outline-none ${
               isMe
-                ? "bg-white text-action hover:bg-slate-100"
-                : "bg-action text-white hover:bg-action-hover"
+                ? "bg-black/30 border-white/30 text-white placeholder-white/50 focus:border-white"
+                : "bg-bg border-border text-text-primary focus:border-action"
             }`}
-          >
-            <VideoIcon className="w-3.5 h-3.5" />
-            <span>Join Meeting</span>
-          </a>
-        ) : (
-          <button
-            type="button"
-            disabled
-            className={`flex-1 py-1.5 px-3 rounded-lg text-xs font-medium text-center cursor-not-allowed ${
-              isMe
-                ? "bg-white/10 text-white/40"
-                : "bg-slate-100 text-slate-400 dark:bg-slate-800 dark:text-slate-500"
-            }`}
-          >
-            {isEnded ? "Meeting ended" : isCancelled ? "Meeting cancelled" : "Meeting unavailable"}
-          </button>
-        )}
+          />
+          <div className="flex items-center justify-end gap-1.5">
+            <button
+              type="button"
+              onClick={() => {
+                setEditingLink(false);
+                setNewUrl(meetUrl || "");
+              }}
+              className={`px-2.5 py-1 text-xs rounded-md border ${
+                isMe
+                  ? "border-white/30 hover:bg-white/10 text-white"
+                  : "border-border text-text-secondary hover:bg-bg"
+              }`}
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              disabled={savingLink || !newUrl.trim()}
+              className="px-2.5 py-1 text-xs font-semibold rounded-md bg-action hover:bg-action-hover text-white disabled:opacity-50"
+            >
+              {savingLink ? "Saving..." : "Save Link"}
+            </button>
+          </div>
+        </form>
+      ) : (
+        <div className="flex items-center gap-2">
+          {isScheduled && meetUrl ? (
+            <a
+              href={meetUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className={`flex-1 py-1.5 px-3 rounded-lg text-xs font-semibold text-center transition-colors shadow-sm flex items-center justify-center gap-1.5 ${
+                isMe
+                  ? "bg-white text-action hover:bg-slate-100"
+                  : "bg-action text-white hover:bg-action-hover"
+              }`}
+            >
+              <VideoIcon className="w-3.5 h-3.5" />
+              <span>Join Meeting</span>
+            </a>
+          ) : (
+            <button
+              type="button"
+              disabled
+              className={`flex-1 py-1.5 px-3 rounded-lg text-xs font-medium text-center cursor-not-allowed ${
+                isMe
+                  ? "bg-white/10 text-white/40"
+                  : "bg-slate-100 text-slate-400 dark:bg-slate-800 dark:text-slate-500"
+              }`}
+            >
+              {isEnded ? "Meeting ended" : isCancelled ? "Meeting cancelled" : "Meeting unavailable"}
+            </button>
+          )}
 
-        {isMe && isScheduled && eventId && (
-          <button
-            type="button"
-            onClick={handleCancel}
-            disabled={cancelling}
-            className={`py-1.5 px-3 rounded-lg text-xs font-medium transition-colors ${
-              isMe
-                ? "bg-rose-500/20 hover:bg-rose-500/30 text-rose-200 border border-rose-400/30"
-                : "border border-border text-text-secondary hover:text-error hover:border-error/40"
-            }`}
-          >
-            {cancelling ? "Cancelling..." : "Cancel"}
-          </button>
-        )}
-      </div>
+          {isMe && isScheduled && eventId && (
+            <>
+              <button
+                type="button"
+                onClick={() => {
+                  setNewUrl(meetUrl || "");
+                  setEditingLink(true);
+                }}
+                className={`py-1.5 px-2.5 rounded-lg text-xs font-medium transition-colors ${
+                  isMe
+                    ? "border border-white/30 hover:bg-white/10 text-white/90"
+                    : "border border-border text-text-secondary hover:text-text-primary"
+                }`}
+                title="Edit meeting URL"
+              >
+                Edit Link
+              </button>
+              <button
+                type="button"
+                onClick={handleCancel}
+                disabled={cancelling}
+                className={`py-1.5 px-2.5 rounded-lg text-xs font-medium transition-colors ${
+                  isMe
+                    ? "bg-rose-500/20 hover:bg-rose-500/30 text-rose-200 border border-rose-400/30"
+                    : "border border-border text-text-secondary hover:text-error hover:border-error/40"
+                }`}
+              >
+                {cancelling ? "..." : "Cancel"}
+              </button>
+            </>
+          )}
+        </div>
+      )}
     </div>
   );
 }
+

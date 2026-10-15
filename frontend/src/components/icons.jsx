@@ -513,6 +513,27 @@ export function BellSlashIcon({ className = "w-4 h-4" }) {
   );
 }
 
+export function SmileIcon({ className = "w-4 h-4" }) {
+  return (
+    <Svg className={className}>
+      <circle cx="12" cy="12" r="10" />
+      <path d="M8 14s1.5 2 4 2 4-2 4-2" />
+      <line x1="9" y1="9" x2="9.01" y2="9" />
+      <line x1="15" y1="9" x2="15.01" y2="9" />
+    </Svg>
+  );
+}
+
+export function ArrowUpIcon({ className = "w-4 h-4" }) {
+  return (
+    <Svg className={className}>
+      <line x1="12" y1="19" x2="12" y2="5" />
+      <polyline points="5 12 12 5 19 12" />
+    </Svg>
+  );
+}
+
+
 
 
 

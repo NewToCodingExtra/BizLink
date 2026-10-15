@@ -13,6 +13,7 @@ use App\Models\Story;
 use App\Models\User;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 
 class MeetService
@@ -24,11 +25,21 @@ class MeetService
 
     public function schedule(User $user, Conversation $conversation, array $data): Message
     {
-        $token = $user->googleToken;
-        if (! $token || ! $token->access_token) {
-            throw ValidationException::withMessages([
-                'google' => ['Google account not connected. Please connect your Google account to schedule a meeting.'],
-            ]);
+        $customUrl = trim($data['custom_meet_url'] ?? '');
+
+        if ($customUrl !== '') {
+            if (!filter_var($customUrl, FILTER_VALIDATE_URL) || (!str_contains($customUrl, 'meet.google.com') && !str_contains($customUrl, 'zoom.us') && !str_contains($customUrl, 'teams.microsoft.com') && !str_contains($customUrl, 'http'))) {
+                throw ValidationException::withMessages([
+                    'custom_meet_url' => ['Please enter a valid video meeting URL (e.g. https://meet.google.com/xxx-yyyy-zzz).'],
+                ]);
+            }
+        } else {
+            $token = $user->googleToken;
+            if (! $token || ! $token->access_token) {
+                throw ValidationException::withMessages([
+                    'google' => ['Google account not connected. Please connect your Google account or provide a direct meeting link.'],
+                ]);
+            }
         }
 
         $title = trim($data['title'] ?? 'BizLink Consultation');
@@ -49,8 +60,15 @@ class MeetService
 
         $end = $start->copy()->addMinutes($duration);
 
-        return DB::transaction(function () use ($user, $conversation, $title, $start, $end, $duration) {
-            $meet = $this->calendarAdapter->createMeet($user, $title, $start, $duration);
+        return DB::transaction(function () use ($user, $conversation, $title, $start, $end, $duration, $customUrl) {
+            if ($customUrl !== '') {
+                $meet = [
+                    'eventId' => 'custom_' . Str::random(16),
+                    'link' => $customUrl,
+                ];
+            } else {
+                $meet = $this->calendarAdapter->createMeet($user, $title, $start, $duration);
+            }
 
             $message = Message::create([
                 'conversation_id' => $conversation->id,
@@ -181,8 +199,32 @@ class MeetService
         return $count;
     }
 
+    public function updateLink(User $user, Conversation $conversation, string $eventId, string $newUrl): Message
+    {
+        $newUrl = trim($newUrl);
+        if (!filter_var($newUrl, FILTER_VALIDATE_URL) || (!str_contains($newUrl, 'meet.google.com') && !str_contains($newUrl, 'zoom.us') && !str_contains($newUrl, 'teams.microsoft.com') && !str_contains($newUrl, 'http'))) {
+            throw ValidationException::withMessages([
+                'meet_url' => ['Please enter a valid meeting URL (e.g. https://meet.google.com/xxx-yyyy-zzz).'],
+            ]);
+        }
+
+        $message = Message::where('conversation_id', $conversation->id)
+            ->where('meet_event_id', $eventId)
+            ->firstOrFail();
+
+        if ((int) $message->sender_id !== (int) $user->id) {
+            abort(403, 'Only the meeting organizer can update this meeting.');
+        }
+
+        $message->update(['meet_url' => $newUrl]);
+        broadcast(new MessageSent($message));
+
+        return $message;
+    }
+
     public function getOtherParticipantId(Conversation $conversation, ?int $userId): ?int
     {
         return $conversation->getOtherParticipantId($userId);
     }
 }
+

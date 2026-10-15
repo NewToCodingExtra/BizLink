@@ -11,6 +11,11 @@ import {
   GoogleIcon,
   DotsIcon,
   ReplyIcon,
+  PencilIcon,
+  TrashIcon,
+  FlagIcon,
+  SmileIcon,
+  ArrowUpIcon,
   InfoIcon,
   BellSlashIcon,
   CheckIcon,
@@ -90,6 +95,13 @@ export default function MessageThread({ conv: initialConv, conversations = [], q
   const [meetDate, setMeetDate] = useState("");
   const [meetDuration, setMeetDuration] = useState(30);
   const [schedulingMeet, setSchedulingMeet] = useState(false);
+  const [customMeetUrl, setCustomMeetUrl] = useState("");
+  const [activeMenuId, setActiveMenuId] = useState(null);
+  const [activeReactId, setActiveReactId] = useState(null);
+  const [selectedMsgId, setSelectedMsgId] = useState(null);
+  const [editingMessageId, setEditingMessageId] = useState(null);
+  const [editText, setEditText] = useState("");
+  const [savingEdit, setSavingEdit] = useState(false);
 
   const scrollRef = useRef(null);
   const inputRef = useRef(null);
@@ -130,9 +142,21 @@ export default function MessageThread({ conv: initialConv, conversations = [], q
     channel.listen(".message.sent", (e) => {
       const msg = e?.message;
       if (!msg || Number(msg.senderId) === Number(me?.id)) return;
-      setMessages((prev) =>
-        prev.some((m) => Number(m.id) === Number(msg.id)) ? prev : [...prev, { ...msg, from: "them" }]
-      );
+      setMessages((prev) => {
+        const idx = prev.findIndex((m) => Number(m.id) === Number(msg.id));
+        if (idx !== -1) {
+          const next = [...prev];
+          next[idx] = { ...next[idx], ...msg, from: "them" };
+          return next;
+        }
+        return [...prev, { ...msg, from: "them" }];
+      });
+    });
+
+    channel.listen(".message.deleted", (e) => {
+      const deletedId = e?.messageId;
+      if (!deletedId) return;
+      setMessages((prev) => prev.filter((m) => Number(m.id) !== Number(deletedId)));
     });
 
     channel.listen(".poll.updated", (e) => {
@@ -190,6 +214,18 @@ export default function MessageThread({ conv: initialConv, conversations = [], q
     };
   }, [conv?.id, me?.id]);
 
+  // Close message action menus on outside click
+  useEffect(() => {
+    const handleWindowClick = () => {
+      setActiveMenuId(null);
+      setActiveReactId(null);
+      setSelectedMsgId(null);
+    };
+    window.addEventListener("click", handleWindowClick);
+    return () => window.removeEventListener("click", handleWindowClick);
+  }, []);
+
+
   // Fallback polling
   useEffect(() => {
     if (!liveDown || !conv) return;
@@ -240,6 +276,238 @@ export default function MessageThread({ conv: initialConv, conversations = [], q
       mediaType: msg.mediaType,
     });
     inputRef.current?.focus();
+  };
+
+  const handleReact = async (m, emoji) => {
+    setActiveReactId(null);
+    try {
+      const res = await httpApi.post(`/conversations/${conv.id}/messages/${m.id}/react`, { emoji });
+      const updated = res.data ?? res;
+      setMessages((prev) =>
+        prev.map((x) => (Number(x.id) === Number(m.id) ? { ...x, ...updated } : x))
+      );
+    } catch (err) {
+      toast.error(err.message || "Failed to react");
+    }
+  };
+
+  const handleBumpMessage = async (m) => {
+    setActiveMenuId(null);
+    try {
+      const res = await httpApi.post(`/conversations/${conv.id}/messages/${m.id}/bump`);
+      const newMsg = res.data ?? res;
+      setMessages((prev) => (prev.some((x) => Number(x.id) === Number(newMsg.id)) ? prev : [...prev, newMsg]));
+      setConv((c) => (c ? { ...c, lastMessage: newMsg.text || "Bumped message" } : c));
+      toast.success("Message bumped!");
+      setTimeout(() => {
+        scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: "smooth" });
+      }, 50);
+    } catch (err) {
+      toast.error(err.message || "Failed to bump message");
+    }
+  };
+
+  const startEditing = (m) => {
+    setActiveMenuId(null);
+    setEditingMessageId(m.id);
+    setEditText(m.text || "");
+  };
+
+  const cancelEditing = () => {
+    setEditingMessageId(null);
+    setEditText("");
+  };
+
+  const handleSaveEdit = async (m) => {
+    if (!editText.trim()) {
+      toast.error("Message cannot be empty");
+      return;
+    }
+    setSavingEdit(true);
+    try {
+      const res = await httpApi.put(`/conversations/${conv.id}/messages/${m.id}`, {
+        text: editText.trim(),
+      });
+      const updated = res.data ?? res;
+      setMessages((prev) =>
+        prev.map((x) => (Number(x.id) === Number(m.id) ? { ...x, ...updated } : x))
+      );
+      cancelEditing();
+      toast.success("Message updated");
+    } catch (err) {
+      toast.error(err.message || "Failed to update message");
+    } finally {
+      setSavingEdit(false);
+    }
+  };
+
+  const handleDeleteMessage = async (m) => {
+    setActiveMenuId(null);
+    if (!confirm("Are you sure you want to delete this message?")) return;
+    try {
+      await httpApi.delete(`/conversations/${conv.id}/messages/${m.id}`);
+      setMessages((prev) => prev.filter((x) => Number(x.id) !== Number(m.id)));
+      toast.success("Message deleted");
+    } catch (err) {
+      toast.error(err.message || "Failed to delete message");
+    }
+  };
+
+  const renderMessageActions = (m, isMe, idx) => {
+    const isMenuOpen = activeMenuId === m.id;
+    const isReactOpen = activeReactId === m.id;
+    const isSelected = selectedMsgId === m.id;
+    const openDownwards = idx < 2;
+
+    return (
+      <div
+        className={`transition-opacity flex items-center gap-1 shrink-0 ${
+          isMenuOpen || isReactOpen || isSelected
+            ? "opacity-100"
+            : "opacity-0 group-hover:opacity-100"
+        }`}
+      >
+        {/* 1. Reply Icon (Centered) */}
+        <button
+          type="button"
+          onClick={() => initiateReply(m)}
+          className="w-7 h-7 rounded-full bg-surface border border-border text-text-secondary hover:text-action hover:bg-bg grid place-items-center shadow-2xs hover:scale-105 transition-all"
+          title="Reply"
+        >
+          <ReplyIcon className="w-3.5 h-3.5" />
+        </button>
+
+        {/* 2. React Icon */}
+        <div className="relative">
+          <button
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation();
+              setActiveReactId(isReactOpen ? null : m.id);
+              setActiveMenuId(null);
+            }}
+            className={`w-7 h-7 rounded-full border grid place-items-center shadow-2xs hover:scale-105 transition-all ${
+              isReactOpen
+                ? "bg-action text-white border-action"
+                : "bg-surface border-border text-text-secondary hover:text-action hover:bg-bg"
+            }`}
+            title="React"
+          >
+            <SmileIcon className="w-3.5 h-3.5" />
+          </button>
+
+          {/* Quick Emoji Reaction Bar */}
+          {isReactOpen && (
+            <div
+              onClick={(e) => e.stopPropagation()}
+              className={`absolute z-[70] ${
+                openDownwards ? "top-full mt-1.5" : "bottom-full mb-1.5"
+              } ${
+                isMe ? "right-0" : "left-0"
+              } p-1 bg-surface border border-border rounded-full shadow-2xl flex items-center gap-0.5 animate-in fade-in zoom-in-95 duration-150`}
+            >
+              {["❤️", "👍", "😂", "😮", "😢", "🔥"].map((emoji) => (
+                <button
+                  key={emoji}
+                  type="button"
+                  onClick={() => handleReact(m, emoji)}
+                  className={`w-7 h-7 rounded-full text-base grid place-items-center hover:scale-125 transition-transform hover:bg-bg ${
+                    m.myReactions?.includes(emoji) ? "bg-action/20 ring-1 ring-action" : ""
+                  }`}
+                  title={emoji}
+                >
+                  {emoji}
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
+
+        {/* 3. More Actions (...) Icon */}
+        <div className="relative">
+          <button
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation();
+              setActiveMenuId(isMenuOpen ? null : m.id);
+              setActiveReactId(null);
+            }}
+            className={`w-7 h-7 rounded-full border grid place-items-center shadow-2xs hover:scale-105 transition-all ${
+              isMenuOpen
+                ? "bg-action text-white border-action"
+                : "bg-surface border-border text-text-secondary hover:text-action hover:bg-bg"
+            }`}
+            title="More actions"
+          >
+            <DotsIcon className="w-3.5 h-3.5" />
+          </button>
+
+          {/* Dropdown Menu (Guaranteed to float on top with z-[70]) */}
+          {isMenuOpen && (
+            <div
+              onClick={(e) => e.stopPropagation()}
+              className={`absolute z-[70] ${
+                openDownwards ? "top-full mt-1.5" : "bottom-full mb-1.5"
+              } ${
+                isMe ? "right-0" : "left-0"
+              } w-36 py-1 bg-surface border border-border rounded-xl shadow-2xl animate-in fade-in zoom-in-95 duration-150 text-xs text-text-primary`}
+            >
+              {/* Bump: resending the exact message */}
+              <button
+                type="button"
+                onClick={() => handleBumpMessage(m)}
+                className="w-full px-3 py-2 flex items-center gap-2 hover:bg-bg text-left transition-colors font-medium text-text-primary"
+              >
+                <ArrowUpIcon className="w-3.5 h-3.5 text-action" />
+                <span>Bump</span>
+              </button>
+
+              {/* Edit: message text editing for sender */}
+              {isMe && m.text && (
+                <button
+                  type="button"
+                  onClick={() => startEditing(m)}
+                  className="w-full px-3 py-2 flex items-center gap-2 hover:bg-bg text-left transition-colors font-medium text-text-primary"
+                >
+                  <PencilIcon className="w-3.5 h-3.5 text-text-secondary" />
+                  <span>Edit</span>
+                </button>
+              )}
+
+              {/* Delete: message deletion for sender */}
+              {isMe && (
+                <button
+                  type="button"
+                  onClick={() => handleDeleteMessage(m)}
+                  className="w-full px-3 py-2 flex items-center gap-2 hover:bg-rose-500/10 text-rose-500 text-left transition-colors font-medium"
+                >
+                  <TrashIcon className="w-3.5 h-3.5" />
+                  <span>Delete</span>
+                </button>
+              )}
+
+              {/* Report */}
+              <button
+                type="button"
+                onClick={() => {
+                  setActiveMenuId(null);
+                  setReportTarget({
+                    endpoint: `/messages/${m.id}/report`,
+                    title: "Report message",
+                  });
+                }}
+                className={`w-full px-3 py-2 flex items-center gap-2 hover:bg-rose-500/10 text-rose-500 text-left transition-colors font-medium ${
+                  isMe ? "border-t border-border/50" : ""
+                }`}
+              >
+                <FlagIcon className="w-3.5 h-3.5" />
+                <span>Report</span>
+              </button>
+            </div>
+          )}
+        </div>
+      </div>
+    );
   };
 
   const send = async (e) => {
@@ -359,15 +627,20 @@ export default function MessageThread({ conv: initialConv, conversations = [], q
     }
     setSchedulingMeet(true);
     try {
-      const res = await httpApi.post(`/conversations/${conv.id}/meet`, {
+      const payload = {
         title: meetTitle || `Consultation: ${conv.with}`,
         start_at: new Date(meetDate).toISOString(),
         duration: Number(meetDuration),
-      });
+      };
+      if (customMeetUrl.trim()) {
+        payload.custom_meet_url = customMeetUrl.trim();
+      }
+      const res = await httpApi.post(`/conversations/${conv.id}/meet`, payload);
       const msg = res.data ?? res;
       setMessages((prev) => (prev.some((m) => Number(m.id) === Number(msg.id)) ? prev : [...prev, msg]));
       setConv((c) => (c ? { ...c, lastMessage: `Meeting scheduled: ${meetTitle || conv.with}` } : c));
       setShowMeetModal(false);
+      setCustomMeetUrl("");
       toast.success("Meeting scheduled");
     } catch (err) {
       if (err.message?.includes("Google account not connected")) {
@@ -664,36 +937,28 @@ export default function MessageThread({ conv: initialConv, conversations = [], q
 
                   <div
                     id={`msg-${m.id}`}
-                    className={`flex items-end gap-2 group transition-all duration-500 ${
-                      isMe ? "justify-end" : "justify-start"
-                    } ${isHighlighted ? "scale-[1.01]" : ""}`}
+                    onClick={() => setSelectedMsgId((cur) => (cur === m.id ? null : m.id))}
+                    className={`flex items-center gap-2 group transition-all duration-300 relative ${
+                      activeMenuId === m.id || activeReactId === m.id || selectedMsgId === m.id
+                        ? "z-30"
+                        : "z-0"
+                    } ${isMe ? "justify-end" : "justify-start"} ${isHighlighted ? "scale-[1.01]" : ""}`}
                   >
                     {/* Peer avatar beside them-messages */}
                     {!isMe && (
                       <img
                         src={conv.avatar}
                         alt={conv.with}
-                        className="w-7 h-7 rounded-full object-cover mb-1 border border-border shrink-0 hidden sm:block"
+                        className="w-7 h-7 rounded-full object-cover self-end mb-1 border border-border shrink-0 hidden sm:block"
                       />
                     )}
 
-                    {/* Action buttons (Reply / Report) for 'me' */}
-                    {isMe && (
-                      <div className="opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-1 mb-1.5 shrink-0">
-                        <button
-                          type="button"
-                          onClick={() => initiateReply(m)}
-                          className="w-7 h-7 rounded-full bg-surface border border-border text-text-secondary hover:text-action grid place-items-center shadow-2xs hover:scale-105 transition-transform"
-                          title="Reply"
-                        >
-                          <ReplyIcon className="w-3.5 h-3.5" />
-                        </button>
-                      </div>
-                    )}
+                    {/* Action buttons (Reply, React, More) for 'me' */}
+                    {isMe && renderMessageActions(m, true, idx)}
 
                     {/* Message Bubble */}
                     <div
-                      className={`max-w-[85%] sm:max-w-[70%] rounded-2xl px-4 py-2.5 text-sm leading-relaxed transition-all ${
+                      className={`max-w-[75%] sm:max-w-[70%] rounded-2xl px-4 py-2.5 text-sm leading-relaxed transition-all ${
                         isMe
                           ? "bg-action text-white rounded-br-xs shadow-2xs"
                           : "bg-surface border border-border text-text-primary rounded-bl-xs shadow-2xs"
@@ -792,6 +1057,19 @@ export default function MessageThread({ conv: initialConv, conversations = [], q
                               )
                             );
                           }}
+                          onUpdated={(updated) => {
+                            setMessages((prev) =>
+                              prev.map((item) =>
+                                Number(item.id) === Number(m.id)
+                                  ? {
+                                      ...item,
+                                      meetUrl: updated.meetUrl || updated.meet_url || item.meetUrl,
+                                      ...updated,
+                                    }
+                                  : item
+                              )
+                            );
+                          }}
                         />
                       )}
 
@@ -814,17 +1092,92 @@ export default function MessageThread({ conv: initialConv, conversations = [], q
                         </div>
                       )}
 
-                      {/* Message Text with Linkify */}
-                      {m.text && (
-                        <div className="whitespace-pre-wrap break-words">
-                          {renderWithLinks(m.text, isMe)}
-                        </div>
+                      {/* Message Text with Linkify OR Inline Edit Form */}
+                      {editingMessageId === m.id ? (
+                        <form
+                          onSubmit={(e) => {
+                            e.preventDefault();
+                            handleSaveEdit(m);
+                          }}
+                          className="space-y-2 mt-1"
+                        >
+                          <textarea
+                            rows={2}
+                            value={editText}
+                            onChange={(e) => setEditText(e.target.value)}
+                            onKeyDown={(e) => {
+                              if (e.key === "Enter" && !e.shiftKey) {
+                                e.preventDefault();
+                                handleSaveEdit(m);
+                              } else if (e.key === "Escape") {
+                                cancelEditing();
+                              }
+                            }}
+                            className="w-full p-2 text-sm rounded-lg border outline-none bg-black/20 border-white/30 text-white placeholder-white/50 focus:border-white resize-none"
+                            autoFocus
+                          />
+                          <div className="flex items-center justify-end gap-1.5 text-xs">
+                            <button
+                              type="button"
+                              onClick={cancelEditing}
+                              className="px-2.5 py-1 rounded-md border border-white/30 text-white hover:bg-white/10"
+                            >
+                              Cancel
+                            </button>
+                            <button
+                              type="submit"
+                              disabled={savingEdit || !editText.trim()}
+                              className="px-2.5 py-1 rounded-md bg-white text-action hover:bg-slate-100 font-semibold disabled:opacity-50"
+                            >
+                              {savingEdit ? "Saving..." : "Save"}
+                            </button>
+                          </div>
+                        </form>
+                      ) : (
+                        m.text && (
+                          <div className="whitespace-pre-wrap break-words">
+                            {renderWithLinks(m.text, isMe)}
+                          </div>
+                        )
                       )}
 
                       {/* Link Preview Card */}
                       {extractedUrl && <LinkPreviewCard url={extractedUrl} dark={isMe} />}
 
-                      {/* Timestamp & actions */}
+                      {/* Reaction Badges on Message Bubble */}
+                      {m.reactions && Object.keys(m.reactions).length > 0 && (
+                        <div
+                          className={`flex flex-wrap items-center gap-1 mt-1.5 -mb-0.5 ${
+                            isMe ? "justify-end" : "justify-start"
+                          }`}
+                        >
+                          {Object.entries(m.reactions).map(([emoji, count]) => {
+                            const isMine = m.myReactions?.includes(emoji);
+                            return (
+                              <button
+                                key={emoji}
+                                type="button"
+                                onClick={() => handleReact(m, emoji)}
+                                className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full text-xs shadow-2xs transition-all border ${
+                                  isMe
+                                    ? isMine
+                                      ? "bg-white/30 border-white/40 text-white font-bold"
+                                      : "bg-white/15 border-white/20 text-white"
+                                    : isMine
+                                    ? "bg-action/15 border-action/30 text-action font-bold"
+                                    : "bg-surface border-border text-text-primary"
+                                }`}
+                                title={isMine ? "Remove reaction" : "React"}
+                              >
+                                <span>{emoji}</span>
+                                <span className="text-[11px] font-medium">{count}</span>
+                              </button>
+                            );
+                          })}
+                        </div>
+                      )}
+
+                      {/* Timestamp & edited indicator */}
                       <div className="flex items-center justify-end gap-2 mt-1">
                         <span
                           className={`text-[10px] font-medium ${
@@ -832,37 +1185,15 @@ export default function MessageThread({ conv: initialConv, conversations = [], q
                           }`}
                         >
                           {m.time}
+                          {m.isEdited && <span className="ml-1 opacity-75">(edited)</span>}
                         </span>
                       </div>
                     </div>
 
-                    {/* Action buttons (Reply / Report) for 'them' */}
-                    {!isMe && (
-                      <div className="opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-1 mb-1.5 shrink-0">
-                        <button
-                          type="button"
-                          onClick={() => initiateReply(m)}
-                          className="w-7 h-7 rounded-full bg-surface border border-border text-text-secondary hover:text-action grid place-items-center shadow-2xs hover:scale-105 transition-transform"
-                          title="Reply"
-                        >
-                          <ReplyIcon className="w-3.5 h-3.5" />
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() =>
-                            setReportTarget({
-                              endpoint: `/messages/${m.id}/report`,
-                              title: "Report message",
-                            })
-                          }
-                          className="w-7 h-7 rounded-full bg-surface border border-border text-text-secondary hover:text-error grid place-items-center shadow-2xs hover:scale-105 transition-transform text-[11px]"
-                          title="Report"
-                        >
-                          !
-                        </button>
-                      </div>
-                    )}
+                    {/* Action buttons (Reply, React, More) for 'them' */}
+                    {!isMe && renderMessageActions(m, false, idx)}
                   </div>
+
 
                   {/* Read Receipt ("Seen") for last 'me' message */}
                   {isMe && isLastMeMessage && conv.peerReadAt && (
@@ -1232,6 +1563,31 @@ export default function MessageThread({ conv: initialConv, conversations = [], q
                   ))}
                 </div>
               </div>
+              <div>
+                <div className="flex items-center justify-between mb-1">
+                  <label className="text-xs font-semibold text-text-secondary">
+                    Custom Meeting Link (Optional)
+                  </label>
+                  <a
+                    href="https://meet.google.com/new"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-[11px] text-action hover:underline flex items-center gap-1 font-medium"
+                  >
+                    Open meet.google.com/new ↗
+                  </a>
+                </div>
+                <input
+                  type="url"
+                  value={customMeetUrl}
+                  onChange={(e) => setCustomMeetUrl(e.target.value)}
+                  placeholder="https://meet.google.com/xxx-yyyy-zzz"
+                  className="w-full px-3 py-2 rounded-lg border border-border bg-bg text-sm text-text-primary focus:border-action focus:ring-2 focus:ring-action/20 outline-none"
+                />
+                <p className="text-[11px] text-text-secondary mt-1">
+                  Leave empty to auto-mint via Google Calendar, or paste an active Google Meet / Zoom link.
+                </p>
+              </div>
               <div className="flex items-center justify-end gap-2 pt-2">
                 <button
                   type="button"
@@ -1270,6 +1626,18 @@ export default function MessageThread({ conv: initialConv, conversations = [], q
               <p>• Requires Calendar Events permission</p>
               <p>• Automatically mints Google Meet conference links</p>
               <p>• You can disconnect anytime from thread options</p>
+            </div>
+            <div className="pt-2 border-t border-border/40">
+              <button
+                type="button"
+                onClick={() => {
+                  setShowConnectModal(false);
+                  setShowMeetModal(true);
+                }}
+                className="text-xs text-action hover:underline font-medium"
+              >
+                Or schedule manually with a custom meeting link →
+              </button>
             </div>
             <div className="flex items-center justify-end gap-2 pt-2">
               <button

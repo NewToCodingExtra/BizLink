@@ -4,10 +4,11 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Message extends Model
 {
-    use HasFactory;
+    use HasFactory, SoftDeletes;
 
     protected $fillable = [
         'conversation_id',
@@ -15,6 +16,7 @@ class Message extends Model
         'sender_id',
         'from_side',
         'text',
+        'edited_at',
         'media_url',
         'media_type',
         'media_name',
@@ -34,6 +36,7 @@ class Message extends Model
     protected $casts = [
         'insight' => 'array',
         'media_size' => 'integer',
+        'edited_at' => 'datetime',
         'meet_start_at' => 'datetime',
         'meet_end_at' => 'datetime',
     ];
@@ -62,4 +65,10 @@ class Message extends Model
     {
         return $this->belongsTo(Poll::class);
     }
+
+    public function reactions()
+    {
+        return $this->hasMany(MessageReaction::class);
+    }
 }
+

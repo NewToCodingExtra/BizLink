@@ -33,7 +33,7 @@ class ConversationController extends Controller
         if (!$conversation->isParticipant($user?->id)) {
             return response()->json(['message' => 'Forbidden'], 403);
         }
-        $conversation->load(['messages.sender:id,name,avatar', 'messages.attachment', 'messages.poll.votes', 'messages.replyTo.sender:id,name']);
+        $conversation->load(['messages.sender:id,name,avatar', 'messages.attachment', 'messages.poll.votes', 'messages.replyTo.sender:id,name', 'messages.reactions']);
         $conversation->update(['unread' => 0]);
 
         if ($user) {
@@ -332,8 +332,18 @@ class ConversationController extends Controller
 
     private function serializeMessage(Message $message): array
     {
-        $message->loadMissing(['attachment', 'poll.votes', 'replyTo.sender:id,name']);
+        $message->loadMissing(['attachment', 'poll.votes', 'replyTo.sender:id,name', 'reactions']);
         $viewerId = auth()->id() ?: request()->user()?->id;
+
+        $reactions = $message->relationLoaded('reactions') ? $message->reactions : $message->reactions()->get();
+        $reactionCounts = [];
+        $myReactions = [];
+        foreach ($reactions as $r) {
+            $reactionCounts[$r->emoji] = ($reactionCounts[$r->emoji] ?? 0) + 1;
+            if ($viewerId && (int) $r->user_id === (int) $viewerId) {
+                $myReactions[] = $r->emoji;
+            }
+        }
 
         $replyTo = null;
         if ($message->reply_to_id) {
@@ -356,6 +366,10 @@ class ConversationController extends Controller
             'text' => $message->is_hidden ? '[Removed by moderation]' : $message->text,
             'time' => $message->created_at?->diffForHumans(),
             'rawTime' => $message->created_at?->toIso8601String(),
+            'editedAt' => $message->edited_at?->diffForHumans(),
+            'isEdited' => (bool) $message->edited_at,
+            'reactions' => $reactionCounts,
+            'myReactions' => $myReactions,
             'replyTo' => $replyTo,
             'mediaUrl' => $message->media_url,
             'mediaType' => $message->media_type,
@@ -623,10 +637,108 @@ class ConversationController extends Controller
      */
     public function linkPreview(Request $request)
     {
-        $request->validate(['url' => 'required|url|max:2048']);
         $url = $request->input('url');
-        $preview = app(\App\Services\LinkPreviewService::class)->getPreview($url);
+        if (!$url || !is_string($url) || strlen($url) > 2048) {
+            return response()->json(['data' => null]);
+        }
+        $preview = app(\App\Services\LinkPreviewService::class)->getPreview(trim($url));
         return response()->json(['data' => $preview]);
+    }
+
+    public function updateMessage(Request $request, Conversation $conversation, Message $message)
+    {
+        $user = $request->user();
+        if ((int) $message->sender_id !== (int) $user->id || (int) $message->conversation_id !== (int) $conversation->id) {
+            return response()->json(['message' => 'Forbidden'], 403);
+        }
+
+        $validated = $request->validate([
+            'text' => 'required|string|max:2000',
+        ]);
+
+        $message->update([
+            'text' => $validated['text'],
+            'edited_at' => now(),
+        ]);
+
+        broadcast(new \App\Events\MessageSent($message));
+
+        return response()->json(['data' => $this->serializeMessage($message)]);
+    }
+
+    public function destroyMessage(Request $request, Conversation $conversation, Message $message)
+    {
+        $user = $request->user();
+        if ((int) $message->sender_id !== (int) $user->id || (int) $message->conversation_id !== (int) $conversation->id) {
+            return response()->json(['message' => 'Forbidden'], 403);
+        }
+
+        $messageId = $message->id;
+        $message->delete();
+
+        broadcast(new \App\Events\MessageDeleted($conversation->id, $messageId));
+
+        return response()->json(['success' => true]);
+    }
+
+    public function bumpMessage(Request $request, Conversation $conversation, Message $message)
+    {
+        $user = $request->user();
+        if (!$conversation->isParticipant($user?->id) || (int) $message->conversation_id !== (int) $conversation->id) {
+            return response()->json(['message' => 'Forbidden'], 403);
+        }
+
+        $bumped = Message::create([
+            'conversation_id' => $conversation->id,
+            'sender_id' => $user->id,
+            'from_side' => 'me',
+            'text' => $message->text,
+            'media_url' => $message->media_url,
+            'media_type' => $message->media_type,
+            'media_name' => $message->media_name,
+            'media_size' => $message->media_size,
+            'attachment_id' => $message->attachment_id,
+            'attachment_type' => $message->attachment_type,
+        ]);
+
+        $preview = $bumped->text ?: 'Bumped message';
+        $conversation->update(['last_message' => $preview]);
+        broadcast(new \App\Events\MessageSent($bumped));
+
+        return response()->json(['data' => $this->serializeMessage($bumped)], 201);
+    }
+
+    public function reactMessage(Request $request, Conversation $conversation, Message $message)
+    {
+        $user = $request->user();
+        if (!$conversation->isParticipant($user?->id) || (int) $message->conversation_id !== (int) $conversation->id) {
+            return response()->json(['message' => 'Forbidden'], 403);
+        }
+
+        $validated = $request->validate([
+            'emoji' => 'required|string|max:16',
+        ]);
+
+        $emoji = $validated['emoji'];
+        $existing = \App\Models\MessageReaction::where('message_id', $message->id)
+            ->where('user_id', $user->id)
+            ->where('emoji', $emoji)
+            ->first();
+
+        if ($existing) {
+            $existing->delete();
+        } else {
+            \App\Models\MessageReaction::create([
+                'message_id' => $message->id,
+                'user_id' => $user->id,
+                'emoji' => $emoji,
+            ]);
+        }
+
+        $message->load('reactions');
+        broadcast(new \App\Events\MessageSent($message));
+
+        return response()->json(['data' => $this->serializeMessage($message)]);
     }
 
     /**
@@ -639,3 +751,4 @@ class ConversationController extends Controller
         return $ownerId ? \App\Models\User::select('id', 'username')->find($ownerId) : null;
     }
 }
+
