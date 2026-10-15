@@ -395,7 +395,23 @@ php artisan test            # PHPUnit: AdminAccessTest, AdminConsoleModulesTest,
 php artisan migrate --force # production-safe migrations (never :fresh outside dev)
 ```
 
-Deployment is manual today — no CI, no Docker. Minimum viable production path: a small VPS (Railway/Render/Fly or any PHP host) with MySQL, `APP_ENV=production`, `APP_DEBUG=false`, `DEMO_LOGIN=false`, real SMTP, `php artisan migrate --force`, a persistent disk for `storage/`, and long-running `php artisan reverb:start` + `php artisan queue:work` processes. Vercel-style serverless hosting does **not** fit (PHP runtime, websockets, local disk).
+Deployment is Railway-first: `Dockerfile` + `railway.json` + `docker/` (Apache, Supervisor running web + queue + Reverb + scheduler, entrypoint migrates and caches config). Steps: push, add the MySQL plugin, attach a volume at `backend/storage`, fill the variables below, deploy. Vercel-style serverless hosting does **not** fit (PHP runtime, websockets, local disk).
+
+| Variable | Value on Railway |
+|----------|------------------|
+| `APP_URL` | `https://<service>.up.railway.app` |
+| `APP_ENV` / `APP_DEBUG` / `DEMO_LOGIN` | `production` / `false` / `false` |
+| `APP_KEY` | `base64:…` (generate once, keep stable — sessions/cookies depend on it) |
+| `DB_*` | From the MySQL plugin (`MYSQLHOST`, `MYSQLPORT`, `MYSQLDATABASE`, `MYSQLUSER`, `MYSQLPASSWORD`) |
+| `SESSION_DOMAIN` | empty (host-only cookie) or your custom domain |
+| `SESSION_SECURE_COOKIE` | `true` |
+| `LOG_CHANNEL` | `stderr` (shows in Railway logs) |
+| `SCOUT_DRIVER` | `database` (or add a Meilisearch service and point `MEILISEARCH_HOST` at it) |
+| `REVERB_APP_KEY` / `REVERB_APP_SECRET` | any random hex (must also reach the browser — set matching `VITE_REVERB_APP_KEY`); host/port auto-derive, websockets share the web domain via `/app` proxy |
+| `MAIL_*` | Real SMTP (password resets go nowhere on `log`) |
+| Google/Facebook `*_CLIENT_ID/SECRET` + `*_REDIRECT_URI` | Pointed at `https://<domain>/auth/{google,facebook}/callback` and `/meet/callback`; add them as authorized URIs in each provider console |
+
+Then create your admin once: `railway run php artisan db:seed --class=AdminUserSeeder` (change the default password after first login).
 
 ---
 
