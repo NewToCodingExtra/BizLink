@@ -10,10 +10,11 @@ fi
 
 cd /var/www/html/backend
 
-# APP_KEY must exist before config:cache (Railway should provide it, but
-# never fail the boot if it was forgotten).
+# APP_KEY must exist before config:cache (Railway should provide a stable
+# one — this fallback only saves the boot; exported so every child process
+# and the cached config see the same key).
 if [ -z "$APP_KEY" ]; then
-  php artisan key:generate --force
+  export APP_KEY="base64:$(head -c 32 /dev/urandom | base64)"
 fi
 
 # Writable paths (Railway volume should mount at .../backend/storage).
