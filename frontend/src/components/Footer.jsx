@@ -16,36 +16,36 @@ export default function Footer() {
             </div>
             <p className="text-sm text-text-secondary mt-3 max-w-md leading-relaxed mx-auto md:mx-0">Bridging Brands and Business Owners — connecting franchisers and wholesalers with aspiring buyers through verified opportunities and direct matchmaking.</p>
             <p className="text-sm text-text-secondary mt-3">Contact: hello@bizlink.ph · +63 917 000 0000</p>
-            <div className="flex gap-3 mt-4 justify-center md:justify-start">
-              <a href="#" aria-label="Facebook" className="w-8 h-8 rounded-full bg-surface/10 grid place-items-center hover:bg-surface/15 transition-colors text-white"><FacebookIcon /></a>
-              <a href="#" aria-label="Instagram" className="w-8 h-8 rounded-full bg-surface/10 grid place-items-center hover:bg-surface/15 transition-colors text-white"><InstagramIcon /></a>
-              <a href="#" aria-label="LinkedIn" className="w-8 h-8 rounded-full bg-surface/10 grid place-items-center hover:bg-surface/15 transition-colors text-white"><LinkedinIcon /></a>
+            <div className="flex gap-2 mt-4 justify-center md:justify-start">
+              <a href="#" aria-label="Facebook" className="w-11 h-11 rounded-full bg-surface/10 grid place-items-center hover:bg-surface/15 active:bg-surface/20 active:scale-[0.97] transition-colors text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-300"><FacebookIcon /></a>
+              <a href="#" aria-label="Instagram" className="w-11 h-11 rounded-full bg-surface/10 grid place-items-center hover:bg-surface/15 active:bg-surface/20 active:scale-[0.97] transition-colors text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-300"><InstagramIcon /></a>
+              <a href="#" aria-label="LinkedIn" className="w-11 h-11 rounded-full bg-surface/10 grid place-items-center hover:bg-surface/15 active:bg-surface/20 active:scale-[0.97] transition-colors text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-300"><LinkedinIcon /></a>
             </div>
           </div>
           <div className="md:col-span-2 lg:col-span-2 lg:col-start-7">
             <p className="text-white text-sm font-semibold">Explore</p>
-            <ul className="mt-3 space-y-2.5 text-sm">
-              <li><Link href="/" className="hover:text-white transition-colors">Feed</Link></li>
-              <li><Link href="/about" className="hover:text-white transition-colors">About</Link></li>
-              <li><Link href="/reels" className="hover:text-white transition-colors">Reels</Link></li>
-              <li><Link href="/search" className="hover:text-white transition-colors">Search</Link></li>
+            <ul className="mt-1 sm:mt-3 space-y-0.5 sm:space-y-2.5 text-sm">
+              <li><Link href="/" className="inline-flex items-center justify-center md:justify-start min-h-[44px] px-2 -mx-2 hover:text-white active:text-white transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-300 focus-visible:rounded">Feed</Link></li>
+              <li><Link href="/about" className="inline-flex items-center justify-center md:justify-start min-h-[44px] px-2 -mx-2 hover:text-white active:text-white transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-300 focus-visible:rounded">About</Link></li>
+              <li><Link href="/reels" className="inline-flex items-center justify-center md:justify-start min-h-[44px] px-2 -mx-2 hover:text-white active:text-white transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-300 focus-visible:rounded">Reels</Link></li>
+              <li><Link href="/search" className="inline-flex items-center justify-center md:justify-start min-h-[44px] px-2 -mx-2 hover:text-white active:text-white transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-300 focus-visible:rounded">Search</Link></li>
             </ul>
           </div>
           <div className="md:col-span-2 lg:col-span-2">
             <p className="text-white text-sm font-semibold">Support</p>
-            <ul className="mt-3 space-y-2.5 text-sm">
-              <li><Link href="/contact" className="hover:text-white transition-colors">Contact</Link></li>
-              <li><Link href="/settings/preferences" className="hover:text-white transition-colors">Preferences</Link></li>
-              <li><Link href="/saved" className="hover:text-white transition-colors">Saved Opportunities</Link></li>
-              <li><Link href="/messages" className="hover:text-white transition-colors">Consultation Inbox</Link></li>
+            <ul className="mt-1 sm:mt-3 space-y-0.5 sm:space-y-2.5 text-sm">
+              <li><Link href="/contact" className="inline-flex items-center justify-center md:justify-start min-h-[44px] px-2 -mx-2 hover:text-white active:text-white transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-300 focus-visible:rounded">Contact</Link></li>
+              <li><Link href="/settings/preferences" className="inline-flex items-center justify-center md:justify-start min-h-[44px] px-2 -mx-2 hover:text-white active:text-white transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-300 focus-visible:rounded">Preferences</Link></li>
+              <li><Link href="/saved" className="inline-flex items-center justify-center md:justify-start min-h-[44px] px-2 -mx-2 hover:text-white active:text-white transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-300 focus-visible:rounded">Saved Opportunities</Link></li>
+              <li><Link href="/messages" className="inline-flex items-center justify-center md:justify-start min-h-[44px] px-2 -mx-2 hover:text-white active:text-white transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-300 focus-visible:rounded">Consultation Inbox</Link></li>
             </ul>
           </div>
           <div className="md:col-span-3 lg:col-span-2">
             <p className="text-white text-sm font-semibold">Terms &amp; Agreements</p>
-            <ul className="mt-3 space-y-2.5 text-sm">
-              <li><Link href="/privacy" className="hover:text-white transition-colors">Privacy Policy</Link></li>
-              <li><Link href="/terms" className="hover:text-white transition-colors">Terms of Service</Link></li>
-              <li><Link href="/acceptable-use" className="hover:text-white transition-colors">Acceptable Use</Link></li>
+            <ul className="mt-1 sm:mt-3 space-y-0.5 sm:space-y-2.5 text-sm">
+              <li><Link href="/privacy" className="inline-flex items-center justify-center md:justify-start min-h-[44px] px-2 -mx-2 hover:text-white active:text-white transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-300 focus-visible:rounded">Privacy Policy</Link></li>
+              <li><Link href="/terms" className="inline-flex items-center justify-center md:justify-start min-h-[44px] px-2 -mx-2 hover:text-white active:text-white transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-300 focus-visible:rounded">Terms of Service</Link></li>
+              <li><Link href="/acceptable-use" className="inline-flex items-center justify-center md:justify-start min-h-[44px] px-2 -mx-2 hover:text-white active:text-white transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-300 focus-visible:rounded">Acceptable Use</Link></li>
             </ul>
           </div>
         </div>

@@ -73,11 +73,11 @@ export default function Navbar() {
   };
 
   const linkClass = (path) =>
-    `text-sm font-medium transition-colors duration-150 ${pathname === path ? "text-white" : "text-slate-300 hover:text-white"}`;
+    `inline-flex items-center min-h-[44px] px-1 py-2 text-sm font-medium transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-300 focus-visible:rounded ${pathname === path ? "text-white" : "text-slate-300 hover:text-white active:text-white"}`;
 
   return (
-    <header className="sticky top-0 z-40 bg-primary border-b border-white/10">
-      <div className="max-w-6xl mx-auto px-4 sm:px-6 h-[64px] flex items-center gap-4">
+    <header className="sticky top-0 z-40 bg-primary border-b border-white/10 pt-[env(safe-area-inset-top)]">
+      <div className="max-w-6xl mx-auto px-4 sm:px-6 min-h-[64px] py-2 flex items-center gap-3 sm:gap-4">
         <Link href={user ? "/feed" : "/"} className="flex items-center gap-2 shrink-0">
           <img src={markUrl} alt="BizLink" className="w-8 h-8 rounded-lg" />
           <span className="font-bold tracking-tight text-[18px]"><span className="text-white">Biz</span><span className="text-accent">Link</span></span>
@@ -97,10 +97,10 @@ export default function Navbar() {
           <SearchBar onSearch={(q) => router.visit(`/search?q=${encodeURIComponent(q)}`)} />
         </div>
 
-        <div className="flex items-center gap-2 ml-auto md:ml-0">
+        <div className="flex items-center gap-1 sm:gap-2 ml-auto md:ml-0 shrink-0">
           <button
             onClick={() => setIsDark(!isDark)}
-            className="w-9 h-9 grid place-items-center rounded-lg text-slate-300 hover:text-white hover:bg-surface/10 transition-colors mr-2"
+            className="w-11 h-11 grid place-items-center rounded-lg text-slate-300 hover:text-white hover:bg-surface/10 active:bg-surface/15 active:scale-[0.97] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-300"
             aria-label="Toggle Dark Mode"
           >
             {isDark ? (
@@ -112,14 +112,14 @@ export default function Navbar() {
 
           {user ? (
             can(page, "opportunities.create") && (
-              <Link href="/create" className="hidden sm:inline-flex items-center gap-1.5 bg-action hover:bg-action-hover active:bg-[#1E40AF] text-white text-sm font-medium px-4 py-2 rounded-lg transition-colors duration-150 focus-visible:ring-2 focus-visible:ring-blue-300 focus-visible:ring-offset-2 focus-visible:ring-offset-[#0B1F3A]">
+              <Link href="/create" className="hidden sm:inline-flex items-center gap-1.5 bg-action hover:bg-action-hover active:bg-[#1E40AF] active:scale-[0.98] text-white text-sm font-medium px-4 min-h-[44px] py-2 rounded-lg transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-300 focus-visible:ring-offset-2 focus-visible:ring-offset-[#0B1F3A]">
                 <span className="text-lg leading-none -mt-0.5">+</span> Post
               </Link>
             )
           ) : (
             <>
-              <Link href="/login" className="hidden sm:inline-flex text-sm font-medium text-slate-200 hover:text-white px-3 py-2">Log in</Link>
-              <Link href="/register" className="hidden sm:inline-flex items-center bg-action hover:bg-action-hover text-white text-sm font-medium px-4 py-2 rounded-lg transition-colors">Sign up</Link>
+              <Link href="/login" className="hidden sm:inline-flex items-center min-h-[44px] px-3 py-2 text-sm font-medium text-slate-200 hover:text-white active:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-300 focus-visible:rounded">Log in</Link>
+              <Link href="/register" className="hidden sm:inline-flex items-center min-h-[44px] bg-action hover:bg-action-hover active:scale-[0.98] text-white text-sm font-medium px-4 py-2 rounded-lg transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-300">Sign up</Link>
             </>
           )}
 
@@ -132,7 +132,7 @@ export default function Navbar() {
                     <p className="text-sm font-semibold text-text-primary">Notifications{unread > 0 ? ` (${unread})` : ""}</p>
                     <Link href="/notifications" onClick={() => setShowBell(false)} className="text-xs font-medium text-action hover:text-[#1D4ED8]">View all</Link>
                   </div>
-                  <div className="max-h-[320px] overflow-auto divide-y divide-slate-50">
+                  <div className="max-h-[320px] overflow-auto divide-y divide-border">
                     {notifications.length === 0 && <p className="p-6 text-sm text-text-secondary text-center">No notifications</p>}
                     {notifications.slice(0, 5).map((n) => (
                       <button
@@ -142,7 +142,7 @@ export default function Navbar() {
                           setShowBell(false);
                           router.visit(n.link || "/notifications");
                         }}
-                        className={`w-full text-left px-4 py-3 flex gap-3 hover:bg-bg transition-colors ${!n.read ? "bg-action/10" : ""}`}
+                        className={`w-full min-h-[56px] text-left px-4 py-3 flex gap-3 hover:bg-bg active:bg-bg transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-action ${!n.read ? "bg-action/10" : ""}`}
                       >
                         <span className={`mt-1 w-2 h-2 rounded-full shrink-0 ${n.read ? "bg-bg" : "bg-action"}`}></span>
                         <div className="flex-1 min-w-0">
@@ -159,14 +159,14 @@ export default function Navbar() {
 
           {user && <ProfileMenu />}
 
-          <button onClick={() => setMobileOpen(!mobileOpen)} className="md:hidden w-9 h-9 grid place-items-center rounded-lg text-slate-300 hover:text-white hover:bg-surface/10 transition-colors" aria-label="Menu">
+          <button onClick={() => setMobileOpen(!mobileOpen)} className="md:hidden w-11 h-11 grid place-items-center rounded-lg text-slate-300 hover:text-white hover:bg-surface/10 active:bg-surface/15 active:scale-[0.97] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-300" aria-label="Menu" aria-expanded={mobileOpen} aria-controls="mobile-nav">
             {mobileOpen ? <XIcon className="w-5 h-5" /> : <MenuIcon className="w-5 h-5" />}
           </button>
         </div>
       </div>
 
       {mobileOpen && (
-        <div className="md:hidden border-t border-white/10 bg-primary px-4 py-4 space-y-3">
+        <div id="mobile-nav" className="md:hidden border-t border-white/10 bg-primary px-4 py-4 pb-[max(1rem,env(safe-area-inset-bottom))] space-y-3 max-h-[calc(100dvh-64px)] overflow-y-auto">
           <SearchBar onSearch={(q) => { setMobileOpen(false); router.visit(`/search?q=${encodeURIComponent(q)}`); }} />
           {user && (
             <div className="flex items-center gap-3 rounded-xl bg-surface/5 border border-white/10 px-3 py-2.5">
@@ -179,18 +179,18 @@ export default function Navbar() {
             </div>
           )}
           <div className="flex flex-wrap gap-2 pt-1">
-            {!user && <Link href="/" onClick={() => setMobileOpen(false)} className="px-3 py-1.5 rounded-full bg-surface text-primary text-sm font-medium">Home</Link>}
-            <Link href="/feed" onClick={() => setMobileOpen(false)} className="px-3 py-1.5 rounded-full border border-white/20 text-white text-sm">Feed</Link>
-            <Link href="/about" onClick={() => setMobileOpen(false)} className="px-3 py-1.5 rounded-full border border-white/20 text-white text-sm">About</Link>
-            <Link href="/reels" onClick={() => setMobileOpen(false)} className="px-3 py-1.5 rounded-full border border-white/20 text-white text-sm">Reels</Link>
-            {user && <Link href="/messages" onClick={() => setMobileOpen(false)} className="px-3 py-1.5 rounded-full border border-white/20 text-white text-sm">Messages</Link>}
-            <Link href="/contact" onClick={() => setMobileOpen(false)} className="px-3 py-1.5 rounded-full border border-white/20 text-white text-sm">Contact</Link>
-            {!user && <Link href="/login" onClick={() => setMobileOpen(false)} className="px-3 py-1.5 rounded-full border border-white/20 text-white text-sm">Log in</Link>}
-            {!user && <Link href="/register" onClick={() => setMobileOpen(false)} className="px-3 py-1.5 rounded-full bg-action text-white text-sm">Sign up</Link>}
+            {!user && <Link href="/" onClick={() => setMobileOpen(false)} className="inline-flex items-center min-h-[44px] px-4 py-2 rounded-full bg-surface text-primary text-sm font-medium active:scale-[0.98]">Home</Link>}
+            <Link href="/feed" onClick={() => setMobileOpen(false)} className="inline-flex items-center min-h-[44px] px-4 py-2 rounded-full border border-white/20 text-white text-sm active:bg-white/10">Feed</Link>
+            <Link href="/about" onClick={() => setMobileOpen(false)} className="inline-flex items-center min-h-[44px] px-4 py-2 rounded-full border border-white/20 text-white text-sm active:bg-white/10">About</Link>
+            <Link href="/reels" onClick={() => setMobileOpen(false)} className="inline-flex items-center min-h-[44px] px-4 py-2 rounded-full border border-white/20 text-white text-sm active:bg-white/10">Reels</Link>
+            {user && <Link href="/messages" onClick={() => setMobileOpen(false)} className="inline-flex items-center min-h-[44px] px-4 py-2 rounded-full border border-white/20 text-white text-sm active:bg-white/10">Messages</Link>}
+            <Link href="/contact" onClick={() => setMobileOpen(false)} className="inline-flex items-center min-h-[44px] px-4 py-2 rounded-full border border-white/20 text-white text-sm active:bg-white/10">Contact</Link>
+            {!user && <Link href="/login" onClick={() => setMobileOpen(false)} className="inline-flex items-center min-h-[44px] px-4 py-2 rounded-full border border-white/20 text-white text-sm active:bg-white/10">Log in</Link>}
+            {!user && <Link href="/register" onClick={() => setMobileOpen(false)} className="inline-flex items-center min-h-[44px] px-4 py-2 rounded-full bg-action text-white text-sm active:scale-[0.98]">Sign up</Link>}
           </div>
           {user ? (
             can(page, "opportunities.create") && (
-              <Link href="/create" onClick={() => setMobileOpen(false)} className="block text-center bg-action text-white rounded-lg py-2.5 text-sm font-medium">+ Post Opportunity</Link>
+              <Link href="/create" onClick={() => setMobileOpen(false)} className="flex items-center justify-center min-h-[48px] text-center bg-action hover:bg-action-hover active:scale-[0.99] text-white rounded-lg py-3 px-4 text-sm font-medium">+ Post Opportunity</Link>
             )
           ) : null}
         </div>

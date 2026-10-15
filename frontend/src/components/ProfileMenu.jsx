@@ -77,7 +77,7 @@ export default function ProfileMenu({ onAction }) {
   };
 
   const itemClass =
-    "w-full flex items-center gap-3 px-4 py-2.5 text-sm font-medium text-[var(--color-text-primary)] hover:bg-[var(--color-bg-secondary)] transition-colors text-left";
+    "w-full min-h-[44px] flex items-center gap-3 px-4 py-2.5 text-sm font-medium text-[var(--color-text-primary)] hover:bg-[var(--color-bg-secondary)] active:bg-[var(--color-bg-secondary)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-action transition-colors text-left";
 
   return (
     <>
@@ -87,7 +87,7 @@ export default function ProfileMenu({ onAction }) {
           aria-haspopup="menu"
           aria-expanded={open}
           title={user.name}
-          className={`flex items-center gap-1 rounded-full border p-0.5 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-300 ${open ? "border-accent" : "border-white/20 hover:border-white/50"}`}
+          className={`flex items-center gap-1 rounded-full border p-0.5 pr-1 min-w-[44px] min-h-[44px] justify-center transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-300 ${open ? "border-accent" : "border-white/20 hover:border-white/50 active:border-white/50"}`}
         >
           <img src={user.avatar || "https://i.pravatar.cc/100?img=12"} alt="profile" className="w-7 h-7 rounded-full object-cover" />
           <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#CBD5E1" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" className={`mr-0.5 transition-transform duration-150 ${open ? "rotate-180" : ""}`}>
@@ -98,7 +98,7 @@ export default function ProfileMenu({ onAction }) {
         {open && (
           <>
             <div className="fixed inset-0 z-40 cursor-default" onClick={() => setOpen(false)} aria-hidden="true" />
-            <div role="menu" className="absolute right-0 mt-2 w-64 bg-[var(--color-surface)] rounded-2xl ring-1 ring-slate-900/5 shadow-xl overflow-hidden z-50 origin-top-right border border-[var(--color-border)]">
+            <div role="menu" className="fixed left-4 right-4 top-[72px] sm:absolute sm:left-auto sm:right-0 sm:top-auto sm:mt-2 sm:w-64 w-auto bg-[var(--color-surface)] rounded-2xl ring-1 ring-slate-900/5 shadow-xl overflow-hidden z-50 origin-top-right border border-[var(--color-border)]">
               <div className="px-4 py-3.5 bg-[var(--color-bg-secondary)] border-b border-[var(--color-border)] flex items-center gap-3">
                 <img src={user.avatar || "https://i.pravatar.cc/100?img=12"} alt="" className="w-10 h-10 rounded-full object-cover shrink-0" />
                 <div className="flex-1 min-w-0">

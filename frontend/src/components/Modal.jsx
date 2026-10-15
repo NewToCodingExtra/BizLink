@@ -37,12 +37,16 @@ export default function Modal({
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 bg-black/60 backdrop-blur-sm"
+      className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-4 sm:p-6 pb-[max(1rem,env(safe-area-inset-bottom))] bg-black/60 backdrop-blur-sm"
       onClick={handleBackdropClick}
+      role="presentation"
     >
       <div
         ref={modalRef}
-        className={`bg-[var(--color-surface)] w-full ${maxWidth} rounded-2xl shadow-xl border border-[var(--color-border)] flex flex-col max-h-[90vh] overflow-hidden animate-in fade-in zoom-in-95 duration-200`}
+        role="dialog"
+        aria-modal="true"
+        aria-label={typeof title === "string" ? title : "Dialog"}
+        className={`bg-[var(--color-surface)] w-full ${maxWidth} rounded-2xl shadow-xl border border-[var(--color-border)] flex flex-col max-h-[90dvh] overflow-hidden animate-in fade-in zoom-in-95 duration-200`}
       >
         {/* Header */}
         {(title || onClose) && (
@@ -51,7 +55,7 @@ export default function Modal({
             {onClose && (
               <button
                 onClick={onClose}
-                className="p-2 -mr-2 text-text-secondary hover:text-text-secondary rounded-full hover:bg-bg transition-colors"
+                className="p-2 -mr-2 min-w-[44px] min-h-[44px] grid place-items-center text-text-secondary hover:text-text-secondary rounded-full hover:bg-bg active:bg-bg active:scale-[0.97] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-action"
                 aria-label="Close"
               >
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -69,7 +73,7 @@ export default function Modal({
 
         {/* Footer */}
         {footer && (
-          <div className="p-4 border-t border-[var(--color-border)] bg-bg dark:bg-bg/50 flex justify-end gap-3">
+          <div className="p-4 pb-[max(1rem,env(safe-area-inset-bottom))] border-t border-[var(--color-border)] bg-bg dark:bg-bg/50 flex flex-col-reverse sm:flex-row sm:justify-end gap-2 sm:gap-3">
             {footer}
           </div>
         )}

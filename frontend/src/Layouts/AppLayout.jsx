@@ -20,9 +20,15 @@ export default function AppLayout({ children }) {
   }, [flash, seenFlash, toast]);
 
   return (
-    <div className="min-h-screen bg-[var(--color-bg)] text-[var(--color-text-primary)] flex flex-col">
+    <div className="min-h-dvh bg-[var(--color-bg)] text-[var(--color-text-primary)] flex flex-col overflow-x-clip">
+      <a
+        href="#main-content"
+        className="sr-only focus:not-sr-only focus:absolute focus:top-2 focus:left-2 focus:z-[60] focus:bg-surface focus:text-text-primary focus:px-4 focus:py-2 focus:rounded-lg focus:border focus:border-border"
+      >
+        Skip to content
+      </a>
       <Navbar />
-      <main className="flex-1">{children}</main>
+      <main id="main-content" className="flex-1 min-w-0 pb-[max(1rem,env(safe-area-inset-bottom))]">{children}</main>
       <Footer />
       <GlobalModals />
     </div>
