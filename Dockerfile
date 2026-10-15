@@ -20,6 +20,9 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     && a2enmod rewrite proxy proxy_http proxy_wstunnel headers \
     && rm -rf /var/lib/apt/lists/*
 
+# mod_php requires prefork; the base image enables mpm_event, so swap it out.
+RUN a2dismod mpm_event mpm_worker || true && a2enmod mpm_prefork
+
 COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
 
 WORKDIR /var/www/html
