@@ -384,4 +384,29 @@ class AdminConsoleModulesTest extends TestCase
         $this->assertEquals('pending', $newLatest->status);
         $this->assertEquals('Brand Renewed Corporation', $newLatest->business_name);
     }
+
+    public function test_analytics_returns_community_and_opportunity_performance(): void
+    {
+        Opportunity::create([
+            'user_id' => $this->brand->id,
+            'brand_name' => 'Acme Corp',
+            'slug' => 'acme-analytics-deal',
+            'headline' => 'Acme Analytics Deal',
+            'description' => 'Test deal description',
+            'type' => 'Franchise',
+            'capital_required' => '₱500,000',
+            'roi' => '25%',
+            'verified' => false,
+            'likes_count' => 15,
+            'saves_count' => 5,
+        ]);
+
+        $response = $this->actingAs($this->admin)->get('/admin/analytics');
+        $response->assertOk();
+        $response->assertInertia(fn($page) => $page
+            ->component('Admin/Analytics', false)
+            ->has('data.communityDistribution')
+            ->has('data.opportunityPerformance')
+        );
+    }
 }

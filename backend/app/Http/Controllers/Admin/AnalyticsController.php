@@ -28,7 +28,7 @@ class AnalyticsController extends Controller
             default => 30,
         };
 
-        $cacheKey = "admin_analytics_v1_{$days}";
+        $cacheKey = "admin_analytics_v2_{$days}";
         $data = Cache::remember($cacheKey, 300, function () use ($days) {
             $now = Carbon::now();
             $startDate = $now->copy()->subDays($days)->startOfDay();
@@ -83,13 +83,84 @@ class AnalyticsController extends Controller
             unset($item);
             $timeSeries = array_values($dailyStats);
 
-            // 3. Category Breakdown for Opportunities
+            // 3. Category & Opportunity Format Performance
             $typeDistribution = Opportunity::groupBy('type')
                 ->selectRaw('type, count(*) as count')
                 ->pluck('count', 'type')
                 ->toArray();
 
-            // 4. Reports by Category
+            $opportunityPerformance = Opportunity::select('type')
+                ->selectRaw('count(*) as count, coalesce(sum(likes_count), 0) as total_likes, coalesce(sum(saves_count), 0) as total_saves')
+                ->whereNotNull('type')
+                ->where('type', '!=', '')
+                ->groupBy('type')
+                ->orderByDesc('count')
+                ->get()
+                ->map(fn($o) => [
+                    'type' => ucfirst((string) $o->type),
+                    'listings' => (int) $o->count,
+                    'likes' => (int) $o->total_likes,
+                    'saves' => (int) $o->total_saves,
+                    'engagement' => (int) ($o->total_likes + $o->total_saves),
+                ])
+                ->values()
+                ->all();
+
+            // 4. Community & User Ecosystem Distribution
+            $adminCount = User::where(function ($q) {
+                $q->where('role', 'admin')
+                    ->orWhere('role', 'Admin')
+                    ->orWhereHas('roles', fn($r) => $r->where('name', 'Admin'));
+            })->count();
+
+            $verifiedBrandCount = User::where(function ($q) {
+                $q->where('role', 'brand')
+                    ->orWhere('role', 'Manager')
+                    ->orWhereHas('roles', fn($r) => $r->where('name', 'Manager'));
+            })->where('is_brand_verified', true)->count();
+
+            $emergingBrandCount = User::where(function ($q) {
+                $q->where('role', 'brand')
+                    ->orWhere('role', 'Manager')
+                    ->orWhereHas('roles', fn($r) => $r->where('name', 'Manager'));
+            })->where(function ($q) {
+                $q->where('is_brand_verified', false)->orWhereNull('is_brand_verified');
+            })->count();
+
+            $seekerCount = User::where(function ($q) {
+                $q->where('role', 'entrepreneur')
+                    ->orWhere('role', 'User')
+                    ->orWhereHas('roles', fn($r) => $r->where('name', 'User'));
+            })->count();
+
+            $communityDistribution = [
+                [
+                    'name' => 'Verified Brands',
+                    'value' => $verifiedBrandCount,
+                    'color' => '#10B981',
+                    'sublabel' => 'Verified business accounts',
+                ],
+                [
+                    'name' => 'Emerging Brands',
+                    'value' => $emergingBrandCount,
+                    'color' => '#3B82F6',
+                    'sublabel' => 'Standard / unverified brands',
+                ],
+                [
+                    'name' => 'Entrepreneurs & Seekers',
+                    'value' => $seekerCount,
+                    'color' => '#8B5CF6',
+                    'sublabel' => 'Active franchise & deal seekers',
+                ],
+                [
+                    'name' => 'Platform Staff',
+                    'value' => $adminCount,
+                    'color' => '#F59E0B',
+                    'sublabel' => 'Administrators & moderators',
+                ],
+            ];
+
+            // 5. Reports by Category
             $reportsByCategory = ReportCategory::withCount(['reports' => function ($q) use ($startDate) {
                 $q->where('created_at', '>=', $startDate);
             }])
@@ -104,7 +175,7 @@ class AnalyticsController extends Controller
                 ->values()
                 ->all();
 
-            // 5. Moderation resolution outcomes (pie chart data)
+            // 6. Moderation resolution outcomes (pie chart data)
             $resolutionOutcomes = [
                 ['name' => 'Accepted', 'value' => Report::where('status', 'accepted')->count(), 'color' => '#10B981'],
                 ['name' => 'Rejected', 'value' => Report::where('status', 'rejected')->count(), 'color' => '#64748B'],
@@ -168,6 +239,8 @@ class AnalyticsController extends Controller
                 ],
                 'timeSeries' => $timeSeries,
                 'typeDistribution' => $typeDistribution,
+                'opportunityPerformance' => $opportunityPerformance,
+                'communityDistribution' => $communityDistribution,
                 'reportsByCategory' => $reportsByCategory,
                 'resolutionOutcomes' => $resolutionOutcomes,
                 'topOpportunities' => $topOpportunities,
