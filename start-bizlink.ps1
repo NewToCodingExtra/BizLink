@@ -3,7 +3,14 @@ $ErrorActionPreference = "Continue"
 $root = Split-Path -Parent $MyInvocation.MyCommand.Path
 $backend = Join-Path $root "backend"
 $frontend = Join-Path $root "frontend"
-$xamppPhp = "C:\xampp\php\php.exe"
+$phpExe = (Get-Command php -ErrorAction SilentlyContinue).Source
+if (-not $phpExe -or -not (Test-Path $phpExe)) {
+  if (Test-Path "C:\Php\php-8.5.0-Win32-vs17-x64\php.exe") {
+    $phpExe = "C:\Php\php-8.5.0-Win32-vs17-x64\php.exe"
+  } else {
+    $phpExe = "C:\xampp\php\php.exe"
+  }
+}
 
 function Stop-ListenersOnPort {
   param([int[]]$Ports)
@@ -50,8 +57,9 @@ if (-not (Test-Path $meiliPath)) {
 Start-Process -FilePath $meiliPath -ArgumentList "--db-path=C:\temp\meilisearch_data" -WindowStyle Hidden
 Start-Sleep -Seconds 2
 
-Write-Host "3) Laravel on :8000 (multi-worker for parallel requests)..."
-Start-Process -FilePath "cmd.exe" -ArgumentList @('/c', "set PHP_CLI_SERVER_WORKERS=5 && `"$xamppPhp`" artisan serve --host=127.0.0.1 --port=8000") -WorkingDirectory $backend -WindowStyle Hidden -RedirectStandardOutput C:\temp\bizlink-api.log -RedirectStandardError C:\temp\bizlink-api-err.log
+Write-Host "3) Laravel on :8000..."
+Start-Process -FilePath $phpExe -ArgumentList "artisan", "serve", "--host=127.0.0.1", "--port=8000" -WorkingDirectory $backend -WindowStyle Hidden -RedirectStandardOutput C:\temp\bizlink-api.log -RedirectStandardError C:\temp\bizlink-api-err.log
+
 Start-Sleep -Seconds 5
 try {
   Invoke-RestMethod http://127.0.0.1:8000/api/health | ConvertTo-Json
@@ -60,13 +68,15 @@ try {
 }
 
 Write-Host "3b) Reverb WebSocket on :8080 (live chat)..."
-Start-Process -FilePath "C:\xampp\php\php.exe" -ArgumentList "artisan", "reverb:start", "--port=8080" -WorkingDirectory $backend -WindowStyle Hidden -RedirectStandardOutput C:\temp\bizlink-reverb.log -RedirectStandardError C:\temp\bizlink-reverb-err.log
+Start-Process -FilePath $phpExe -ArgumentList "artisan", "reverb:start", "--port=8080" -WorkingDirectory $backend -WindowStyle Hidden -RedirectStandardOutput C:\temp\bizlink-reverb.log -RedirectStandardError C:\temp\bizlink-reverb-err.log
 Start-Sleep -Seconds 5
-$reverbUp = netstat -ano | Select-String "127.0.0.1:8080.*LISTENING"
+$reverbUp = netstat -ano | Select-String ":8080\s+.*LISTENING"
 if ($reverbUp) { Write-Host "   Reverb listening on :8080" } else { Write-Host "   Reverb may still be starting - check C:\temp\bizlink-reverb-err.log" }
 
+
 Write-Host "3c) Laravel Scheduler (meet:close-ended)..."
-Start-Process -FilePath "C:\xampp\php\php.exe" -ArgumentList "artisan", "schedule:work" -WorkingDirectory $backend -WindowStyle Hidden -RedirectStandardOutput C:\temp\bizlink-schedule.log -RedirectStandardError C:\temp\bizlink-schedule-err.log
+Start-Process -FilePath $phpExe -ArgumentList "artisan", "schedule:work" -WorkingDirectory $backend -WindowStyle Hidden -RedirectStandardOutput C:\temp\bizlink-schedule.log -RedirectStandardError C:\temp\bizlink-schedule-err.log
+
 
 Write-Host "4) Frontend Vite on :5173 (Inertia assets for Laravel)..."
 Start-Process -FilePath "cmd.exe" -ArgumentList @('/c', "npm run dev") -WorkingDirectory $frontend -WindowStyle Hidden -RedirectStandardOutput C:\temp\bizlink-vite.log -RedirectStandardError C:\temp\bizlink-vite-err.log
