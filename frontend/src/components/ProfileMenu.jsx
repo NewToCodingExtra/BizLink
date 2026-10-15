@@ -185,25 +185,41 @@ export default function ProfileMenu({ onAction }) {
         title="Leaving so soon?"
         footer={
           <>
-            <Button variant="ghost" onClick={() => setShowLogoutConfirm(false)} disabled={busy}>Cancel</Button>
-            <Button variant="danger" onClick={handleConfirmLogout} disabled={busy}>
+            <Button
+              variant="ghost"
+              onClick={() => setShowLogoutConfirm(false)}
+              disabled={busy}
+              className="w-full sm:w-auto min-h-[44px] justify-center"
+            >
+              Cancel
+            </Button>
+            <Button
+              variant="danger"
+              onClick={handleConfirmLogout}
+              disabled={busy}
+              className="w-full sm:w-auto min-h-[44px] justify-center bg-red-600 hover:bg-red-700 font-semibold"
+            >
               {busy ? "Logging out..." : "Yes, logout"}
             </Button>
           </>
         }
       >
-        <div className="flex flex-col items-center text-center pb-2">
+        <div className="flex flex-col items-center text-center py-2 px-1">
           {user?.avatar ? (
-            <img src={user.avatar} alt={user.name} className="w-20 h-20 rounded-full object-cover mb-4 border-2 border-[var(--color-border)] aspect-square shrink-0" />
+            <img
+              src={user.avatar}
+              alt={user.name}
+              className="w-20 h-20 rounded-full object-cover mb-3 border-2 border-[var(--color-border)] shadow-sm aspect-square shrink-0"
+            />
           ) : (
-            <svg className="w-20 h-20 text-[var(--color-text-secondary)] mb-4 opacity-80" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 3c1.66 0 3 1.34 3 3s-1.34 3-3 3-3-1.34-3-3 1.34-3 3-3zm0 14.2c-2.5 0-4.71-1.28-6-3.22.03-1.99 4-3.08 6-3.08 1.99 0 5.97 1.09 6 3.08-1.29 1.94-3.5 3.22-6 3.22z" />
-            </svg>
+            <div className="w-20 h-20 rounded-full bg-surface border border-border grid place-items-center mb-3 text-text-secondary">
+              <LogoutIcon className="w-8 h-8 text-error" />
+            </div>
           )}
-          <p className="text-[var(--color-text-primary)] text-base font-medium">
+          <h3 className="text-[var(--color-text-primary)] text-base font-bold">
             Are you sure you want to log out?
-          </p>
-          <p className="text-[var(--color-text-secondary)] text-sm mt-2">
+          </h3>
+          <p className="text-[var(--color-text-secondary)] text-xs sm:text-sm mt-1.5 max-w-xs leading-relaxed">
             You will need to log in again to access your dashboard.
           </p>
         </div>

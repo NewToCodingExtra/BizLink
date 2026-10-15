@@ -203,30 +203,134 @@ export default function Navbar() {
       </div>
 
       {mobileOpen && (
-        <div id="mobile-nav" className="md:hidden border-t border-white/10 bg-primary px-4 py-4 pb-[max(1rem,env(safe-area-inset-bottom))] space-y-3 max-h-[calc(100dvh-64px)] overflow-y-auto">
-          {user && (
-            <div className="flex items-center gap-3 rounded-xl bg-surface/5 border border-white/10 px-3 py-2.5">
-              <img src={user.avatar || "https://i.pravatar.cc/100?img=12"} alt="" className="w-9 h-9 rounded-full object-cover shrink-0 aspect-square" />
+        <div
+          id="mobile-nav"
+          className="md:hidden border-t border-white/10 bg-primary px-4 py-4 pb-[max(1rem,env(safe-area-inset-bottom))] space-y-3 max-h-[calc(100dvh-64px)] overflow-y-auto"
+        >
+          {user ? (
+            <div className="flex items-center gap-3 rounded-xl bg-white/5 border border-white/10 px-3.5 py-3">
+              <img
+                src={user.avatar || "https://i.pravatar.cc/100?img=12"}
+                alt=""
+                className="w-10 h-10 rounded-full object-cover shrink-0 aspect-square border border-white/20"
+              />
               <div className="flex-1 min-w-0">
                 <p className="text-sm font-semibold text-white truncate">{user.name}</p>
-                <p className="text-xs text-text-secondary truncate">{user.email}</p>
+                <p className="text-xs text-slate-300 truncate">{user.email}</p>
               </div>
             </div>
-          )}
-          {/* Primary tabs live in BottomNav on mobile — menu keeps secondary links only. */}
-          <div className="flex flex-wrap gap-2 pt-1">
-            {!user && <Link href="/" onClick={() => setMobileOpen(false)} className="inline-flex items-center min-h-[44px] px-4 py-2 rounded-full bg-surface text-primary text-sm font-medium active:scale-[0.98]">Home</Link>}
-            <Link href="/about" onClick={() => setMobileOpen(false)} className="inline-flex items-center min-h-[44px] px-4 py-2 rounded-full border border-white/20 text-white text-sm active:bg-white/10">About</Link>
-            <Link href="/contact" onClick={() => setMobileOpen(false)} className="inline-flex items-center min-h-[44px] px-4 py-2 rounded-full border border-white/20 text-white text-sm active:bg-white/10">Contact</Link>
-            {user && hasRole(page, "Admin") && <Link href="/admin" onClick={() => setMobileOpen(false)} className="inline-flex items-center min-h-[44px] px-4 py-2 rounded-full border border-white/20 text-white text-sm active:bg-white/10">Admin</Link>}
-            {!user && <Link href="/login" onClick={() => setMobileOpen(false)} className="inline-flex items-center min-h-[44px] px-4 py-2 rounded-lg border border-white/30 text-white text-sm font-medium active:bg-white/10">Log in</Link>}
-            {!user && <Link href="/register" onClick={() => setMobileOpen(false)} className="inline-flex items-center min-h-[44px] px-4 py-2 rounded-full bg-action text-white text-sm active:scale-[0.98]">Sign up</Link>}
-          </div>
-          {user ? (
-            can(page, "opportunities.create") && (
-              <Link href="/create" onClick={() => setMobileOpen(false)} className="flex items-center justify-center min-h-[48px] text-center bg-action hover:bg-action-hover active:scale-[0.99] text-white rounded-lg py-3 px-4 text-sm font-medium">+ Post Opportunity</Link>
-            )
           ) : null}
+
+          {/* Navigation Links */}
+          <div className="flex flex-col gap-1">
+            {!user && (
+              <Link
+                href="/"
+                onClick={() => setMobileOpen(false)}
+                className={`flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-medium transition-colors min-h-[44px] ${
+                  pathname === "/"
+                    ? "bg-white/15 text-white font-semibold"
+                    : "text-slate-200 hover:text-white hover:bg-white/10 active:bg-white/10"
+                }`}
+              >
+                Home
+              </Link>
+            )}
+            <Link
+              href="/about"
+              onClick={() => setMobileOpen(false)}
+              className={`flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-medium transition-colors min-h-[44px] ${
+                pathname === "/about"
+                  ? "bg-white/15 text-white font-semibold"
+                  : "text-slate-200 hover:text-white hover:bg-white/10 active:bg-white/10"
+              }`}
+            >
+              About
+            </Link>
+            <Link
+              href="/contact"
+              onClick={() => setMobileOpen(false)}
+              className={`flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-medium transition-colors min-h-[44px] ${
+                pathname === "/contact"
+                  ? "bg-white/15 text-white font-semibold"
+                  : "text-slate-200 hover:text-white hover:bg-white/10 active:bg-white/10"
+              }`}
+            >
+              Contact
+            </Link>
+            {user && hasRole(page, "Admin") && (
+              <Link
+                href="/admin"
+                onClick={() => setMobileOpen(false)}
+                className={`flex items-center justify-between px-3.5 py-2.5 rounded-xl text-sm font-medium transition-colors min-h-[44px] ${
+                  pathname.startsWith("/admin")
+                    ? "bg-white/15 text-white font-semibold"
+                    : "text-slate-200 hover:text-white hover:bg-white/10 active:bg-white/10"
+                }`}
+              >
+                <span>Admin Console</span>
+                <span className="text-[10px] font-bold tracking-wider px-2 py-0.5 rounded-full bg-accent text-[#0B1F3A]">
+                  STAFF
+                </span>
+              </Link>
+            )}
+          </div>
+
+          {/* User actions */}
+          {user ? (
+            <div className="pt-2 border-t border-white/10 space-y-2">
+              {can(page, "opportunities.create") && (
+                <Link
+                  href="/create"
+                  onClick={() => setMobileOpen(false)}
+                  className="flex items-center justify-center gap-2 min-h-[46px] w-full text-center bg-action hover:bg-action-hover active:scale-[0.99] text-white rounded-xl py-2.5 px-4 text-sm font-semibold shadow-sm transition-all"
+                >
+                  + Post Opportunity
+                </Link>
+              )}
+              <button
+                type="button"
+                onClick={() => {
+                  setMobileOpen(false);
+                  setShowLogoutConfirm(true);
+                }}
+                className="w-full flex items-center justify-center gap-2 min-h-[44px] px-4 py-2.5 rounded-xl border border-red-500/30 text-red-400 hover:bg-red-500/10 active:bg-red-500/20 text-sm font-medium transition-colors"
+              >
+                <svg
+                  className="w-4 h-4 shrink-0"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="1.8"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
+                  <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
+                  <polyline points="16 17 21 12 16 7" />
+                  <line x1="21" y1="12" x2="9" y2="12" />
+                </svg>
+                Log out
+              </button>
+            </div>
+          ) : (
+            /* Guest Auth Buttons: 2-column balanced grid with min-h-[46px] touch targets */
+            <div className="pt-3 border-t border-white/10 grid grid-cols-2 gap-2.5">
+              <Link
+                href="/login"
+                onClick={() => setMobileOpen(false)}
+                className="flex items-center justify-center min-h-[46px] px-4 py-2.5 rounded-xl border border-white/30 text-white font-medium text-sm hover:bg-white/10 active:bg-white/15 transition-colors text-center"
+              >
+                Log in
+              </Link>
+              <Link
+                href="/register"
+                onClick={() => setMobileOpen(false)}
+                className="flex items-center justify-center min-h-[46px] px-4 py-2.5 rounded-xl bg-action hover:bg-action-hover active:scale-[0.98] text-white font-semibold text-sm shadow-sm transition-all text-center"
+              >
+                Sign up
+              </Link>
+            </div>
+          )}
         </div>
       )}
 
@@ -236,23 +340,45 @@ export default function Navbar() {
         title="Leaving so soon?"
         footer={
           <>
-            <Button variant="ghost" onClick={() => setShowLogoutConfirm(false)}>Stay</Button>
-            <Button variant="primary" onClick={confirmLogout} className="bg-red-600 hover:bg-red-700 focus:ring-red-500">Log out</Button>
+            <Button
+              variant="ghost"
+              onClick={() => setShowLogoutConfirm(false)}
+              className="w-full sm:w-auto min-h-[44px] justify-center"
+            >
+              Cancel
+            </Button>
+            <Button
+              variant="primary"
+              onClick={confirmLogout}
+              className="w-full sm:w-auto min-h-[44px] justify-center bg-red-600 hover:bg-red-700 focus:ring-red-500 font-semibold text-white"
+            >
+              Yes, logout
+            </Button>
           </>
         }
       >
-        <div className="flex flex-col items-center text-center pb-2">
+        <div className="flex flex-col items-center text-center py-2 px-1">
           {user?.avatar ? (
-            <img src={user.avatar} alt={user.name} className="w-20 h-20 rounded-full object-cover mb-4 border-2 border-white/10 aspect-square shrink-0" />
+            <img
+              src={user.avatar}
+              alt={user.name}
+              className="w-20 h-20 rounded-full object-cover mb-3 border-2 border-[var(--color-border)] shadow-sm aspect-square shrink-0"
+            />
           ) : (
-            <svg className="w-20 h-20 text-slate-400 mb-4 opacity-80" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-              <circle cx="12" cy="12" r="10"></circle>
-              <path d="M8 9.05v-.1"></path>
-              <path d="M16 9.05v-.1"></path>
-              <path d="M16 16c-1.5-1.5-3-1.5-6 0"></path>
-            </svg>
+            <div className="w-20 h-20 rounded-full bg-surface border border-border grid place-items-center mb-3 text-text-secondary">
+              <svg className="w-8 h-8 text-red-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
+                <polyline points="16 17 21 12 16 7" />
+                <line x1="21" y1="12" x2="9" y2="12" />
+              </svg>
+            </div>
           )}
-          <p className="text-text-primary text-base font-medium">We'll miss you. Are you sure you want to log out?</p>
+          <h3 className="text-[var(--color-text-primary)] text-base font-bold">
+            Are you sure you want to log out?
+          </h3>
+          <p className="text-[var(--color-text-secondary)] text-xs sm:text-sm mt-1.5 max-w-xs leading-relaxed">
+            You will need to log in again to access your dashboard.
+          </p>
         </div>
       </Modal>
 

@@ -1,4 +1,5 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 
 export default function Modal({
   isOpen,
@@ -10,6 +11,11 @@ export default function Modal({
   closeOnClickOutside = true
 }) {
   const modalRef = useRef(null);
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   useEffect(() => {
     const handleEscape = (e) => {
@@ -27,7 +33,7 @@ export default function Modal({
     };
   }, [isOpen, onClose]);
 
-  if (!isOpen) return null;
+  if (!isOpen || !mounted) return null;
 
   const handleBackdropClick = (e) => {
     if (closeOnClickOutside && modalRef.current && !modalRef.current.contains(e.target)) {
@@ -35,9 +41,9 @@ export default function Modal({
     }
   };
 
-  return (
+  const modalContent = (
     <div
-      className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-6 pb-[max(0rem,env(safe-area-inset-bottom))] bg-black/60 backdrop-blur-sm"
+      className="fixed inset-0 z-[100] flex items-end sm:items-center justify-center p-0 sm:p-6 bg-black/60 backdrop-blur-sm"
       onClick={handleBackdropClick}
       role="presentation"
     >
@@ -78,11 +84,13 @@ export default function Modal({
 
         {/* Footer */}
         {footer && (
-          <div className="p-4 pb-[max(1rem,env(safe-area-inset-bottom))] border-t border-[var(--color-border)] bg-bg dark:bg-bg/50 flex flex-col-reverse sm:flex-row sm:justify-end gap-2 sm:gap-3">
+          <div className="p-4 pb-[max(1.5rem,env(safe-area-inset-bottom))] border-t border-[var(--color-border)] bg-[var(--color-surface)] flex flex-col-reverse sm:flex-row sm:justify-end gap-2.5 sm:gap-3 shrink-0">
             {footer}
           </div>
         )}
       </div>
     </div>
   );
+
+  return typeof document !== 'undefined' ? createPortal(modalContent, document.body) : modalContent;
 }
