@@ -130,8 +130,11 @@ class ReportAdminController extends Controller
         $target = $this->serializeTarget($report->reportable_type, $report->reportable_id);
         $offenderId = $target['offenderId'] ?? null;
 
+        $serialized = $this->serializeRow($report->fresh(['category', 'reporter']));
+
         return response()->json([
-            'data' => $this->serializeRow($report->fresh(['category', 'reporter'])),
+            'report' => $serialized,
+            'data' => $serialized,
             'target' => $target,
             'siblings' => $siblings->map(fn ($r) => $this->serializeRow($r))->values(),
             'history' => $offenderId ? $this->reports->offenderHistory((int) $offenderId) : null,
@@ -184,6 +187,52 @@ class ReportAdminController extends Controller
         $siblingsCount = Report::where('reportable_type', $r->reportable_type)
             ->where('reportable_id', $r->reportable_id)
             ->count();
+
+        $category = null;
+        if ($r->category) {
+            $category = [
+                'id' => $r->category->id,
+                'key' => $r->category->key,
+                'label' => $r->category->label,
+                'severity' => (int) $r->category->severity,
+            ];
+        } elseif ($r->category_id) {
+            $cat = ReportCategory::find($r->category_id);
+            if ($cat) {
+                $category = [
+                    'id' => $cat->id,
+                    'key' => $cat->key,
+                    'label' => $cat->label,
+                    'severity' => (int) $cat->severity,
+                ];
+            }
+        }
+        if (! $category) {
+            $category = [
+                'id' => null,
+                'key' => 'guidelines_violation',
+                'label' => 'Community Guidelines Violation',
+                'severity' => 20,
+            ];
+        }
+
+        $reporter = null;
+        if ($r->reporter) {
+            $reporter = [
+                'id' => $r->reporter->id,
+                'name' => $r->reporter->name,
+                'username' => $r->reporter->username,
+                'avatar' => $r->reporter->avatar,
+            ];
+        } else {
+            $reporter = [
+                'id' => null,
+                'name' => 'Community Member',
+                'username' => 'anonymous',
+                'avatar' => null,
+            ];
+        }
+
         return [
             'id' => $r->id,
             'type' => $r->reportable_type,
@@ -196,8 +245,8 @@ class ReportAdminController extends Controller
             'createdAt' => $r->created_at?->toIso8601String(),
             'createdAgo' => $r->created_at?->diffForHumans(),
             'resolvedAt' => $r->resolved_at?->toIso8601String(),
-            'category' => $r->category ? ['key' => $r->category->key, 'label' => $r->category->label, 'severity' => (int) $r->category->severity] : null,
-            'reporter' => $r->reporter ? ['id' => $r->reporter->id, 'name' => $r->reporter->name, 'username' => $r->reporter->username, 'avatar' => $r->reporter->avatar] : null,
+            'category' => $category,
+            'reporter' => $reporter,
             'siblingsCount' => $siblingsCount,
         ];
     }

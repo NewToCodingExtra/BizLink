@@ -2,6 +2,7 @@ import { useEffect, useState, useRef } from "react";
 import { Head, Link, router, usePage } from "@inertiajs/react";
 import { hasRole } from "../../utils/can";
 import { httpApi } from "../../utils/http";
+import { profilePath } from "../../utils/profilePath";
 import { useToast } from "../../context/ToastContext";
 import AdminHeader from "../../Components/Admin/AdminHeader";
 import AdminStatCard from "../../Components/Admin/AdminStatCard";
@@ -111,7 +112,12 @@ export default function AdminReports({
     setLoadingDetail(true);
     try {
       const res = await httpApi.get(`/admin/reports/${id}`);
-      setDetail(res);
+      const reportItem = res.report || res.data || res;
+      setDetail({
+        ...res,
+        report: reportItem,
+        data: reportItem,
+      });
     } catch (err) {
       toast.error(err.message || "Could not load report details.");
     } finally {
@@ -509,103 +515,181 @@ export default function AdminReports({
       >
         {loadingDetail ? (
           <p className="p-8 text-center text-xs text-text-secondary">Loading report data...</p>
-        ) : detail ? (
-          <div className="space-y-4">
-            {/* Target Snippet */}
-            <div className="p-4 rounded-xl bg-bg border border-border">
-              <span className="text-[10px] font-bold uppercase tracking-wider text-text-secondary block mb-1">
-                Reported Content ({typeLabel(detail.report?.type)})
-              </span>
-              <p className="text-sm font-semibold text-text-primary">
-                {detail.target?.preview || "[Content Preview Unavailable]"}
-              </p>
-              {detail.target?.link && (
-                <Link
-                  href={detail.target.link}
-                  target="_blank"
-                  className="inline-flex items-center gap-1 text-xs text-action hover:underline mt-1 font-semibold"
-                >
-                  <span>Open live content</span>
-                  <ArrowRightIcon className="w-3 h-3" />
-                </Link>
-              )}
-            </div>
+        ) : detail ? (() => {
+          const rep = detail.report || detail.data;
+          const isPending = rep?.status === "pending";
+          const catLabel = rep?.category?.label || rep?.category?.key || "Community Guideline Violation";
+          const catSev = rep?.category?.severity !== undefined ? rep.category.severity : 20;
 
-            {/* Reporter details */}
-            <div className="p-4 rounded-xl bg-bg border border-border">
-              <span className="text-[10px] font-bold uppercase tracking-wider text-text-secondary block mb-1">
-                Reporter Claim
-              </span>
-              <p className="text-xs text-text-primary font-medium">
-                Category: <span className="font-bold">{detail.report?.category?.label}</span> (Severity {detail.report?.category?.severity})
-              </p>
-              <p className="text-xs text-text-secondary mt-1">
-                Details: &ldquo;{detail.report?.details || "No additional text provided."}&rdquo;
-              </p>
-              <p className="text-[11px] text-text-secondary mt-1">
-                Filed by {detail.report?.reporter?.name} · {detail.report?.createdAgo}
-              </p>
-            </div>
-
-            {/* Offender History if available */}
-            {detail.offender && (
+          return (
+            <div className="space-y-4">
+              {/* Target Snippet */}
               <div className="p-4 rounded-xl bg-bg border border-border">
-                <span className="text-[10px] font-bold uppercase tracking-wider text-text-secondary block mb-2">
-                  Account Under Review
+                <span className="text-[10px] font-bold uppercase tracking-wider text-text-secondary block mb-1">
+                  Reported Content ({typeLabel(rep?.type)})
                 </span>
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2.5">
-                    <img
-                      src={detail.offender.avatar}
-                      alt=""
-                      className="w-9 h-9 rounded-full object-cover border border-border"
-                    />
-                    <div>
-                      <p className="text-xs font-bold text-text-primary">{detail.offender.name}</p>
-                      <p className="text-[11px] text-text-secondary">
-                        @{detail.offender.username} · {detail.offender.warningCount ?? 0} warnings
-                      </p>
+                <p className="text-sm font-semibold text-text-primary">
+                  {detail.target?.preview || "[Content Preview Unavailable]"}
+                </p>
+                {detail.target?.link && (
+                  <Link
+                    href={detail.target.link}
+                    target="_blank"
+                    className="inline-flex items-center gap-1 text-xs text-action hover:underline mt-1 font-semibold"
+                  >
+                    <span>Open live content</span>
+                    <ArrowRightIcon className="w-3 h-3" />
+                  </Link>
+                )}
+              </div>
+
+              {/* Reporter details */}
+              <div className="p-4 rounded-xl bg-bg border border-border">
+                <span className="text-[10px] font-bold uppercase tracking-wider text-text-secondary block mb-1">
+                  Reporter Claim
+                </span>
+                <p className="text-xs text-text-primary font-medium">
+                  Category: <span className="font-bold">{catLabel}</span>{" "}
+                  <span className="text-text-secondary font-normal">(Severity {catSev})</span>
+                </p>
+                <p className="text-xs text-text-secondary mt-1">
+                  Details: &ldquo;{rep?.details || "No additional text provided."}&rdquo;
+                </p>
+                <p className="text-[11px] text-text-secondary mt-1.5 flex items-center gap-1">
+                  <span>Filed by</span>
+                  {rep?.reporter?.username ? (
+                    <Link
+                      href={profilePath(rep.reporter)}
+                      className="font-semibold text-text-primary hover:text-action hover:underline cursor-pointer"
+                    >
+                      {rep.reporter.name || rep.reporter.username}
+                    </Link>
+                  ) : (
+                    <span className="font-semibold text-text-primary">
+                      {rep?.reporter?.name || "Community Member"}
+                    </span>
+                  )}
+                  <span>· {rep?.createdAgo || "Recently"}</span>
+                </p>
+              </div>
+
+              {/* Offender History if available */}
+              {detail.offender && (
+                <div className="p-4 rounded-xl bg-bg border border-border">
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-text-secondary block mb-2">
+                    Account Under Review
+                  </span>
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2.5">
+                      <Link href={profilePath(detail.offender)} className="shrink-0 cursor-pointer">
+                        <img
+                          src={detail.offender.avatar}
+                          alt=""
+                          className="w-9 h-9 rounded-full object-cover border border-border hover:border-action transition-all shadow-xs"
+                        />
+                      </Link>
+                      <div>
+                        <Link
+                          href={profilePath(detail.offender)}
+                          className="text-xs font-bold text-text-primary hover:text-action hover:underline cursor-pointer transition-colors block"
+                        >
+                          {detail.offender.name}
+                        </Link>
+                        <p className="text-[11px] text-text-secondary">
+                          <Link
+                            href={profilePath(detail.offender)}
+                            className="hover:text-action hover:underline cursor-pointer"
+                          >
+                            @{detail.offender.username}
+                          </Link>
+                          {" "}· {detail.offender.warningCount ?? 0} warnings
+                        </p>
+                      </div>
+                    </div>
+                    <span
+                      className={`text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full border ${
+                        detail.offender.status === "banned"
+                          ? "bg-rose-500/10 text-rose-600 border-rose-500/20"
+                          : "bg-emerald-500/10 text-emerald-600 border-emerald-500/20"
+                      }`}
+                    >
+                      {detail.offender.status}
+                    </span>
+                  </div>
+                </div>
+              )}
+
+              {/* Decision & Moderation Controls */}
+              <div className="pt-3 border-t border-border">
+                {isPending ? (
+                  <div className="flex items-center justify-between gap-3">
+                    <span className="text-xs text-text-secondary">
+                      Action Required:
+                    </span>
+                    <div className="flex items-center gap-2">
+                      <Button
+                        variant="secondary"
+                        size="sm"
+                        onClick={() => setRejectOpen(true)}
+                        className="cursor-pointer active:scale-95 transition-all"
+                      >
+                        Reject / Dismiss
+                      </Button>
+                      <Button
+                        variant="danger"
+                        size="sm"
+                        onClick={() => setAcceptOpen(true)}
+                        className="cursor-pointer active:scale-95 transition-all"
+                      >
+                        Accept &amp; Take Action
+                      </Button>
                     </div>
                   </div>
-                  <span
-                    className={`text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full border ${
-                      detail.offender.status === "banned"
-                        ? "bg-rose-500/10 text-rose-600 border-rose-500/20"
-                        : "bg-emerald-500/10 text-emerald-600 border-emerald-500/20"
-                    }`}
-                  >
-                    {detail.offender.status}
-                  </span>
-                </div>
+                ) : (
+                  <div className="space-y-3">
+                    <div className="p-3 rounded-xl bg-surface border border-border text-xs text-text-secondary text-center">
+                      This report was resolved as{" "}
+                      <span className="font-bold text-text-primary uppercase">{rep?.status}</span>
+                      {rep?.actionTaken && (
+                        <span className="ml-1 text-text-primary">
+                          (Action: <span className="font-semibold">{rep.actionTaken}</span>)
+                        </span>
+                      )}
+                      {rep?.adminNote && (
+                        <p className="text-[11px] text-text-secondary mt-1 italic">
+                          Note: &ldquo;{rep.adminNote}&rdquo;
+                        </p>
+                      )}
+                    </div>
+                    <div className="flex items-center justify-between gap-2">
+                      <span className="text-[11px] text-text-secondary">
+                        Re-evaluate or adjust moderation:
+                      </span>
+                      <div className="flex items-center gap-2">
+                        <Button
+                          variant="secondary"
+                          size="xs"
+                          onClick={() => setRejectOpen(true)}
+                          className="cursor-pointer active:scale-95 transition-all"
+                        >
+                          Mark Rejected
+                        </Button>
+                        <Button
+                          variant="danger"
+                          size="xs"
+                          onClick={() => setAcceptOpen(true)}
+                          className="cursor-pointer active:scale-95 transition-all"
+                        >
+                          Enforce Action
+                        </Button>
+                      </div>
+                    </div>
+                  </div>
+                )}
               </div>
-            )}
-
-            {/* Decision Buttons */}
-            {detail.report?.status === "pending" ? (
-              <div className="flex justify-end gap-2 pt-2 border-t border-border">
-                <Button
-                  variant="secondary"
-                  size="sm"
-                  onClick={() => setRejectOpen(true)}
-                >
-                  Reject Report
-                </Button>
-                <Button
-                  variant="danger"
-                  size="sm"
-                  onClick={() => setAcceptOpen(true)}
-                >
-                  Accept &amp; Take Action
-                </Button>
-              </div>
-            ) : (
-              <div className="p-3 rounded-xl bg-surface border border-border text-xs text-text-secondary text-center">
-                This report was resolved as <span className="font-bold text-text-primary">{detail.report?.status}</span>
-                {detail.report?.actionTaken && ` (${detail.report.actionTaken})`}.
-              </div>
-            )}
-          </div>
-        ) : null}
+            </div>
+          );
+        })() : null}
       </Modal>
 
       {/* REJECT CONFIRMATION MODAL */}
