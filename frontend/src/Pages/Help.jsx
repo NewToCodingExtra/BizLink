@@ -6,8 +6,16 @@ import { httpApi } from "../utils/http";
 import { useToast } from "../context/ToastContext";
 import { ArrowLeftIcon, ArrowRightIcon } from "../Components/icons";
 
+function cleanHeadingTitle(text) {
+  return String(text || "")
+    .replace(/`([^`]+)`/g, "$1")
+    .replace(/[*_~]/g, "")
+    .trim();
+}
+
 function slugify(text) {
   return String(text || "")
+    .replace(/`([^`]+)`/g, "$1")
     .toLowerCase()
     .replace(/[^a-z0-9\s-]/g, "")
     .trim()
@@ -17,8 +25,11 @@ function slugify(text) {
 function headingsOf(markdown) {
   const out = [];
   for (const m of String(markdown || "").matchAll(/^##\s+(.+)$/gm)) {
-    const title = m[1].trim();
-    out.push({ title, id: slugify(title) });
+    const raw = m[1].trim();
+    out.push({
+      title: cleanHeadingTitle(raw),
+      id: slugify(raw),
+    });
   }
   return out;
 }
@@ -102,9 +113,80 @@ export default function Help({ pages = [] }) {
                 <ReactMarkdown
                   remarkPlugins={[remarkGfm]}
                   components={{
-                    h2: ({ children }) => {
-                      const text = Array.isArray(children) ? children.join("") : String(children ?? "");
-                      return <h2 id={slugify(text)} className="scroll-mt-24">{children}</h2>;
+                    h2: ({ children, node }) => {
+                      const text = node?.children
+                        ? node.children.map((c) => c.value || c.children?.[0]?.value || "").join("")
+                        : Array.isArray(children)
+                        ? children.map((c) => (typeof c === "string" ? c : c?.props?.children || "")).join("")
+                        : String(children ?? "");
+                      const id = slugify(text);
+                      return (
+                        <h2 id={id} className="scroll-mt-24">
+                          {children}
+                        </h2>
+                      );
+                    },
+                    a: ({ href, children, ...props }) => {
+                      if (!href) return <a {...props}>{children}</a>;
+
+                      // Inter-guide links (e.g., 'deployment.md' or './deployment.md')
+                      const guideMatch = href.match(/^(\.\/)?([a-z0-9-]+)\.md(#.*)?$/i);
+                      const targetSlug = guideMatch ? guideMatch[2] : null;
+                      if (targetSlug && pages.some((p) => p.slug === targetSlug)) {
+                        return (
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setSlug(targetSlug);
+                              window.scrollTo({ top: 0, behavior: "smooth" });
+                            }}
+                            className="text-action hover:underline font-medium inline cursor-pointer text-left"
+                          >
+                            {children}
+                          </button>
+                        );
+                      }
+
+                      // Repository / README relative links -> redirect to GitHub repo
+                      if (href.startsWith("../") || href.includes("README.md") || href.includes("README")) {
+                        const cleanPath = href.replace(/^(\.\.\/)+/, "").replace(/^(\.\/)+/, "");
+                        const githubUrl = `https://github.com/NewToCodingExtra/BizLink/blob/main/${cleanPath}`;
+                        return (
+                          <a
+                            href={githubUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-action hover:underline font-medium inline-flex items-center gap-1"
+                            {...props}
+                          >
+                            <span>{children}</span>
+                            <span className="text-xs">↗</span>
+                          </a>
+                        );
+                      }
+
+                      // Internal app routes (/terms, /privacy, /acceptable-use)
+                      if (href.startsWith("/")) {
+                        return (
+                          <Link href={href} className="text-action hover:underline font-medium" {...props}>
+                            {children}
+                          </Link>
+                        );
+                      }
+
+                      // External links
+                      return (
+                        <a
+                          href={href}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-action hover:underline font-medium inline-flex items-center gap-1"
+                          {...props}
+                        >
+                          <span>{children}</span>
+                          <span className="text-xs">↗</span>
+                        </a>
+                      );
                     },
                   }}
                 >
@@ -161,9 +243,19 @@ export default function Help({ pages = [] }) {
             ))}
             {toc.length === 0 && <li className="px-2 text-[13px] text-text-secondary">No sections yet.</li>}
           </ul>
-          <Link href="/contact" className="mt-4 flex items-center gap-1.5 px-2 py-2 text-[13px] font-medium text-action hover:underline">
-            Still stuck? Contact us <ArrowRightIcon className="w-3.5 h-3.5" />
-          </Link>
+          <div className="mt-4 pt-3 border-t border-border/50 space-y-1">
+            <Link href="/contact" className="flex items-center gap-1.5 px-2 py-1 text-[13px] font-medium text-action hover:underline">
+              Still stuck? Contact us <ArrowRightIcon className="w-3.5 h-3.5" />
+            </Link>
+            <a
+              href="https://github.com/NewToCodingExtra/BizLink"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center gap-1.5 px-2 py-1 text-[13px] font-medium text-text-secondary hover:text-action"
+            >
+              GitHub Repository ↗
+            </a>
+          </div>
         </aside>
       </div>
     </div>

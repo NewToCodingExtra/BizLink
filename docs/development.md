@@ -59,4 +59,4 @@ Demo accounts (password `password123`): `demo@bizlink.ph` · `brand@bizlink.ph` 
 
 ## Branching & PRs
 
-`feat/...`, `fix/...`, one concern per PR. Keep PRs small enough to review against the conventions above — see [README](../README.md#contributing).
+`feat/...`, `fix/...`, one concern per PR. Keep PRs small enough to review against the conventions above — see [README](https://github.com/NewToCodingExtra/BizLink/blob/main/README.md#contributing).
