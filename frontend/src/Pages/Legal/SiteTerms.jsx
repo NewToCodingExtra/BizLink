@@ -3,7 +3,7 @@ import LegalLayout from "../../Components/LegalLayout";
 
 export default function SiteTerms() {
   return (
-    <LegalLayout title="Terms of Service" lastUpdated="September 23, 2026">
+    <LegalLayout title="Terms of Service" lastUpdated="October 15, 2026">
       <Head title="Terms of Service" />
       <p>
         These Terms of Service ("Terms") govern your access to and use of <strong>BizLink</strong> 
@@ -43,13 +43,23 @@ export default function SiteTerms() {
         You must not post misleading financial claims (e.g., guaranteed ROI).
       </p>
 
-      <h2>5. Limitation of Liability and Disclaimer of Warranties</h2>
+      <h2>5. Moderation and Enforcement</h2>
       <p>
-        <span className="bg-yellow-100 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-200 px-1 py-0.5 rounded">REQUIRES BUSINESS/LEGAL CONFIRMATION</span>
+        To keep the marketplace trustworthy, users may report content that violates our Acceptable Use
+        Policy. Our administrators review reports and may take action ranging from a warning, to content
+        removal, to temporary suspension or a permanent ban. Accounts with repeated violations face
+        escalating penalties.
       </p>
       <p>
-        BizLink is provided on an "AS IS" and "AS AVAILABLE" basis. We make no warranties, express or 
-        implied, regarding the platform's reliability, accuracy, or suitability for any purpose. We do 
+        The <strong>Verified</strong> badge is issued only after an administrator reviews and approves a
+        brand verification request. It is never automatic and may be revoked if the account later
+        violates these Terms.
+      </p>
+
+      <h2>6. Limitation of Liability and Disclaimer of Warranties</h2>
+      <p>
+        BizLink is provided on an "AS IS" and "AS AVAILABLE" basis. We make no warranties, express or
+        implied, regarding the platform's reliability, accuracy, or suitability for any purpose. We do
         not verify or endorse the business opportunities posted by users.
       </p>
       <p>
@@ -59,26 +69,26 @@ export default function SiteTerms() {
         other users.
       </p>
 
-      <h2>6. Termination</h2>
+      <h2>7. Termination</h2>
       <p>
         We reserve the right to suspend or terminate your account at our sole discretion, without notice 
         or liability, for any reason, including if you violate these Terms or our Acceptable Use Policy.
       </p>
 
-      <h2>7. Governing Law</h2>
+      <h2>8. Governing Law</h2>
       <p>
-        These Terms shall be governed by and construed in accordance with the laws of the 
-        <strong> Philippines</strong>, without regard to its conflict of law provisions. Any disputes 
-        shall be resolved in the competent courts of <strong>[BUSINESS LOCATION/CITY]</strong>.
+        These Terms shall be governed by and construed in accordance with the laws of the
+        <strong> Philippines</strong>, without regard to its conflict of law provisions. Any disputes
+        shall be resolved in the competent courts of the Philippines.
       </p>
 
-      <h2>8. Contact</h2>
+      <h2>9. Contact</h2>
       <p>
         If you have any questions about these Terms, please contact us at:
       </p>
       <address className="not-italic text-text-secondary bg-surface p-4 rounded-xl border border-border mt-4">
-        <strong>[LEGAL BUSINESS NAME]</strong><br />
-        Email: [PRIVACY CONTACT EMAIL]
+        <strong>BizLink</strong><br />
+        Email: support@bizlink.ph
       </address>
     </LegalLayout>
   );

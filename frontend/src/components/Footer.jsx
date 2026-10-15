@@ -15,7 +15,7 @@ export default function Footer() {
               <span className="font-bold text-lg tracking-tight"><span className="text-white">Biz</span><span className="text-accent">Link</span></span>
             </div>
             <p className="text-sm text-text-secondary mt-3 max-w-md leading-relaxed mx-auto md:mx-0">Bridging Brands and Business Owners — connecting franchisers and wholesalers with aspiring buyers through verified opportunities and direct matchmaking.</p>
-            <p className="text-sm text-text-secondary mt-3">Contact: hello@bizlink.ph · +63 917 000 0000</p>
+            <p className="text-sm text-text-secondary mt-3">Questions? Reach us at support@bizlink.ph</p>
             <div className="flex gap-2 mt-4 justify-center md:justify-start">
               <a href="#" aria-label="Facebook" className="w-11 h-11 rounded-full bg-surface/10 grid place-items-center hover:bg-surface/15 active:bg-surface/20 active:scale-[0.97] transition-colors text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-300"><FacebookIcon /></a>
               <a href="#" aria-label="Instagram" className="w-11 h-11 rounded-full bg-surface/10 grid place-items-center hover:bg-surface/15 active:bg-surface/20 active:scale-[0.97] transition-colors text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-300"><InstagramIcon /></a>

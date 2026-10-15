@@ -3,7 +3,7 @@ import LegalLayout from "../../Components/LegalLayout";
 
 export default function SiteAcceptable() {
   return (
-    <LegalLayout title="Acceptable Use Policy" lastUpdated="September 23, 2026">
+    <LegalLayout title="Acceptable Use Policy" lastUpdated="October 15, 2026">
       <Head title="Acceptable Use Policy" />
       <p>
         This Acceptable Use Policy ("AUP") outlines the rules and guidelines for your use of the 
@@ -49,8 +49,11 @@ export default function SiteAcceptable() {
         We may remove any content or terminate any account that violates this AUP at our sole discretion.
       </p>
       <p>
-        If you encounter an opportunity or user that violates this policy, please report it immediately to 
-        <strong>[PRIVACY CONTACT EMAIL]</strong>.
+        If you encounter an opportunity or user that violates this policy, please report it immediately to
+        <strong> support@bizlink.ph</strong>, or use the in-app Report button found on posts, comments,
+        stories, messages, and profiles. Every report is reviewed by our administrators, and confirmed
+        violations lead to warnings, content removal, suspension, or a permanent ban depending on severity
+        and history.
       </p>
     </LegalLayout>
   );
