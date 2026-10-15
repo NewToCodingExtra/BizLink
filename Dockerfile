@@ -18,6 +18,8 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     && docker-php-ext-configure intl \
     && docker-php-ext-install -j$(nproc) pdo_mysql mbstring bcmath zip gd intl opcache pcntl sockets exif \
     && a2enmod rewrite proxy proxy_http proxy_wstunnel headers \
+    && (a2dismod mpm_event mpm_worker 2>/dev/null || true) \
+    && (a2enmod mpm_prefork 2>/dev/null || true) \
     && rm -rf /var/lib/apt/lists/*
 
 # mod_php requires prefork; the base image enables mpm_event, so swap it out.

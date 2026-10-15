@@ -42,4 +42,10 @@ php artisan config:cache
 php artisan route:cache
 php artisan view:cache
 
+# Ensure only mpm_prefork is loaded and remove any stale Apache PID file from prior restarts
+rm -f /etc/apache2/mods-enabled/mpm_event.* /etc/apache2/mods-enabled/mpm_worker.* 2>/dev/null || true
+a2dismod mpm_event mpm_worker 2>/dev/null || true
+a2enmod mpm_prefork 2>/dev/null || true
+rm -f /var/run/apache2/apache2.pid 2>/dev/null || true
+
 exec /usr/bin/supervisord -c /etc/supervisor/conf.d/supervisord.conf
