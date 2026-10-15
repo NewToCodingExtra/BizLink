@@ -163,7 +163,7 @@ class DatabaseSeeder extends Seeder
                 'description' => '24/7 access model, app-driven member retention and proven class programming. Includes equipment bundle and 6-week founder immersion.',
                 'image' => 'https://images.unsplash.com/photo-1534438327276-14e5300c3a48?w=800&q=80&auto=format&fit=crop',
                 'media_type' => 'video',
-                'video_url' => 'https://videos.pexels.com/video-files/5310859/5310859-uhd_2560_1440_25fps.mp4',
+                'video_url' => 'https://videos.pexels.com/video-files/5198159/5198159-uhd_2560_1440_25fps.mp4',
                 'featured' => true,
                 'verified' => true,
                 'likes_count' => 210,

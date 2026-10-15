@@ -183,11 +183,23 @@ class MeetController extends Controller
             'duration' => 'required|integer|in:15,30,60',
         ]);
 
-        $message = $meetService->schedule($request->user(), $conversation, $validated);
+        try {
+            $message = $meetService->schedule($request->user(), $conversation, $validated);
 
-        return response()->json([
-            'data' => app(ConversationController::class)->serializeForBroadcast($message),
-        ], 201);
+            return response()->json([
+                'data' => app(ConversationController::class)->serializeForBroadcast($message),
+            ], 201);
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            throw $e;
+        } catch (\Throwable $e) {
+            \Illuminate\Support\Facades\Log::error('Meet scheduling error', [
+                'error' => $e->getMessage(),
+            ]);
+
+            return response()->json([
+                'message' => $e->getMessage() ?: 'Unable to schedule Google Meet. Please try again.',
+            ], 422);
+        }
     }
 
     public function cancel(Request $request, Conversation $conversation, string $eventId, MeetService $meetService)
