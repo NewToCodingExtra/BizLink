@@ -62,4 +62,7 @@ Route::middleware('auth')->group(function () {
     Route::post('/link-preview', [ConversationController::class, 'linkPreview'])
         ->middleware('throttle:30,1')
         ->name('link-preview');
+    Route::get('/link-preview/image', [ConversationController::class, 'proxyImage'])
+        ->middleware('throttle:60,1')
+        ->name('link-preview.image');
 });

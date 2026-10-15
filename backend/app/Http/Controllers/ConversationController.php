@@ -647,6 +647,49 @@ class ConversationController extends Controller
         return response()->json(['data' => $preview]);
     }
 
+    /**
+     * Fallback proxy for link preview images blocked by CDN hotlinking or tracking blockers (e.g. Brave shields).
+     */
+    public function proxyImage(Request $request)
+    {
+        $url = $request->input('url');
+        if (!$url || !is_string($url) || !filter_var($url, FILTER_VALIDATE_URL)) {
+            return response('Invalid image URL', 400);
+        }
+
+        $parsed = parse_url($url);
+        $scheme = strtolower($parsed['scheme'] ?? '');
+        if (!in_array($scheme, ['http', 'https'], true)) {
+            return response('Invalid scheme', 400);
+        }
+
+        $host = $parsed['host'] ?? '';
+        if (app(\App\Services\LinkPreviewService::class)->isPrivateHost($host)) {
+            return response('Forbidden', 403);
+        }
+
+        try {
+            $res = \Illuminate\Support\Facades\Http::timeout(6)
+                ->withHeaders([
+                    'User-Agent' => 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
+                    'Accept' => 'image/avif,image/webp,image/apng,image/svg+xml,image/*,*/*;q=0.8',
+                ])
+                ->get($url);
+
+            if (!$res->successful()) {
+                return response('Image unavailable', 404);
+            }
+
+            $contentType = $res->header('Content-Type') ?: 'image/jpeg';
+            return response($res->body(), 200, [
+                'Content-Type' => $contentType,
+                'Cache-Control' => 'public, max-age=604800, immutable',
+            ]);
+        } catch (\Throwable $e) {
+            return response('Error fetching image', 500);
+        }
+    }
+
     public function updateMessage(Request $request, Conversation $conversation, Message $message)
     {
         $user = $request->user();

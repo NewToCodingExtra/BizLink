@@ -33,20 +33,25 @@ class LinkPreviewService
             ->first();
 
         if ($cached) {
+            $cachedImg = $cached->image_url;
+            if ($cachedImg) {
+                $cachedImg = html_entity_decode($cachedImg, ENT_QUOTES | ENT_HTML5, 'UTF-8');
+            }
             return [
                 'url' => $cached->url,
                 'title' => $cached->title,
                 'description' => $cached->description,
-                'image' => $cached->image_url,
+                'image' => $cachedImg,
                 'siteName' => $cached->site_name,
             ];
         }
 
         try {
-            $response = Http::timeout(4)
+            $response = Http::timeout(5)
                 ->withHeaders([
-                    'User-Agent' => 'Mozilla/5.0 (compatible; BizLinkBot/1.0; +https://bizlink.ph)',
-                    'Accept' => 'text/html,application/xhtml+xml',
+                    'User-Agent' => 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36 facebookexternalhit/1.1',
+                    'Accept' => 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
+                    'Accept-Language' => 'en-US,en;q=0.9',
                 ])
                 ->get($url);
 
@@ -77,7 +82,7 @@ class LinkPreviewService
         }
     }
 
-    private function isPrivateHost(string $host): bool
+    public function isPrivateHost(string $host): bool
     {
         if (empty($host)) return true;
         if (in_array(strtolower($host), ['localhost', '127.0.0.1', '::1', '0.0.0.0'], true)) {
@@ -94,6 +99,20 @@ class LinkPreviewService
         );
     }
 
+    private function getMetaContent(string $html, string $key): ?string
+    {
+        $escaped = preg_quote($key, '/');
+        // Match <meta property="key" content="value"> or <meta name="key" content="value">
+        if (preg_match('/<meta[^>]+(?:property|name)=["\']' . $escaped . '["\'][^>]+content=["\']([^"\']*)["\']/i', $html, $m)) {
+            return $m[1];
+        }
+        // Match <meta content="value" property="key"> or <meta content="value" name="key">
+        if (preg_match('/<meta[^>]+content=["\']([^"\']*)["\'][^>]+(?:property|name)=["\']' . $escaped . '["\']/i', $html, $m)) {
+            return $m[1];
+        }
+        return null;
+    }
+
     private function extractMeta(string $html, string $url, string $host): array
     {
         $title = null;
@@ -101,36 +120,47 @@ class LinkPreviewService
         $image = null;
         $siteName = $host;
 
-        // OG title or <title>
-        if (preg_match('/<meta[^>]+property=["\']og:title["\'][^>]+content=["\']([^"\']+)["\']/i', $html, $m)) {
-            $title = html_entity_decode($m[1], ENT_QUOTES | ENT_HTML5, 'UTF-8');
+        // Title: OG title -> Twitter title -> <title>
+        $rawTitle = $this->getMetaContent($html, 'og:title')
+            ?? $this->getMetaContent($html, 'twitter:title');
+        if ($rawTitle !== null && trim($rawTitle) !== '') {
+            $title = html_entity_decode(trim($rawTitle), ENT_QUOTES | ENT_HTML5, 'UTF-8');
         } elseif (preg_match('/<title[^>]*>([^<]+)<\/title>/i', $html, $m)) {
             $title = html_entity_decode(trim($m[1]), ENT_QUOTES | ENT_HTML5, 'UTF-8');
         }
 
-        // OG description or standard description
-        if (preg_match('/<meta[^>]+property=["\']og:description["\'][^>]+content=["\']([^"\']+)["\']/i', $html, $m)) {
-            $description = html_entity_decode($m[1], ENT_QUOTES | ENT_HTML5, 'UTF-8');
-        } elseif (preg_match('/<meta[^>]+name=["\']description["\'][^>]+content=["\']([^"\']+)["\']/i', $html, $m)) {
-            $description = html_entity_decode($m[1], ENT_QUOTES | ENT_HTML5, 'UTF-8');
+        // Description: OG desc -> Twitter desc -> Meta desc
+        $rawDesc = $this->getMetaContent($html, 'og:description')
+            ?? $this->getMetaContent($html, 'twitter:description')
+            ?? $this->getMetaContent($html, 'description');
+        if ($rawDesc !== null && trim($rawDesc) !== '') {
+            $description = html_entity_decode(trim($rawDesc), ENT_QUOTES | ENT_HTML5, 'UTF-8');
         }
 
-        // OG image
-        if (preg_match('/<meta[^>]+property=["\']og:image["\'][^>]+content=["\']([^"\']+)["\']/i', $html, $m)) {
-            $img = trim($m[1]);
+        // Image: OG image -> Twitter image
+        $rawImg = $this->getMetaContent($html, 'og:image')
+            ?? $this->getMetaContent($html, 'og:image:url')
+            ?? $this->getMetaContent($html, 'twitter:image')
+            ?? $this->getMetaContent($html, 'twitter:image:src');
+        if ($rawImg !== null && trim($rawImg) !== '') {
+            $img = html_entity_decode(trim($rawImg), ENT_QUOTES | ENT_HTML5, 'UTF-8');
             if (str_starts_with($img, '//')) {
                 $img = 'https:' . $img;
             } elseif (str_starts_with($img, '/') && !empty($host)) {
-                $img = rtrim($url, '/') . '/' . ltrim($img, '/');
+                $parsedUrl = parse_url($url);
+                $scheme = $parsedUrl['scheme'] ?? 'https';
+                $img = $scheme . '://' . $host . $img;
             }
             if (filter_var($img, FILTER_VALIDATE_URL)) {
                 $image = $img;
             }
         }
 
-        // OG site_name
-        if (preg_match('/<meta[^>]+property=["\']og:site_name["\'][^>]+content=["\']([^"\']+)["\']/i', $html, $m)) {
-            $siteName = html_entity_decode($m[1], ENT_QUOTES | ENT_HTML5, 'UTF-8');
+        // Site Name
+        $rawSite = $this->getMetaContent($html, 'og:site_name')
+            ?? $this->getMetaContent($html, 'twitter:site');
+        if ($rawSite !== null && trim($rawSite) !== '') {
+            $siteName = html_entity_decode(trim($rawSite), ENT_QUOTES | ENT_HTML5, 'UTF-8');
         }
 
         return [

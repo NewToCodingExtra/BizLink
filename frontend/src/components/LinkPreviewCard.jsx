@@ -38,6 +38,9 @@ export default function LinkPreviewCard({ url, dark = false }) {
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [failed, setFailed] = useState(false);
+  const [imgSrc, setImgSrc] = useState(null);
+  const [imgFailed, setImgFailed] = useState(false);
+  const [triedProxy, setTriedProxy] = useState(false);
 
   useEffect(() => {
     if (!url) return;
@@ -52,6 +55,13 @@ export default function LinkPreviewCard({ url, dark = false }) {
         const preview = res?.data ?? res;
         if (preview && (preview.title || preview.description)) {
           setData(preview);
+          if (preview.image) {
+            setImgSrc(preview.image);
+            setImgFailed(false);
+            setTriedProxy(false);
+          } else {
+            setImgFailed(true);
+          }
         } else {
           setFailed(true);
         }
@@ -67,6 +77,16 @@ export default function LinkPreviewCard({ url, dark = false }) {
       active = false;
     };
   }, [url]);
+
+  const handleImageError = () => {
+    // If direct load failed (e.g. Brave shields or CDN Referer block), try server proxy
+    if (!triedProxy && data?.image) {
+      setTriedProxy(true);
+      setImgSrc(`/link-preview/image?url=${encodeURIComponent(data.image)}`);
+    } else {
+      setImgFailed(true);
+    }
+  };
 
   if (loading || failed || !data) return null;
 
@@ -86,15 +106,15 @@ export default function LinkPreviewCard({ url, dark = false }) {
           : "bg-bg border-border text-text-primary hover:border-action/40"
       }`}
     >
-      {data.image && (
+      {imgSrc && !imgFailed && (
         <div className="w-full h-32 sm:h-36 overflow-hidden bg-black/10">
           <img
-            src={data.image}
+            src={imgSrc}
             alt={data.title || "Link preview"}
+            referrerPolicy="no-referrer"
+            loading="lazy"
             className="w-full h-full object-cover"
-            onError={(e) => {
-              e.currentTarget.style.display = "none";
-            }}
+            onError={handleImageError}
           />
         </div>
       )}
