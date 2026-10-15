@@ -209,12 +209,20 @@ function Node({ c, depth, ctx }) {
   );
 }
 
-export default function CommentTree({ postId, postSlug, authorId, initialComments = [], autoLoad = true, onAdd }) {
+// Feed-level callers pool every post's comments into one array (see
+// HomeFeed/Profile flatMap). Only this post's items may seed the tree —
+// otherwise foreign comments flash until the fetch replaces them.
+function forPost(list, postId) {
+  if (!postId) return list || [];
+  return (list || []).filter((c) => String(c.postId ?? c.post_id) === String(postId));
+}
+
+export default function CommentTree({ postId, postSlug, authorId, initialComments = [], autoLoad = true, onAdd, previewLimit = null, totalCount = null, onViewAll = null }) {
   const toast = useToast();
   const { auth } = usePage().props;
   const viewer = auth?.user ?? null;
   const isPostOwner = !!(viewer && authorId && String(viewer.id) === String(authorId));
-  const [tree, setTree] = useState(() => nestFlat(initialComments));
+  const [tree, setTree] = useState(() => nestFlat(forPost(initialComments, postId)));
   const [loaded, setLoaded] = useState(false);
   const [loading, setLoading] = useState(false);
   const [sending, setSending] = useState(false);
@@ -237,6 +245,10 @@ export default function CommentTree({ postId, postSlug, authorId, initialComment
   };
 
   useEffect(() => {
+    // Reused across posts (feed preview -> modal, reels modal): reseed with
+    // this post's cache and refetch so no other post's thread ever shows.
+    setTree(nestFlat(forPost(initialComments, postId)));
+    setLoaded(false);
     if (autoLoad) load();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [postId, autoLoad]);
@@ -363,11 +375,22 @@ export default function CommentTree({ postId, postSlug, authorId, initialComment
     return <p className="text-sm text-text-secondary py-3">Loading comments…</p>;
   }
 
+  // Feed preview (Facebook-style): composer + first N threads only, the rest
+  // lives in the post modal so cards never stretch unbounded.
+  const shown = previewLimit != null ? (tree || []).slice(0, previewLimit) : (tree || []);
+  const total = totalCount ?? (tree || []).length;
+  const hidden = Math.max(0, total - shown.length);
+
   return (
     <div>
       {viewer ? <Composer onSend={sendTop} sending={sending} /> : <p className="text-sm text-text-secondary">Log in to comment.</p>}
       {(tree || []).length === 0 && loaded && <p className="text-sm text-text-secondary mt-3">No comments yet. Start the discussion.</p>}
-      {(tree || []).map((c) => <Node key={c.id} c={c} depth={0} ctx={ctx} />)}
+      {shown.map((c) => <Node key={c.id} c={c} depth={0} ctx={ctx} />)}
+      {previewLimit != null && hidden > 0 && (
+        <button onClick={() => onViewAll && onViewAll()} className="mt-2 text-sm font-medium text-text-secondary hover:text-text-primary">
+          View all {total} comment{total === 1 ? "" : "s"}
+        </button>
+      )}
     </div>
   );
 }

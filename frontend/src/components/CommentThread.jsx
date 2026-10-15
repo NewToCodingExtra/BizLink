@@ -12,6 +12,9 @@ export default function CommentThread({
   postSlug,
   authorId,
   autoLoad = true,
+  previewLimit = null,
+  totalCount = null,
+  onViewAll = null,
 }) {
   return (
     <div className="pt-3 border-t border-border mt-3">
@@ -24,6 +27,9 @@ export default function CommentThread({
           initialComments={comments}
           autoLoad={autoLoad}
           onAdd={onAdd}
+          previewLimit={previewLimit}
+          totalCount={totalCount}
+          onViewAll={onViewAll}
         />
       </div>
     </div>

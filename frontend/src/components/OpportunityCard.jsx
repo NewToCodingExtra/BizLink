@@ -1,16 +1,17 @@
 import { useRef, useState } from "react";
 import { Link, router, usePage } from "@inertiajs/react";
 import { can, hasRole } from "../utils/can";
-import CommentThread from "./CommentThread";
 import DropdownMenu from "./DropdownMenu";
-import { HeartIcon, CommentIcon, BookmarkIcon, CheckIcon, SparkleIcon } from "./icons";
+import { HeartIcon, CommentIcon, BookmarkIcon, SparkleIcon } from "./icons";
 import { profilePath } from "../utils/profilePath";
 import { displayCapital, displayRoi } from "../utils/money";
 import { useToast } from "../context/ToastContext";
 import Modal from "./Modal";
 import Button from "./Button";
 import ReportModal from "./ReportModal";
-import AuthorRoleBadge from "./AuthorRoleBadge";
+import AuthorIdentity, { AuthorBadges } from "./AuthorIdentity";
+import PostModal from "./PostModal";
+import SmartMedia, { FeedVideo } from "./SmartMedia";
 
 function badgeClasses(type) {
   if (type === "Franchise") return "bg-warning/10 text-warning border border-warning/20";
@@ -37,10 +38,10 @@ export default function OpportunityCard({ opp, comments, onToggleLike, onToggleS
   const page = usePage();
   const { auth } = page.props;
   const user = auth?.user ?? null;
-  const [showComments, setShowComments] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [reportOpen, setReportOpen] = useState(false);
+  const [postOpen, setPostOpen] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const menuBtnRef = useRef(null);
   const fresh = isFresh(opp.createdAt);
@@ -51,24 +52,15 @@ export default function OpportunityCard({ opp, comments, onToggleLike, onToggleS
 
   return (
     <article className="bg-surface rounded-xl border border-border shadow-sm hover:shadow-md transition-shadow duration-150 overflow-hidden">
-      <div className="p-3.5 sm:p-4 flex items-start gap-2.5 sm:gap-3">
-        <Link href={profilePath({ username: opp.user?.username || opp.authorUsername, authorId: opp.authorId, brandId: opp.brandId })} className="shrink-0 mt-0.5">
-          <img src={opp.brandAvatar} alt={opp.brandName} className="w-10 h-10 rounded-full object-cover shrink-0 aspect-square border border-border/40" />
+      <div className="p-3.5 sm:p-4 flex items-center gap-2.5 sm:gap-3">
+        <Link href={profilePath({ username: opp.user?.username || opp.authorUsername, authorId: opp.authorId, brandId: opp.brandId })} className="shrink-0 self-center">
+          <img src={opp.brandAvatar} alt={opp.brandName} className="w-8 h-8 sm:w-10 sm:h-10 rounded-full object-cover shrink-0 aspect-square border border-border/40" />
         </Link>
         <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-1.5 min-w-0">
-            <Link href={profilePath({ username: opp.user?.username || opp.authorUsername, authorId: opp.authorId, brandId: opp.brandId })} className="text-sm font-semibold text-text-primary hover:text-action truncate min-w-0">
-              {opp.brandName}
-            </Link>
-            {opp.verified && (
-              <span title="Verified Brand" className="inline-flex items-center gap-0.5 text-[10px] sm:text-[11px] font-bold text-success bg-success/10 border border-success/20 rounded-full px-1.5 sm:px-2 py-0.5 shrink-0 whitespace-nowrap">
-                <CheckIcon className="w-2.5 h-2.5 sm:w-3 sm:h-3" /> Verified
-              </span>
-            )}
-            <AuthorRoleBadge opp={opp} />
-          </div>
-          <div className="mt-0.5 flex items-center gap-1.5 flex-wrap">
-            <p className="text-xs text-text-secondary truncate">{opp.category} · {formatDate(opp.createdAt)}</p>
+          <AuthorIdentity opp={opp} />
+          <div className="mt-0.5 flex items-center gap-x-1.5 gap-y-1 flex-wrap">
+            <AuthorBadges opp={opp} className="inline-flex sm:hidden" />
+            <p className="text-xs text-text-secondary truncate min-w-0 max-w-full">{opp.category} · {formatDate(opp.createdAt)}</p>
             {fresh && <span className="text-[9px] font-bold tracking-wider bg-primary text-white px-1.5 py-0.5 rounded-full shrink-0 whitespace-nowrap leading-none">NEW</span>}
             {opp.featured && <span className="text-[9px] font-bold tracking-wider bg-accent text-[#0B1F3A] px-1.5 py-0.5 rounded-full shrink-0 whitespace-nowrap leading-none">FEATURED</span>}
             {opp.preferred && (
@@ -78,7 +70,7 @@ export default function OpportunityCard({ opp, comments, onToggleLike, onToggleS
             )}
           </div>
         </div>
-        <div className="flex items-center gap-1.5 shrink-0 mt-0.5">
+        <div className="flex items-center gap-1.5 shrink-0">
           <span className={`text-[11px] sm:text-xs font-medium border rounded-full px-2 sm:px-2.5 py-0.5 sm:py-1 shrink-0 whitespace-nowrap ${badgeClasses(opp.type)}`}>
             {opp.type}
           </span>
@@ -147,9 +139,9 @@ export default function OpportunityCard({ opp, comments, onToggleLike, onToggleS
 
       <Link href={`/post/${opp.slug}`} className="block bg-bg">
         {opp.mediaType === "video" && opp.videoUrl ? (
-          <video src={opp.videoUrl} muted loop playsInline poster={opp.image} className="w-full h-[280px] object-cover" />
+          <FeedVideo opp={opp} className="w-full h-[280px]" />
         ) : (
-          <img src={opp.image} alt={opp.headline} className="w-full h-[280px] object-cover" loading="lazy" />
+          <SmartMedia opp={opp} className="w-full h-[280px] object-cover" />
         )}
       </Link>
 
@@ -176,7 +168,7 @@ export default function OpportunityCard({ opp, comments, onToggleLike, onToggleS
             </button>
             <button
               type="button"
-              onClick={() => setShowComments(!showComments)}
+              onClick={() => setPostOpen(true)}
               aria-label="View comments"
               className="inline-flex items-center gap-1 sm:gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-full border border-border bg-surface text-text-secondary hover:bg-bg text-xs sm:text-sm font-medium transition-colors"
             >
@@ -202,8 +194,6 @@ export default function OpportunityCard({ opp, comments, onToggleLike, onToggleS
             Inquire
           </button>
         </div>
-
-        {showComments && <CommentThread postId={opp.id} postSlug={opp.slug} authorId={opp.authorId} comments={comments} onAdd={onAddComment} autoLoad={showComments} />}
       </div>
 
       <Modal
@@ -237,6 +227,19 @@ export default function OpportunityCard({ opp, comments, onToggleLike, onToggleS
         onClose={() => setReportOpen(false)}
         endpoint={`/opportunities/${opp.id}/report`}
         title="Report this post"
+      />
+
+      <PostModal
+        isOpen={postOpen}
+        onClose={() => setPostOpen(false)}
+        opp={opp}
+        comments={comments}
+        commentCount={commentCount}
+        onToggleLike={onToggleLike}
+        onToggleSave={onToggleSave}
+        onInquire={onInquire}
+        onAddComment={onAddComment}
+        saved={saved}
       />
     </article>
   );

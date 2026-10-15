@@ -6,6 +6,32 @@ import { httpApi } from "../utils/http";
 import { goInquire } from "../utils/inquire";
 import { useToast } from "../context/ToastContext";
 import ReportModal from "../Components/ReportModal";
+import { useVideoPoster } from "../Components/SmartMedia";
+
+function ReelGridThumb({ opp }) {
+  // Grid cells show the captured frame, never a black first-frame.
+  const poster = useVideoPoster(opp.videoUrl, opp.image || opp.brandAvatar);
+  if (opp.videoUrl) {
+    return (
+      <>
+        <video
+          src={opp.videoUrl}
+          poster={poster || undefined}
+          muted
+          playsInline
+          preload="metadata"
+          className="w-full h-full object-cover group-hover:scale-105 transition duration-300"
+        />
+        <span className="absolute top-1.5 right-1.5 w-7 h-7 rounded-full bg-black/60 border border-white/30 grid place-items-center text-white pointer-events-none">
+          <svg className="w-3.5 h-3.5 ml-px" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z" /></svg>
+        </span>
+      </>
+    );
+  }
+  return (
+    <img src={opp.image || opp.brandAvatar} alt={opp.headline} className="w-full h-full object-cover group-hover:scale-105 transition duration-300" />
+  );
+}
 
 export default function Profile({
   profileUser,
@@ -231,18 +257,7 @@ export default function Profile({
               )}
               {reelOpps.map((o) => (
                 <Link key={o.id} href={`/reels?slug=${o.slug}`} className="block aspect-[9/16] bg-bg relative group overflow-hidden">
-                  {o.videoUrl ? (
-                    <video
-                      src={o.videoUrl}
-                      poster={o.image || undefined}
-                      muted
-                      playsInline
-                      preload="metadata"
-                      className="w-full h-full object-cover group-hover:scale-105 transition duration-300"
-                    />
-                  ) : (
-                    <img src={o.image || o.brandAvatar} alt={o.headline} className="w-full h-full object-cover group-hover:scale-105 transition duration-300" />
-                  )}
+                  <ReelGridThumb opp={o} />
                   <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition flex items-center justify-center">
                     <span className="text-[var(--color-text-primary)] font-bold flex items-center gap-1">
                       <svg className="w-5 h-5 fill-white" viewBox="0 0 24 24"><path d="M8 5v14l11-7z" /></svg>
