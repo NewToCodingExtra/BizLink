@@ -228,6 +228,59 @@ class AdminConsoleModulesTest extends TestCase
         $this->assertEquals('10', \App\Models\Setting::get('login_rate_limit'));
     }
 
+    public function test_admin_verifications_auto_syncs_brand_users(): void
+    {
+        // Delete all verification requests
+        VerificationRequest::query()->delete();
+
+        $response = $this->actingAs($this->admin)->get('/admin/verifications');
+        $response->assertOk();
+
+        // VerificationRequest should now have synced rows for brand accounts
+        $this->assertGreaterThan(0, VerificationRequest::count());
+        $this->assertDatabaseHas('verification_requests', [
+            'user_id' => $this->brand->id,
+        ]);
+    }
+
+    public function test_admin_report_show_returns_full_report_structure_and_actionable_data(): void
+    {
+        $category = \App\Models\ReportCategory::firstOrCreate(
+            ['key' => 'spam'],
+            ['label' => 'Spam & Solicitation', 'severity' => 30, 'active' => true]
+        );
+
+        $report = \App\Models\Report::create([
+            'reporter_id' => $this->entrepreneur->id,
+            'category_id' => $category->id,
+            'reportable_type' => 'user',
+            'reportable_id' => $this->brand->id,
+            'details' => 'Suspicious business impersonation activity',
+            'status' => 'pending',
+            'priority_score' => 50,
+        ]);
+
+        $response = $this->actingAs($this->admin)->getJson("/admin/reports/{$report->id}");
+        $response->assertOk();
+        $response->assertJsonStructure([
+            'report' => [
+                'id',
+                'type',
+                'status',
+                'details',
+                'category' => ['label', 'severity'],
+                'reporter' => ['name', 'username'],
+            ],
+            'data',
+            'target',
+        ]);
+
+        $json = $response->json();
+        $this->assertEquals('pending', $json['report']['status']);
+        $this->assertNotEmpty($json['report']['category']['label']);
+        $this->assertNotEmpty($json['report']['reporter']['name']);
+    }
+
     public function test_admin_exports_stream(): void
     {
         $this->actingAs($this->admin)->get('/admin/export/users')->assertOk();
