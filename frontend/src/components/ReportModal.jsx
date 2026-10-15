@@ -4,9 +4,21 @@ import { useToast } from "../context/ToastContext";
 import Modal from "./Modal";
 import Button from "./Button";
 
+const DEFAULT_CATEGORIES = [
+  { key: "spam", label: "Spam / misleading", severity: 20 },
+  { key: "scam", label: "Scam / fraud", severity: 70 },
+  { key: "harassment", label: "Harassment / bullying", severity: 60 },
+  { key: "hate", label: "Hate speech", severity: 85 },
+  { key: "explicit", label: "Sexual / explicit", severity: 90 },
+  { key: "violence", label: "Violence / gore", severity: 95 },
+  { key: "self_harm", label: "Self-harm", severity: 95 },
+  { key: "copyright", label: "Copyright / IP", severity: 40 },
+  { key: "other", label: "Other", severity: 10 },
+];
+
 export default function ReportModal({ isOpen, onClose, endpoint, title = "Report content" }) {
   const toast = useToast();
-  const [categories, setCategories] = useState([]);
+  const [categories, setCategories] = useState(DEFAULT_CATEGORIES);
   const [categoryKey, setCategoryKey] = useState("spam");
   const [details, setDetails] = useState("");
   const [sending, setSending] = useState(false);
@@ -17,18 +29,17 @@ export default function ReportModal({ isOpen, onClose, endpoint, title = "Report
       .get("/report-categories")
       .then((res) => {
         const list = res?.data ?? res ?? [];
-        if (Array.isArray(list) && list.length) {
+        if (Array.isArray(list) && list.length > 0) {
           setCategories(list);
-          setCategoryKey(list[0].key);
+          if (!list.some((c) => c.key === categoryKey)) {
+            setCategoryKey(list[0].key);
+          }
+        } else {
+          setCategories(DEFAULT_CATEGORIES);
         }
       })
       .catch(() => {
-        setCategories([
-          { key: "spam", label: "Spam / misleading", severity: 20 },
-          { key: "harassment", label: "Harassment / bullying", severity: 60 },
-          { key: "scam", label: "Scam / fraud", severity: 70 },
-          { key: "other", label: "Other", severity: 10 },
-        ]);
+        setCategories(DEFAULT_CATEGORIES);
       });
   }, [isOpen]);
 

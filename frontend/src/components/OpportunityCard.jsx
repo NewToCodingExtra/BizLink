@@ -119,7 +119,7 @@ export default function OpportunityCard({ opp, comments, onToggleLike, onToggleS
                 share({
                   title: opp.headline,
                   text: opp.description,
-                  url: `/post/${opp.slug}`,
+                  url: `/post/${opp.slug || opp.id}`,
                 });
               }}
               className="w-full text-left px-4 py-2 min-h-[44px] flex items-center text-sm text-text-primary hover:bg-bg gap-2"
@@ -153,7 +153,7 @@ export default function OpportunityCard({ opp, comments, onToggleLike, onToggleS
         </div>
       </div>
 
-      <Link href={`/post/${opp.slug}`} className="block bg-bg">
+      <Link href={`/post/${opp.slug || opp.id}`} className="block bg-bg">
         {opp.mediaType === "video" && opp.videoUrl ? (
           <FeedVideo opp={opp} className="w-full h-[280px]" />
         ) : (
@@ -162,7 +162,7 @@ export default function OpportunityCard({ opp, comments, onToggleLike, onToggleS
       </Link>
 
       <div className="p-4">
-        <Link href={`/post/${opp.slug}`} className="text-lg font-semibold text-text-primary leading-tight hover:text-action line-clamp-2">{opp.headline}</Link>
+        <Link href={`/post/${opp.slug || opp.id}`} className="text-lg font-semibold text-text-primary leading-tight hover:text-action line-clamp-2">{opp.headline}</Link>
         <p className="text-sm text-text-secondary mt-2 line-clamp-2 leading-relaxed">{opp.description}</p>
 
         <div className="mt-3 flex flex-wrap gap-2">
@@ -206,7 +206,7 @@ export default function OpportunityCard({ opp, comments, onToggleLike, onToggleS
               onClick={() => share({
                 title: opp.headline,
                 text: opp.description,
-                url: `/post/${opp.slug}`,
+                url: `/post/${opp.slug || opp.id}`,
               })}
               aria-label="Share"
               className="inline-flex items-center gap-1 sm:gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-full border border-border bg-surface text-text-secondary hover:bg-bg hover:text-text-primary text-xs sm:text-sm font-medium transition-colors"

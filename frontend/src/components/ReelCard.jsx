@@ -60,7 +60,7 @@ export default function ReelCard({ opp, onToggleLike, onInquire, onOpenComments 
             <span className="text-[10px] tracking-widest bg-white/20 px-2 py-0.5 rounded-full shrink-0">{opp.type}</span>
             <AuthorRoleBadge opp={opp} dark />
           </p>
-          <Link href={`/post/${opp.slug}`} className="block text-white text-sm mt-1.5 leading-snug line-clamp-2 hover:underline drop-shadow-[0_1px_2px_rgba(0,0,0,0.9)]">{opp.headline}</Link>
+          <Link href={`/post/${opp.slug || opp.id}`} className="block text-white text-sm mt-1.5 leading-snug line-clamp-2 hover:underline drop-shadow-[0_1px_2px_rgba(0,0,0,0.9)]">{opp.headline}</Link>
           <p className="text-white/80 text-xs mt-1 truncate drop-shadow-[0_1px_2px_rgba(0,0,0,0.9)]">{displayCapital(opp)} · {displayRoi(opp)}</p>
         </div>
         <div className="flex flex-col items-center gap-2.5 shrink-0">
@@ -70,7 +70,7 @@ export default function ReelCard({ opp, onToggleLike, onInquire, onOpenComments 
             onClick={() => share({
               title: opp.headline,
               text: opp.description,
-              url: `/post/${opp.slug}`,
+              url: `/post/${opp.slug || opp.id}`,
             })}
             aria-label="Share"
             className="w-10 h-10 rounded-full grid place-items-center bg-white/20 text-white hover:bg-white/30 active:scale-95 transition-all"
@@ -99,7 +99,7 @@ export default function ReelCard({ opp, onToggleLike, onInquire, onOpenComments 
                   share({
                     title: opp.headline,
                     text: opp.description,
-                    url: `/post/${opp.slug}`,
+                    url: `/post/${opp.slug || opp.id}`,
                   });
                 }}
                 className="w-full text-left px-4 py-2 min-h-[44px] flex items-center text-sm text-[var(--color-text-primary)] hover:bg-[var(--color-bg)] gap-2"

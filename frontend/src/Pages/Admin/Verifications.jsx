@@ -122,7 +122,8 @@ export default function AdminVerifications({
     }
     setActing(true);
     try {
-      await httpApi.post(`/admin/verifications/${selectedRequest.user.id}/revoke`, {
+      const targetId = selectedRequest.user?.id || selectedRequest.id;
+      await httpApi.post(`/admin/verifications/${targetId}/revoke`, {
         reason: revokeReason.trim(),
       });
       toast.success(`Verified badge revoked for ${selectedRequest.businessName}.`);

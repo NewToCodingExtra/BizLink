@@ -82,7 +82,7 @@ export default function OpportunityDetail({ opp: initialOpp }) {
 
   const copyLink = async () => {
     try {
-      await navigator.clipboard.writeText(`${window.location.origin}/post/${opp.slug}`);
+      await navigator.clipboard.writeText(`${window.location.origin}/post/${opp.slug || opp.id}`);
       toast.success("Link copied.");
     } catch {
       toast.error("Copy failed.");
@@ -147,7 +147,7 @@ export default function OpportunityDetail({ opp: initialOpp }) {
                 share({
                   title: opp.headline,
                   text: opp.description,
-                  url: `/post/${opp.slug}`,
+                  url: `/post/${opp.slug || opp.id}`,
                 });
               }}
               className="w-full text-left px-4 py-2 min-h-[44px] flex items-center gap-2.5 text-sm text-text-primary hover:bg-bg"
@@ -244,7 +244,7 @@ export default function OpportunityDetail({ opp: initialOpp }) {
                 onClick={() => share({
                   title: opp.headline,
                   text: opp.description,
-                  url: `/post/${opp.slug}`,
+                  url: `/post/${opp.slug || opp.id}`,
                 })}
                 aria-label="Share"
                 className="inline-flex items-center justify-center gap-1.5 px-3 py-2.5 min-h-[44px] rounded-xl border border-border bg-surface text-text-secondary hover:bg-bg hover:text-text-primary text-sm font-medium transition-colors"

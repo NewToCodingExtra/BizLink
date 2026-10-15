@@ -510,7 +510,7 @@ export default function AdminDashboard({
                   <div className="min-w-0 flex-1">
                     <div className="flex items-center gap-1.5">
                       <Link
-                        href={`/post/${p.slug}`}
+                        href={`/post/${p.slug || p.id}`}
                         className="text-sm font-semibold text-text-primary hover:text-action truncate cursor-pointer"
                       >
                         {p.headline}

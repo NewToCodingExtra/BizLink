@@ -145,7 +145,7 @@ export default function EditOpportunity({ opportunity }) {
   return (
     <div className="max-w-2xl mx-auto px-4 sm:px-6 py-6">
       <Head title="Edit Opportunity" />
-      <Link href={`/post/${opportunity.slug}`} className="text-sm text-text-secondary hover:text-text-primary">Back to post</Link>
+      <Link href={`/post/${opportunity.slug || opportunity.id}`} className="text-sm text-text-secondary hover:text-text-primary">Back to post</Link>
       <h1 className="text-2xl font-semibold text-text-primary mt-2">Edit Opportunity</h1>
       <p className="text-sm text-text-secondary mt-1">Update the listing. Changes go live instantly and return you to the post.</p>
 
