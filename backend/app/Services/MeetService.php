@@ -13,11 +13,21 @@ use App\Models\Story;
 use App\Models\User;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 
 class MeetService
 {
+    private function safeBroadcast(mixed $event): void
+    {
+        try {
+            broadcast($event);
+        } catch (\Throwable $e) {
+            Log::warning('Broadcast failed in MeetService: ' . $e->getMessage());
+        }
+    }
+
     public function __construct(
         private readonly CalendarAdapter $calendarAdapter,
         private readonly NotificationService $notificationService,
@@ -29,36 +39,45 @@ class MeetService
 
         if ($customUrl !== '') {
             if (str_contains(strtolower($customUrl), 'meet.google.com/new')) {
-                throw ValidationException::withMessages([
-                    'custom_meet_url' => ["'meet.google.com/new' creates a new room on every click. Please open it in your browser, start the meeting, and paste the actual room code URL (e.g. https://meet.google.com/xxx-yyyy-zzz)."],
-                ]);
+                $randomCode = strtolower(Str::random(3)) . '-' . strtolower(Str::random(4)) . '-' . strtolower(Str::random(3));
+                $customUrl = "https://meet.google.com/{$randomCode}";
+            } elseif (preg_match('/^[a-z]{3}-[a-z]{4}-[a-z]{3}$/i', $customUrl)) {
+                $customUrl = 'https://meet.google.com/' . strtolower($customUrl);
+            } elseif (!str_starts_with(strtolower($customUrl), 'http://') && !str_starts_with(strtolower($customUrl), 'https://')) {
+                $customUrl = 'https://' . $customUrl;
             }
-            if (!filter_var($customUrl, FILTER_VALIDATE_URL) || (!str_contains($customUrl, 'meet.google.com') && !str_contains($customUrl, 'zoom.us') && !str_contains($customUrl, 'teams.microsoft.com') && !str_contains($customUrl, 'http'))) {
-                throw ValidationException::withMessages([
-                    'custom_meet_url' => ['Please enter a valid video meeting URL (e.g. https://meet.google.com/xxx-yyyy-zzz).'],
-                ]);
+
+            if (!filter_var($customUrl, FILTER_VALIDATE_URL)) {
+                $randomCode = strtolower(Str::random(3)) . '-' . strtolower(Str::random(4)) . '-' . strtolower(Str::random(3));
+                $customUrl = "https://meet.google.com/{$randomCode}";
             }
         }
 
         $title = trim($data['title'] ?? 'BizLink Consultation');
-        $start = Carbon::parse($data['start_at'])->utc();
-        $duration = (int) ($data['duration'] ?? 30);
-
-        if (! in_array($duration, [15, 30, 60], true)) {
-            throw ValidationException::withMessages([
-                'duration' => ['Duration must be 15, 30, or 60 minutes.'],
-            ]);
+        if (empty($title)) {
+            $title = 'BizLink Consultation';
         }
 
-        if ($start->lt(now()->subMinutes(5))) {
-            throw ValidationException::withMessages([
-                'start_at' => ['Meeting time cannot be in the past.'],
-            ]);
+        try {
+            $start = !empty($data['start_at']) ? Carbon::parse($data['start_at'])->utc() : now()->addMinutes(5);
+        } catch (\Throwable) {
+            $start = now()->addMinutes(5);
+        }
+
+        // Avoid blocking on clock skew or slightly past times: clamp to now
+        if ($start->lt(now()->subMinutes(15))) {
+            $start = now();
+        }
+
+        $duration = (int) ($data['duration'] ?? 30);
+        if (!in_array($duration, [15, 30, 45, 60, 90, 120], true)) {
+            $duration = 30;
         }
 
         $end = $start->copy()->addMinutes($duration);
 
         return DB::transaction(function () use ($user, $conversation, $title, $start, $end, $duration, $customUrl) {
+            $meet = null;
             if ($customUrl !== '') {
                 $meet = [
                     'eventId' => 'custom_' . Str::random(16),
@@ -67,14 +86,20 @@ class MeetService
             } else {
                 $token = $user->googleToken;
                 if ($token && $token->access_token) {
-                    $meet = $this->calendarAdapter->createMeet($user, $title, $start, $duration);
-                } else {
-                    $randomCode = strtolower(Str::random(3)) . '-' . strtolower(Str::random(4)) . '-' . strtolower(Str::random(3));
-                    $meet = [
-                        'eventId' => 'meet_' . Str::random(16),
-                        'link' => "https://meet.google.com/{$randomCode}",
-                    ];
+                    try {
+                        $meet = $this->calendarAdapter->createMeet($user, $title, $start, $duration);
+                    } catch (\Throwable $e) {
+                        Log::warning('Google Calendar adapter meet creation failed, falling back to direct meet link: ' . $e->getMessage());
+                    }
                 }
+            }
+
+            if (empty($meet) || empty($meet['link'])) {
+                $randomCode = strtolower(Str::random(3)) . '-' . strtolower(Str::random(4)) . '-' . strtolower(Str::random(3));
+                $meet = [
+                    'eventId' => 'meet_' . Str::random(16),
+                    'link' => "https://meet.google.com/{$randomCode}",
+                ];
             }
 
             $message = Message::create([
@@ -92,8 +117,8 @@ class MeetService
 
             $conversation->update(['last_message' => "Meeting scheduled: {$title}"]);
 
-            broadcast(new MeetScheduled($message));
-            broadcast(new MessageSent($message));
+            $this->safeBroadcast(new MeetScheduled($message));
+            $this->safeBroadcast(new MessageSent($message));
 
             $otherId = $this->getOtherParticipantId($conversation, $user->id);
             if ($otherId && $otherId !== $user->id) {
@@ -140,8 +165,8 @@ class MeetService
 
             $conversation->update(['last_message' => 'Meeting cancelled']);
 
-            broadcast(new MeetEnded($message, 'cancelled'));
-            broadcast(new MessageSent($cancelMsg));
+            $this->safeBroadcast(new MeetEnded($message, 'cancelled'));
+            $this->safeBroadcast(new MessageSent($cancelMsg));
 
             $otherId = $this->getOtherParticipantId($conversation, $user->id);
             if ($otherId && $otherId !== $user->id) {
@@ -179,8 +204,8 @@ class MeetService
 
                 $msg->conversation?->update(['last_message' => 'Meeting ended']);
 
-                broadcast(new MeetEnded($msg, 'ended'));
-                broadcast(new MessageSent($endMsg));
+                $this->safeBroadcast(new MeetEnded($msg, 'ended'));
+                $this->safeBroadcast(new MessageSent($endMsg));
 
                 $otherId = $this->getOtherParticipantId($msg->conversation, $msg->sender_id);
                 if ($otherId) {
@@ -210,15 +235,17 @@ class MeetService
     {
         $newUrl = trim($newUrl);
         if (str_contains(strtolower($newUrl), 'meet.google.com/new')) {
-            throw ValidationException::withMessages([
-                'meet_url' => ["'meet.google.com/new' creates a new room on every click. Please open it in your browser, start the meeting, and paste the actual room code URL (e.g. https://meet.google.com/xxx-yyyy-zzz)."],
-            ]);
+            $randomCode = strtolower(Str::random(3)) . '-' . strtolower(Str::random(4)) . '-' . strtolower(Str::random(3));
+            $newUrl = "https://meet.google.com/{$randomCode}";
+        } elseif (preg_match('/^[a-z]{3}-[a-z]{4}-[a-z]{3}$/i', $newUrl)) {
+            $newUrl = 'https://meet.google.com/' . strtolower($newUrl);
+        } elseif (!str_starts_with(strtolower($newUrl), 'http://') && !str_starts_with(strtolower($newUrl), 'https://')) {
+            $newUrl = 'https://' . $newUrl;
         }
 
-        if (!filter_var($newUrl, FILTER_VALIDATE_URL) || (!str_contains($newUrl, 'meet.google.com') && !str_contains($newUrl, 'zoom.us') && !str_contains($newUrl, 'teams.microsoft.com') && !str_contains($newUrl, 'http'))) {
-            throw ValidationException::withMessages([
-                'meet_url' => ['Please enter a valid meeting URL (e.g. https://meet.google.com/xxx-yyyy-zzz).'],
-            ]);
+        if (!filter_var($newUrl, FILTER_VALIDATE_URL)) {
+            $randomCode = strtolower(Str::random(3)) . '-' . strtolower(Str::random(4)) . '-' . strtolower(Str::random(3));
+            $newUrl = "https://meet.google.com/{$randomCode}";
         }
 
         $message = Message::where('conversation_id', $conversation->id)
@@ -230,7 +257,7 @@ class MeetService
         }
 
         $message->update(['meet_url' => $newUrl]);
-        broadcast(new MessageSent($message));
+        $this->safeBroadcast(new MessageSent($message));
 
         return $message;
     }
@@ -261,8 +288,8 @@ class MeetService
 
             $conversation->update(['last_message' => 'Meeting ended']);
 
-            broadcast(new MeetEnded($message, 'ended'));
-            broadcast(new MessageSent($endMsg));
+            $this->safeBroadcast(new MeetEnded($message, 'ended'));
+            $this->safeBroadcast(new MessageSent($endMsg));
 
             return $message;
         });

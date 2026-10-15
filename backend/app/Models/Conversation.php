@@ -107,7 +107,9 @@ class Conversation extends Model
 
     public function isParticipant(?int $userId): bool
     {
-        return $this->isBuyer($userId) || $this->isSeller($userId);
+        if (!$userId) return false;
+        if ($this->isBuyer($userId) || $this->isSeller($userId)) return true;
+        return $this->messages()->where('sender_id', $userId)->exists();
     }
 
     public function getOtherParticipantId(?int $userId): ?int

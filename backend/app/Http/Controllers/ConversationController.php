@@ -9,6 +9,15 @@ use Illuminate\Http\Request;
 
 class ConversationController extends Controller
 {
+    private function safeBroadcast($event): void
+    {
+        try {
+            broadcast($event);
+        } catch (\Throwable $e) {
+            \Illuminate\Support\Facades\Log::warning('Broadcast failed: ' . $e->getMessage());
+        }
+    }
+
     public function index(Request $request)
     {
         $user = $request->user();
@@ -142,7 +151,7 @@ class ConversationController extends Controller
             );
         }
 
-        broadcast(new \App\Events\MessageSent($message));
+        $this->safeBroadcast(new \App\Events\MessageSent($message));
 
         return response()->json([
             'conversation' => $this->serialize($convo->fresh('messages')),
@@ -231,7 +240,7 @@ class ConversationController extends Controller
         ]);
         $preview = $text !== '' ? $text : ($data['media_type'] === 'file' ? 'Sent a file' : 'Sent media');
         $conversation->update(['last_message' => $preview]);
-        broadcast(new \App\Events\MessageSent($message));
+        $this->safeBroadcast(new \App\Events\MessageSent($message));
         return response()->json(['data' => $this->serializeMessage($message)], 201);
     }
 
@@ -302,7 +311,7 @@ class ConversationController extends Controller
             'insight' => $snapshot,
         ]);
         $conversation->update(['last_message' => 'Shared sales insights']);
-        broadcast(new \App\Events\MessageSent($message));
+        $this->safeBroadcast(new \App\Events\MessageSent($message));
 
         return response()->json(['data' => $this->serializeMessage($message)], 201);
     }
@@ -318,7 +327,7 @@ class ConversationController extends Controller
             'id' => $model->id,
             'type' => $type,
             'kind' => $kind,
-            'slug' => $model->slug ?? null,
+            'slug' => $model->slug ?: (string) $model->id,
             'mediaUrl' => $model->image ?? $model->media_url ?? null,
             'videoUrl' => $model->video_url ?? null,
             'headline' => $model->headline ?? $model->caption ?? 'Story',
@@ -706,7 +715,7 @@ class ConversationController extends Controller
             'edited_at' => now(),
         ]);
 
-        broadcast(new \App\Events\MessageSent($message));
+        $this->safeBroadcast(new \App\Events\MessageSent($message));
 
         return response()->json(['data' => $this->serializeMessage($message)]);
     }
@@ -721,7 +730,7 @@ class ConversationController extends Controller
         $messageId = $message->id;
         $message->delete();
 
-        broadcast(new \App\Events\MessageDeleted($conversation->id, $messageId));
+        $this->safeBroadcast(new \App\Events\MessageDeleted($conversation->id, $messageId));
 
         return response()->json(['success' => true]);
     }
@@ -748,7 +757,7 @@ class ConversationController extends Controller
 
         $preview = $bumped->text ?: 'Bumped message';
         $conversation->update(['last_message' => $preview]);
-        broadcast(new \App\Events\MessageSent($bumped));
+        $this->safeBroadcast(new \App\Events\MessageSent($bumped));
 
         return response()->json(['data' => $this->serializeMessage($bumped)], 201);
     }
@@ -781,7 +790,7 @@ class ConversationController extends Controller
         }
 
         $message->load('reactions');
-        broadcast(new \App\Events\MessageSent($message));
+        $this->safeBroadcast(new \App\Events\MessageSent($message));
 
         return response()->json(['data' => $this->serializeMessage($message)]);
     }

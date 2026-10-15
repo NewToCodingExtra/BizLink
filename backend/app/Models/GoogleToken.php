@@ -32,6 +32,6 @@ class GoogleToken extends Model
         if (!$this->expires_at) {
             return false;
         }
-        return $this->expires_at->subSeconds(60)->isPast();
+        return $this->expires_at->copy()->subSeconds(60)->isPast();
     }
 }
