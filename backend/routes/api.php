@@ -10,6 +10,7 @@ use App\Http\Controllers\SocialAuthController;
 use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\OpportunityController;
 use App\Http\Controllers\PreferenceController;
+use App\Http\Controllers\ReportController;
 use App\Http\Controllers\StoryController;
 use App\Http\Controllers\UploadController;
 use App\Http\Controllers\PollController;
@@ -63,7 +64,13 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::patch('/comments/{comment}', [CommentController::class, 'update']);
     Route::delete('/comments/{comment}', [CommentController::class, 'destroy']);
     Route::post('/comments/{comment}/react', [CommentController::class, 'react'])->middleware('throttle:60,1');
-    Route::post('/comments/{comment}/report', [CommentController::class, 'report']);
+    Route::post('/comments/{comment}/report', [ReportController::class, 'reportComment']);
+    Route::get('/report-categories', [ReportController::class, 'categories']);
+    Route::post('/opportunities/{opportunity}/report', [ReportController::class, 'reportOpportunity']);
+    Route::post('/stories/{story}/report', [ReportController::class, 'reportStory']);
+    Route::post('/messages/{message}/report', [ReportController::class, 'reportMessage']);
+    Route::post('/conversations/{conversation}/report', [ReportController::class, 'reportConversation']);
+    Route::post('/users/{user}/report', [ReportController::class, 'reportUser']);
 
     Route::post('/stories', [StoryController::class, 'store']);
     Route::post('/stories/{story}/seen', [StoryController::class, 'markSeen']);

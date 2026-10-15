@@ -17,7 +17,7 @@ class StoryController extends Controller
             return response()->json(['data' => []]);
         }
 
-        $stories = Story::where('user_id', $user->id)->where(function ($q) {
+        $stories = Story::where('user_id', $user->id)->where('hidden_by_moderation', false)->where(function ($q) {
             $q->whereNull('expires_at')->orWhere('expires_at', '>', now());
         })->latest()->get();
 

@@ -59,6 +59,9 @@ class AdminController extends Controller
                 'moderation' => [
                     'reportedComments' => DB::table('comment_reports')->count(),
                     'deletedComments' => Comment::onlyTrashed()->count(),
+                    'pendingReports' => \App\Models\Report::where('status', 'pending')->count(),
+                    'highSeverity' => \App\Models\Report::where('status', 'pending')
+                        ->whereHas('category', fn ($c) => $c->where('severity', '>=', 70))->count(),
                 ],
             ],
 

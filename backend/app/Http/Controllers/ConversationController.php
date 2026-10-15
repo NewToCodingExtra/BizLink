@@ -329,7 +329,7 @@ class ConversationController extends Controller
             'conversationId' => $message->conversation_id,
             'senderId' => $message->sender_id,
             'from' => (int) $message->sender_id === (int) $viewerId ? 'me' : 'them',
-            'text' => $message->text,
+            'text' => $message->is_hidden ? '[Removed by moderation]' : $message->text,
             'time' => $message->created_at?->diffForHumans(),
             'mediaUrl' => $message->media_url,
             'mediaType' => $message->media_type,

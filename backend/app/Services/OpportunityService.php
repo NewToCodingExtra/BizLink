@@ -263,6 +263,8 @@ class OpportunityService
 
     private function applyFilters($query, Request $request, $viewer, array $signals): void
     {
+        // Moderated removals never surface in the feed/reels.
+        $query->where('hidden_by_moderation', false);
         if ($type = $request->query('type')) {
             if ($type !== 'All' && $type !== 'Following') {
                 $query->where('type', $type);

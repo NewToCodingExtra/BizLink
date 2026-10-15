@@ -93,3 +93,4 @@ Route::middleware('auth')->group(function () {
 require __DIR__.'/opportunities.php';
 require __DIR__.'/comments.php';
 require __DIR__.'/conversations.php';
+require __DIR__.'/reports.php';

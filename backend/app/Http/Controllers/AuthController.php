@@ -65,6 +65,10 @@ class AuthController extends Controller
 
         \Illuminate\Support\Facades\RateLimiter::clear($rateLimitKey);
 
+        if ($block = app(\App\Services\EnforcementService::class)->isBlocked($user)) {
+            throw ValidationException::withMessages(['email' => [$block]]);
+        }
+
         $token = $user->createToken('web')->plainTextToken;
 
         \App\Models\Preference::firstOrCreate(['user_id' => $user->id], ['categories' => []]);

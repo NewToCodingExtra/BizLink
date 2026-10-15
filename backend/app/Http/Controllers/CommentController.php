@@ -105,13 +105,28 @@ class CommentController extends Controller
     public function report(Request $request, Comment $comment)
     {
         $data = $request->validate([
-            'reason' => 'required|string|in:' . implode(',', CommentService::ALLOWED_REASONS),
+            'reason' => 'sometimes|string|max:64',
+            'category_key' => 'sometimes|string|max:64',
+            'details' => 'nullable|string|max:2000',
         ]);
 
-        $result = $this->comments->report($request->user(), $comment, $data['reason']);
+        // Backward compat: old clients send reason=spam|harassment|scam|other.
+        $categoryKey = $data['category_key'] ?? $data['reason'] ?? 'other';
+        $map = ['spam' => 'spam', 'harassment' => 'harassment', 'scam' => 'scam', 'other' => 'other'];
+        $categoryKey = $map[$categoryKey] ?? 'other';
 
-        return response()->json($result + ['message' => $result['hidden']
-            ? 'Thanks — this comment was hidden pending review.'
-            : 'Thanks — our team will review this comment.']);
+        $report = app(\App\Services\ReportService::class)->file(
+            $request->user(),
+            'comment',
+            (int) $comment->id,
+            $categoryKey,
+            $data['details'] ?? null
+        );
+
+        return response()->json([
+            'hidden' => false,
+            'data' => $report,
+            'message' => 'Thanks — our team will review this comment. Reports now prioritize it for admin review.',
+        ], 201);
     }
 }

@@ -35,6 +35,9 @@ class User extends Authenticatable
         return [
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
+            'suspended_until' => 'datetime',
+            'banned_at' => 'datetime',
+            'warning_count' => 'integer',
         ];
     }
 
