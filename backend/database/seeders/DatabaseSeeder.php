@@ -9,8 +9,10 @@ use App\Models\Message;
 use App\Models\Opportunity;
 use App\Models\Story;
 use App\Models\User;
+use App\Models\VerificationRequest;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Str;
 
 class DatabaseSeeder extends Seeder
 {
@@ -551,6 +553,44 @@ class DatabaseSeeder extends Seeder
                 ]
             );
         }
+
+        // Seed Verification Requests and update is_brand_verified
+        $unverifiedBrandKeys = ['brand-4', 'brand-8', 'brand-14', 'brand-16'];
+        foreach ($brandUsers as $brandKey => $bUser) {
+            $isUnverified = in_array($brandKey, $unverifiedBrandKeys, true);
+            $bUser->forceFill(['is_brand_verified' => ! $isUnverified])->save();
+
+            VerificationRequest::firstOrCreate(
+                ['user_id' => $bUser->id],
+                [
+                    'business_name' => $bUser->name,
+                    'status' => $isUnverified ? 'pending' : 'approved',
+                    'document_url' => 'https://example.com/docs/' . Str::slug($bUser->name) . ($isUnverified ? '-permit.pdf' : '-credentials.pdf'),
+                    'notes' => $isUnverified
+                        ? 'Submitted business permits and BIR 2303 registration for brand verification.'
+                        : 'Official franchise & wholesale brand partner credentials.',
+                    'admin_id' => $isUnverified ? null : $admin->id,
+                    'admin_note' => $isUnverified ? null : 'Verified business registration and DTI/SEC certification.',
+                    'resolved_at' => $isUnverified ? null : now()->subDays(10),
+                    'created_at' => $isUnverified ? now()->subDays(rand(1, 4)) : now()->subDays(rand(12, 30)),
+                ]
+            );
+        }
+
+        // Add 1 sample rejected request to populate rejected queue tab
+        VerificationRequest::firstOrCreate(
+            ['business_name' => 'Legacy Express Depot'],
+            [
+                'user_id' => $entrepreneur->id,
+                'status' => 'rejected',
+                'document_url' => 'https://example.com/docs/expired-sample-permit.pdf',
+                'notes' => 'Applied for franchise verification with municipal permit.',
+                'admin_id' => $admin->id,
+                'admin_note' => 'Permit submitted was expired and business registration could not be verified.',
+                'resolved_at' => now()->subDays(3),
+                'created_at' => now()->subDays(7),
+            ]
+        );
     }
 
     public static function parseCapitalAmount(?string $value): ?int

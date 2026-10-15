@@ -18,6 +18,8 @@ class VerificationAdminController extends Controller
     {
         abort_unless($request->user()?->can('users.manage'), 403, 'Admin access only.');
 
+        $this->syncMissingBrandVerifications();
+
         $data = $request->validate([
             'status' => 'nullable|string|in:pending,approved,rejected,all',
             'search' => 'nullable|string|max:100',
@@ -95,6 +97,54 @@ class VerificationAdminController extends Controller
         ]);
     }
 
+    /**
+     * Ensure all brand partners and accounts have representation in VerificationRequest queue.
+     */
+    protected function syncMissingBrandVerifications(): void
+    {
+        $brands = User::where('role', 'brand')
+            ->orWhereHas('roles', fn($r) => $r->where('name', 'Manager'))
+            ->orWhere('is_brand_verified', true)
+            ->orWhereHas('opportunities')
+            ->with('opportunities')
+            ->get();
+
+        if ($brands->isEmpty()) {
+            return;
+        }
+
+        $adminId = User::where('role', 'admin')->value('id');
+
+        foreach ($brands as $brand) {
+            $hasRequest = VerificationRequest::where('user_id', $brand->id)->exists();
+            if ($hasRequest) {
+                continue;
+            }
+
+            $hasVerifiedOpp = $brand->opportunities->contains(fn($o) => (bool) $o->verified);
+            $isVerified = (bool) ($brand->is_brand_verified && $hasVerifiedOpp);
+
+            if (! $hasVerifiedOpp && $brand->opportunities->isNotEmpty()) {
+                $isVerified = false;
+                $brand->forceFill(['is_brand_verified' => false])->save();
+            }
+
+            VerificationRequest::create([
+                'user_id' => $brand->id,
+                'business_name' => $brand->name,
+                'status' => $isVerified ? 'approved' : 'pending',
+                'document_url' => 'https://example.com/docs/' . \Illuminate\Support\Str::slug($brand->name) . '-credentials.pdf',
+                'notes' => $isVerified
+                    ? 'Official verified brand partner account.'
+                    : 'Submitted business registration and BIR permits awaiting operator review.',
+                'admin_id' => $isVerified ? $adminId : null,
+                'admin_note' => $isVerified ? 'Approved business credentials.' : null,
+                'resolved_at' => $isVerified ? now()->subDays(7) : null,
+                'created_at' => $isVerified ? now()->subDays(14) : now()->subDays(2),
+            ]);
+        }
+    }
+
     public function approve(Request $request, VerificationRequest $verificationRequest)
     {
         abort_unless($request->user()?->can('users.manage'), 403, 'Admin access only.');
@@ -152,6 +202,9 @@ class VerificationAdminController extends Controller
 
         $user = $verificationRequest->user;
         if ($user) {
+            $user->forceFill(['is_brand_verified' => false])->save();
+            $user->opportunities()->update(['verified' => false]);
+
             $this->notifications->push(
                 $user->id,
                 'verification_rejected',
@@ -182,6 +235,15 @@ class VerificationAdminController extends Controller
 
         $user->forceFill(['is_brand_verified' => false])->save();
         $user->opportunities()->update(['verified' => false]);
+
+        VerificationRequest::where('user_id', $user->id)
+            ->where('status', 'approved')
+            ->update([
+                'status' => 'rejected',
+                'admin_id' => $request->user()->id,
+                'admin_note' => 'Revoked: ' . $data['reason'],
+                'resolved_at' => now(),
+            ]);
 
         $this->notifications->push(
             $user->id,

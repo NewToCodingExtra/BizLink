@@ -2,6 +2,7 @@ import { useState, useRef } from "react";
 import { Head, Link, router, usePage } from "@inertiajs/react";
 import { hasRole } from "../../utils/can";
 import { httpApi } from "../../utils/http";
+import { profilePath } from "../../utils/profilePath";
 import { useToast } from "../../context/ToastContext";
 import AdminHeader from "../../Components/Admin/AdminHeader";
 import AdminStatCard from "../../Components/Admin/AdminStatCard";
@@ -283,23 +284,42 @@ export default function AdminVerifications({
                     <td className="py-3 px-4">
                       <div className="flex items-center gap-3">
                         {r.user?.avatar ? (
-                          <img
-                            src={r.user.avatar}
-                            alt=""
-                            className="w-9 h-9 rounded-full object-cover border border-border shrink-0 shadow-xs"
-                          />
+                          <Link href={profilePath(r.user)} className="shrink-0 cursor-pointer">
+                            <img
+                              src={r.user.avatar}
+                              alt=""
+                              className="w-9 h-9 rounded-full object-cover border border-border shrink-0 shadow-xs hover:border-action transition-all"
+                            />
+                          </Link>
                         ) : (
                           <div className="w-9 h-9 rounded-full bg-action/10 text-action grid place-items-center font-bold">
                             {r.businessName?.charAt(0) ?? "B"}
                           </div>
                         )}
                         <div className="min-w-0">
-                          <p className="font-bold text-text-primary truncate">
-                            {r.businessName}
-                          </p>
-                          <p className="text-xs text-text-secondary truncate">
-                            {r.user ? `${r.user.name} (@${r.user.username})` : "Account removed"}
-                          </p>
+                          {r.user ? (
+                            <Link
+                              href={profilePath(r.user)}
+                              className="font-bold text-text-primary hover:text-action hover:underline cursor-pointer truncate block transition-colors"
+                              title={`View ${r.businessName} profile`}
+                            >
+                              {r.businessName}
+                            </Link>
+                          ) : (
+                            <p className="font-bold text-text-primary truncate">
+                              {r.businessName}
+                            </p>
+                          )}
+                          {r.user ? (
+                            <Link
+                              href={profilePath(r.user)}
+                              className="text-xs text-text-secondary hover:text-action hover:underline truncate cursor-pointer block transition-colors"
+                            >
+                              {r.user.name} (@{r.user.username})
+                            </Link>
+                          ) : (
+                            <p className="text-xs text-text-secondary">Account removed</p>
+                          )}
                         </div>
                       </div>
                     </td>
