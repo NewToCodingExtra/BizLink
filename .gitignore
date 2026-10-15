@@ -11,3 +11,30 @@ backend/meilisearch.exe
 # Stray copies of the environment file — never commit these
 backend-env.txt
 frontend-env.txt
+
+# Agent folders and IDE tool configs
+.agents/
+.claude/
+.codex/
+.cursor/
+.grok/
+.kilo/
+skills-lock.json
+
+# Agent context, session, and planning files
+implementation_plan.md
+quality-test-plan.md
+quality-test-progress.md
+requirements-plan.md
+requirements-progress.md
+session-*.md
+session.md
+user-usage-context.md
+bizlink-requirements.md
+
+# Non-project artifacts, dumps, and root temporary files
+*.pdf
+dumps/
+*.tgz
+/composer.json
+
