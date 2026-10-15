@@ -57,4 +57,15 @@ return [
         'enabled' => env('DEMO_LOGIN', true),
     ],
 
+    'gcs' => [
+        'bucket' => env('GOOGLE_CLOUD_STORAGE_BUCKET'),
+        'project_id' => env('GOOGLE_CLOUD_PROJECT_ID'),
+        'key_file' => env('GOOGLE_CLOUD_KEY_FILE'),
+    ],
+
+    'frontend' => [
+        'url' => env('FRONTEND_URL', env('APP_URL', 'http://localhost:8000')),
+        'google_success' => env('GOOGLE_FRONTEND_SUCCESS'),
+    ],
+
 ];

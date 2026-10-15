@@ -23,7 +23,7 @@ class SocialAuthController extends Controller
 
     private function frontend(): string
     {
-        return env('GOOGLE_FRONTEND_SUCCESS', 'http://localhost:5173/auth/social/callback');
+        return config('services.frontend.google_success') ?: (rtrim(config('services.frontend.url', config('app.url', 'http://localhost:5173')), '/') . '/auth/social/callback');
     }
 
     private const SOCIAL_ROLES = ['entrepreneur', 'brand'];
@@ -98,8 +98,8 @@ class SocialAuthController extends Controller
             return response()->json([
                 'message' => ucfirst($provider) . ' OAuth is not configured. Set ' . strtoupper($provider) . '_CLIENT_ID and ' . strtoupper($provider) . '_CLIENT_SECRET in backend/.env',
                 'setup' => $provider === 'google'
-                    ? 'Create OAuth credentials at https://console.cloud.google.com/apis/credentials, authorized redirect URI: ' . env('GOOGLE_REDIRECT_URI')
-                    : 'Create a Login app at https://developers.facebook.com/apps, Valid OAuth Redirect URI: ' . env('FACEBOOK_REDIRECT_URI'),
+                    ? 'Create OAuth credentials at https://console.cloud.google.com/apis/credentials, authorized redirect URI: ' . config('services.google.redirect', env('GOOGLE_REDIRECT_URI'))
+                    : 'Create a Login app at https://developers.facebook.com/apps, Valid OAuth Redirect URI: ' . config('services.facebook.redirect', env('FACEBOOK_REDIRECT_URI')),
             ], 503);
         }
 

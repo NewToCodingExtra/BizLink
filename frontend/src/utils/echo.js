@@ -14,7 +14,9 @@ let echo = null;
 export function getEcho() {
   if (echo !== undefined && echo !== null) return echo;
   try {
-    const key = import.meta.env.VITE_REVERB_APP_KEY;
+    const key =
+      import.meta.env.VITE_REVERB_APP_KEY ||
+      (typeof document !== "undefined" ? document.querySelector('meta[name="reverb-key"]')?.getAttribute("content") : null);
     if (!key) {
       echo = null;
       return echo;

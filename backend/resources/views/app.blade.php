@@ -6,6 +6,7 @@
     <meta name="theme-color" content="#0B1F3A" media="(prefers-color-scheme: light)">
     <meta name="theme-color" content="#040814" media="(prefers-color-scheme: dark)">
     <meta name="csrf-token" content="{{ csrf_token() }}">
+    <meta name="reverb-key" content="{{ config('broadcasting.connections.reverb.key') }}">
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <title inertia>{{ config('app.name', 'BizLink') }}</title>
     @viteReactRefresh

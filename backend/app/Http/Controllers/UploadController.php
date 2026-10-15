@@ -87,7 +87,7 @@ class UploadController extends Controller
         $mediaType = $isVideo ? 'video' : ($isFile ? 'file' : 'image');
         $name = 'bizlink/' . now()->format('Y/m/d') . '/' . Str::uuid() . '.' . $extension;
 
-        $bucket = env('GOOGLE_CLOUD_STORAGE_BUCKET');
+        $bucket = config('services.gcs.bucket', env('GOOGLE_CLOUD_STORAGE_BUCKET'));
 
         if ($bucket) {
             try {
@@ -128,8 +128,8 @@ class UploadController extends Controller
 
     private function storeToGcs(string $bucketName, string $name, string $tmpPath, string $mime): string
     {
-        $options = ['projectId' => env('GOOGLE_CLOUD_PROJECT_ID') ?: null];
-        if ($keyFile = env('GOOGLE_CLOUD_KEY_FILE')) {
+        $options = ['projectId' => config('services.gcs.project_id', env('GOOGLE_CLOUD_PROJECT_ID')) ?: null];
+        if ($keyFile = config('services.gcs.key_file', env('GOOGLE_CLOUD_KEY_FILE'))) {
             $options['keyFile'] = json_decode(file_get_contents($keyFile), true);
         }
         $storage = new StorageClient(array_filter($options));

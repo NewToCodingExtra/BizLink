@@ -35,7 +35,8 @@ class PasswordResetController extends Controller
             ['token' => hash('sha256', $token), 'created_at' => now()]
         );
 
-        $link = rtrim(env('FRONTEND_URL', 'http://localhost:5173'), '/')
+        $frontendUrl = config('services.frontend.url', env('FRONTEND_URL', config('app.url', 'http://localhost:5173')));
+        $link = rtrim($frontendUrl, '/')
             . '/reset-password?email=' . urlencode($user->email)
             . '&token=' . urlencode($token);
 
