@@ -68,9 +68,6 @@ Route::post('/demo-login', [SessionAuthController::class, 'demoLogin'])
 
 // Authenticated pages
 Route::middleware(['auth', 'role.setup'])->group(function () {
-    // Admin console: the route guard is role-based, the controller check is
-    // permission-based ('users.manage') — both layers are demonstrated.
-    Route::get('/admin', [AdminController::class, 'index'])->middleware('role:Admin')->name('admin.index');
     Route::middleware(['auth', 'role:Admin|Manager|User'])->get('/create', [OpportunityController::class, 'create'])->name('opportunities.create');
 
     Route::get('/notifications', [PageController::class, 'notifications'])->name('notifications.index');
@@ -89,6 +86,9 @@ Route::middleware(['auth', 'role.setup'])->group(function () {
     Route::get('/follows', [FollowController::class, 'index'])->name('follows.index');
     Route::post('/follows/toggle', [FollowController::class, 'toggle'])->name('follows.toggle');
     Route::post('/uploads', [UploadController::class, 'store'])->name('uploads.store');
+
+    Route::post('/verifications', [\App\Http\Controllers\VerificationController::class, 'store'])->name('verifications.store');
+    Route::get('/verifications/status', [\App\Http\Controllers\VerificationController::class, 'status'])->name('verifications.status');
 });
 
 // First-run role picker for brand-new social accounts (outside the
@@ -102,3 +102,4 @@ require __DIR__.'/opportunities.php';
 require __DIR__.'/comments.php';
 require __DIR__.'/conversations.php';
 require __DIR__.'/reports.php';
+require __DIR__.'/admin.php';

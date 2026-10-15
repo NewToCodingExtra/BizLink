@@ -18,11 +18,3 @@ Route::middleware(['auth', 'suspension'])->group(function () {
     // NOTE: /comments/{comment}/report stays in routes/comments.php (legacy path,
     // now backed by the unified queue) to avoid duplicate route registration.
 });
-
-Route::middleware(['auth', 'role:Admin', 'suspension'])->prefix('admin')->name('admin.')->group(function () {
-    Route::get('/reports', [ReportAdminController::class, 'index'])->name('reports.index');
-    Route::get('/reports/{report}', [ReportAdminController::class, 'show'])->name('reports.show');
-    Route::post('/reports/{report}/reject', [ReportAdminController::class, 'reject'])->name('reports.reject');
-    Route::post('/reports/{report}/accept', [ReportAdminController::class, 'accept'])->name('reports.accept');
-    Route::get('/users/{user}/moderation-history', [ReportAdminController::class, 'history'])->name('users.history');
-});
