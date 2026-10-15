@@ -11,7 +11,7 @@ use Illuminate\Support\Facades\Route;
 | Do not register GET /opportunities/create.
 */
 
-Route::middleware(['auth', 'role:Admin|Manager'])->prefix('opportunities')->name('opportunities.')->group(function () {
+Route::middleware(['auth', 'role:Admin|Manager|User'])->prefix('opportunities')->name('opportunities.')->group(function () {
     Route::post('/', [PageController::class, 'storeOpportunity'])->name('store');
     Route::get('/{opportunity}/edit', [OpportunityController::class, 'edit'])->name('edit');
     Route::put('/{opportunity}', [OpportunityController::class, 'update'])->name('update');

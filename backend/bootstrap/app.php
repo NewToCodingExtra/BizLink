@@ -22,6 +22,7 @@ return Application::configure(basePath: dirname(__DIR__))
             'permission' => \Spatie\Permission\Middleware\PermissionMiddleware::class,
             'role_or_permission' => \Spatie\Permission\Middleware\RoleOrPermissionMiddleware::class,
             'suspension' => \App\Http\Middleware\CheckSuspension::class,
+            'role.setup' => \App\Http\Middleware\EnsureRoleSelected::class,
         ]);
         $middleware->api(append: [
             \App\Http\Middleware\CheckSessionActivity::class,

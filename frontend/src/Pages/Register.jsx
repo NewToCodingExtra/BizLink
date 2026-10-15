@@ -57,11 +57,11 @@ export default function Register() {
         <p className="text-sm text-text-secondary mt-1">Join the BizLink community.</p>
 
         <div className="mt-6 grid grid-cols-2 gap-3">
-          <a href="/auth/google/redirect" className="bg-surface border border-border hover:bg-bg text-text-primary text-sm font-medium py-2.5 rounded-lg transition-colors flex items-center justify-center gap-2">
+          <a href="/auth/google/redirect" className="bg-surface border border-border hover:bg-bg text-text-primary text-sm font-medium py-2.5 min-h-[44px] rounded-lg transition-colors flex items-center justify-center gap-2">
             <GoogleIcon size={20} />
             Google
           </a>
-          <a href="/auth/facebook/redirect" className="bg-[#1877F2] hover:bg-[#1464CC] text-white text-sm font-medium py-2.5 rounded-lg transition-colors flex items-center justify-center gap-2">
+          <a href="/auth/facebook/redirect" className="bg-[#1877F2] hover:bg-[#1464CC] text-white text-sm font-medium py-2.5 min-h-[44px] rounded-lg transition-colors flex items-center justify-center gap-2">
             <FacebookIcon size={20} />
             Facebook
           </a>
@@ -100,8 +100,8 @@ export default function Register() {
             <label className="text-sm font-medium text-text-primary">I am a</label>
             <div className="mt-2 flex gap-2">
               {[
-                { label: 'Entrepreneur', value: 'User' },
-                { label: 'Brand', value: 'Manager' },
+                { label: 'Entrepreneur', value: 'entrepreneur' },
+                { label: 'Brand', value: 'brand' },
               ].map((r) => (
                 <button 
                   key={r.value} 

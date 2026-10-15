@@ -8,6 +8,7 @@ use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\OpportunityController;
 use App\Http\Controllers\PageController;
 use App\Http\Controllers\PreferenceController;
+use App\Http\Controllers\RoleSetupController;
 use App\Http\Controllers\SocialAuthController;
 use App\Http\Controllers\SessionAuthController;
 use App\Http\Controllers\StoryController;
@@ -66,11 +67,11 @@ Route::post('/demo-login', [SessionAuthController::class, 'demoLogin'])
     ->name('demo.login');
 
 // Authenticated pages
-Route::middleware('auth')->group(function () {
+Route::middleware(['auth', 'role.setup'])->group(function () {
     // Admin console: the route guard is role-based, the controller check is
     // permission-based ('users.manage') — both layers are demonstrated.
     Route::get('/admin', [AdminController::class, 'index'])->middleware('role:Admin')->name('admin.index');
-    Route::middleware(['auth', 'role:Admin|Manager'])->get('/create', [OpportunityController::class, 'create'])->name('opportunities.create');
+    Route::middleware(['auth', 'role:Admin|Manager|User'])->get('/create', [OpportunityController::class, 'create'])->name('opportunities.create');
 
     Route::get('/notifications', [PageController::class, 'notifications'])->name('notifications.index');
     Route::get('/saved', [PageController::class, 'saved'])->name('saved');
@@ -88,6 +89,13 @@ Route::middleware('auth')->group(function () {
     Route::get('/follows', [FollowController::class, 'index'])->name('follows.index');
     Route::post('/follows/toggle', [FollowController::class, 'toggle'])->name('follows.toggle');
     Route::post('/uploads', [UploadController::class, 'store'])->name('uploads.store');
+});
+
+// First-run role picker for brand-new social accounts (outside the
+// role.setup guard so it is reachable while pending).
+Route::middleware('auth')->prefix('welcome')->name('welcome.')->group(function () {
+    Route::get('/role', [RoleSetupController::class, 'show'])->name('role');
+    Route::post('/role', [RoleSetupController::class, 'store'])->name('role.store');
 });
 
 require __DIR__.'/opportunities.php';

@@ -126,11 +126,11 @@ export default function Login() {
         </div>
 
         <div className="grid grid-cols-2 gap-3">
-          <a href="/auth/google/redirect" className="bg-surface border border-border hover:bg-bg text-text-primary text-sm font-medium py-2.5 rounded-lg transition-colors flex items-center justify-center gap-2">
+          <a href="/auth/google/redirect" className="bg-surface border border-border hover:bg-bg text-text-primary text-sm font-medium py-2.5 min-h-[44px] rounded-lg transition-colors flex items-center justify-center gap-2">
             <GoogleIcon size={20} />
             Google
           </a>
-          <a href="/auth/facebook/redirect" className="bg-[#1877F2] hover:bg-[#1464CC] text-white text-sm font-medium py-2.5 rounded-lg transition-colors flex items-center justify-center gap-2">
+          <a href="/auth/facebook/redirect" className="bg-[#1877F2] hover:bg-[#1464CC] text-white text-sm font-medium py-2.5 min-h-[44px] rounded-lg transition-colors flex items-center justify-center gap-2">
             <FacebookIcon size={20} />
             Facebook
           </a>

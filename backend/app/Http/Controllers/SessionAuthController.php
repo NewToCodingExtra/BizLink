@@ -143,6 +143,7 @@ class SessionAuthController extends Controller
             'role' => $data['role'] ?? 'entrepreneur',
             'avatar' => 'https://i.pravatar.cc/100?u=' . urlencode($data['email']),
         ]);
+        $user->assignRole(($data['role'] ?? 'entrepreneur') === 'brand' ? 'Manager' : 'User');
 
         Auth::login($user, true);
         $request->session()->regenerate();
