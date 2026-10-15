@@ -11,6 +11,7 @@ import { profilePath } from "../utils/profilePath";
 import Modal from "../components/Modal";
 import Button from "../components/Button";
 import ReportModal from "../components/ReportModal";
+import AuthorRoleBadge from "../components/AuthorRoleBadge";
 
 function badgeClasses(type) {
   if (type === "Franchise") return "bg-warning/10 text-warning border border-warning/20";
@@ -117,6 +118,7 @@ export default function OpportunityDetail({ opp: initialOpp }) {
                       <CheckIcon className="w-2.5 h-2.5 sm:w-3 sm:h-3" /> Verified
                     </span>
                   )}
+                  <AuthorRoleBadge opp={opp} />
                 </div>
                 {opp.category && (
                   <p className="text-xs text-text-secondary truncate mt-0.5">{opp.category}</p>

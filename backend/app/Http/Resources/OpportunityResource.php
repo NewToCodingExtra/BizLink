@@ -29,7 +29,13 @@ class OpportunityResource extends JsonResource
                 'name' => $this->user->name,
                 'username' => $this->user->username,
                 'avatar' => $this->user->avatar,
+                'role' => $this->user->role ?? null,
             ] : null,
+            // Author account type for the role badge (brand vs entrepreneur).
+            // Derived from the `role` column only (no extra queries).
+            'authorRole' => $this->relationLoaded('user') && $this->user
+                ? (in_array($this->user->role ?? 'entrepreneur', ['brand', 'admin'], true) ? 'brand' : 'entrepreneur')
+                : null,
             'brandName' => $this->brand_name,
             'brandAvatar' => $this->brand_avatar,
             'brandId' => $this->brand_id,

@@ -10,6 +10,7 @@ import { useToast } from "../context/ToastContext";
 import Modal from "./Modal";
 import Button from "./Button";
 import ReportModal from "./ReportModal";
+import AuthorRoleBadge from "./AuthorRoleBadge";
 
 function badgeClasses(type) {
   if (type === "Franchise") return "bg-warning/10 text-warning border border-warning/20";
@@ -64,6 +65,7 @@ export default function OpportunityCard({ opp, comments, onToggleLike, onToggleS
                 <CheckIcon className="w-2.5 h-2.5 sm:w-3 sm:h-3" /> Verified
               </span>
             )}
+            <AuthorRoleBadge opp={opp} />
           </div>
           <div className="mt-0.5 flex items-center gap-1.5 flex-wrap">
             <p className="text-xs text-text-secondary truncate">{opp.category} · {formatDate(opp.createdAt)}</p>

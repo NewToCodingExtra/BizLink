@@ -66,7 +66,7 @@ class OpportunityService
 
         $models = empty($ids)
             ? collect()
-            : Opportunity::with(['user:id,name,username,avatar', 'comments.user:id,username'])
+            : Opportunity::with(['user:id,name,username,avatar,role', 'comments.user:id,username'])
                 ->withCount(['likedBy', 'savedBy', 'comments'])
                 ->whereIn('id', $ids)
                 ->get()

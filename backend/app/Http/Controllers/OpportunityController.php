@@ -51,7 +51,7 @@ class OpportunityController extends Controller
 
     public function show(Request $request, Opportunity $opportunity)
     {
-        $opportunity->load(['user:id,name,username,avatar', 'comments.user:id,name,username,avatar']);
+        $opportunity->load(['user:id,name,username,avatar,role', 'comments.user:id,name,username,avatar,role']);
         $user = Auth::guard('sanctum')->user() ?? $request->user();
         
         $likedIds = $user ? [$opportunity->id => $user->likedOpportunities()->where('opportunity_id', $opportunity->id)->exists()] : [];
@@ -258,7 +258,7 @@ class OpportunityController extends Controller
     public function saved(Request $request)
     {
         $user = $request->user();
-        $opps = $user->savedOpportunities()->with(['user:id,name,username,avatar', 'comments.user:id,username'])->latest('opportunity_user_saves.created_at')->paginate(20);
+        $opps = $user->savedOpportunities()->with(['user:id,name,username,avatar,role', 'comments.user:id,username'])->latest('opportunity_user_saves.created_at')->paginate(20);
         $likedIds = $user->likedOpportunities()->pluck('opportunities.id')->toArray();
         $savedIds = $user->savedOpportunities()->pluck('opportunities.id')->toArray();
         

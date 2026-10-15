@@ -47,7 +47,7 @@ class UserController extends Controller
         $likedIds = $viewer ? $viewer->likedOpportunities()->pluck('opportunities.id')->toArray() : [];
         $savedIds = $viewer ? $viewer->savedOpportunities()->pluck('opportunities.id')->toArray() : [];
 
-        $opportunities = \App\Models\Opportunity::with(['user:id,name,username,avatar', 'comments.user:id,username'])
+        $opportunities = \App\Models\Opportunity::with(['user:id,name,username,avatar,role', 'comments.user:id,username'])
             ->where('user_id', $user->id)
             ->latest()
             ->get()

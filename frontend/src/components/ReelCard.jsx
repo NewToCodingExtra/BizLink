@@ -6,6 +6,7 @@ import { displayCapital, displayRoi } from "../utils/money";
 import { useToast } from "../context/ToastContext";
 import ReportModal from "./ReportModal";
 import DropdownMenu from "./DropdownMenu";
+import AuthorRoleBadge from "./AuthorRoleBadge";
 
 export default function ReelCard({ opp, onToggleLike, onInquire, onOpenComments }) {
   const ref = useRef(null);
@@ -41,6 +42,7 @@ export default function ReelCard({ opp, onToggleLike, onInquire, onOpenComments 
             <Link href={authorProfile}><img src={opp.brandAvatar} alt={opp.brandName} className="w-7 h-7 rounded-full border border-white/30 object-cover shrink-0 aspect-square" /></Link>
             <Link href={authorProfile} className="hover:underline truncate">{opp.brandName}</Link>
             <span className="text-[10px] tracking-widest bg-white/20 px-2 py-0.5 rounded-full shrink-0">{opp.type}</span>
+            <AuthorRoleBadge opp={opp} dark />
           </p>
           <Link href={`/post/${opp.slug}`} className="block text-white text-sm mt-1 line-clamp-2 hover:underline">{opp.headline}</Link>
           <p className="text-white/70 text-xs mt-1">{displayCapital(opp)} · {displayRoi(opp)}</p>
