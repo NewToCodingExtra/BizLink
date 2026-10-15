@@ -7,15 +7,28 @@
 
 **The Philippines' verified franchise and wholesale matchmaking platform — curated opportunities, direct inquiries, nationwide reach.**
 
+[![Live Demo](https://img.shields.io/badge/Live%20Demo-bizlink--production--e3ee.up.railway.app-0B1F3A?style=for-the-badge&logo=railway&logoColor=white)](https://bizlink-production-e3ee.up.railway.app/)
+
 [![React](https://img.shields.io/badge/React-19-61DAFB?style=flat-square&logo=react&logoColor=white)](https://react.dev)
 [![Vite](https://img.shields.io/badge/Vite-7-646CFF?style=flat-square&logo=vite&logoColor=white)](https://vitejs.dev)
 [![Tailwind CSS](https://img.shields.io/badge/Tailwind-4-06B6D4?style=flat-square&logo=tailwindcss&logoColor=white)](https://tailwindcss.com)
 [![Inertia](https://img.shields.io/badge/Inertia-React-9553E9?style=flat-square)](https://inertiajs.com)
 [![Laravel](https://img.shields.io/badge/Laravel-12-FF2D20?style=flat-square&logo=laravel&logoColor=white)](https://laravel.com)
+[![Fortify](https://img.shields.io/badge/Auth-Laravel%20Fortify-FF2D20?style=flat-square)](https://laravel.com/docs/fortify)
+[![Spatie Permission](https://img.shields.io/badge/RBAC-Spatie%20Permission-18B69B?style=flat-square)](https://spatie.be/docs/laravel-permission)
 [![MySQL](https://img.shields.io/badge/MySQL-8-4479A1?style=flat-square&logo=mysql&logoColor=white)](https://www.mysql.com)
 [![Reverb](https://img.shields.io/badge/Reverb-WebSockets-0B1F3A?style=flat-square)](https://laravel.com/docs/reverb)
 [![License: MIT](https://img.shields.io/badge/License-MIT-C9A24B?style=flat-square)](#license)
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-2563EB?style=flat-square)](#contributing)
+
+---
+
+### 🌐 Live Production Deployment
+**Experience the live application:** [https://bizlink-production-e3ee.up.railway.app/](https://bizlink-production-e3ee.up.railway.app/)
+
+*Hosted on Railway with automated container builds, MySQL persistence, and Laravel Reverb WebSockets.*
+
+---
 
 </div>
 
@@ -26,13 +39,18 @@
 - [Getting the code](#getting-the-code)
 - [Prerequisites](#prerequisites)
 - [Getting started](#getting-started)
+- [Authentication & RBAC Architecture](#authentication--rbac-architecture)
+  - [Laravel Fortify (Authentication)](#1-laravel-fortify-headless-authentication)
+  - [Spatie Laravel-Permission (RBAC)](#2-spatie-laravel-permission-role-based-access-control)
+  - [Permissions Matrix](#3-permissions-matrix)
+  - [Policy-Level Ownership Checks](#4-policy-level-ownership-checks)
+  - [Security & Moderation Enforcement](#5-security--moderation-enforcement)
 - [Features](#features)
 - [Admin console](#admin-console)
 - [Design system](#design-system)
 - [Tech stack](#tech-stack)
 - [Project structure](#project-structure)
 - [API endpoints](#api-endpoints)
-- [Auth](#auth)
 - [Configuration](#configuration)
 - [Build, test, and deploy](#build-test-and-deploy)
 - [Troubleshooting](#troubleshooting)
@@ -45,20 +63,19 @@
 
 ## Why BizLink?
 
-> Most franchise discovery in PH happens on scattered Facebook pages and untrusted posters.
-> **BizLink centralizes it** — one trusted feed where brands publish opportunities and entrepreneurs discover, compare, and launch.
+> Most franchise and wholesale discovery in the Philippines happens across fragmented Facebook groups, unverified chat threads, and untrusted flyers.
+> **BizLink centralizes it** — one verified, curated feed where brands publish business opportunities and entrepreneurs discover, evaluate, and connect directly.
 
-**Dual-role model:** brands publish verified opportunities, entrepreneurs discover them, inquire, and open private consultation threads.
+**Dual-Role Model:**
+- **Brands** publish verified opportunities (Franchise, Wholesale, Distribution, Resell), showcase pitch reels, answer inquiries, and schedule Google Meet consultations.
+- **Entrepreneurs** discover tailored opportunities via custom budget/category preferences, save shortlists, participate in community discussions, and chat directly with brand representatives.
 
 ```
-Brand posts Franchise / Wholesale / Resell → Feed + Reels + Stories → Buyer likes, comments, inquires → Private consultation → Saved shortlist
+Brand publishes Opportunity / Reel / Story → Discovery Feed → Entrepreneur reviews ROI & Capital → Private Inquiry & Thread → Google Meet Consultation
 ```
 
-**Guest landing:** visitors see the Bridging Brands hero with demo credentials and calls to action on `/`. Signing in takes you to the live `/feed`.
-
-**Requirements:** PHP 8.2+, MySQL 8.0, Node 18+. Optional: Google/Facebook OAuth apps, Meilisearch (search falls back to the database without it).
-
-**Platforms:** Windows (XAMPP), macOS, Linux. Developed on Windows + XAMPP.
+- **Guest Landing:** Visitors arriving at `/` see the full business overview, mission/vision, objectives, and feature highlights with demo login shortcuts. Authenticated users are directed straight to the active `/feed` or `/admin` console.
+- **Supported Platforms:** Windows (XAMPP / native), macOS, Linux, and Docker/Railway containers.
 
 ---
 
@@ -68,14 +85,15 @@ Brand posts Franchise / Wholesale / Resell → Feed + Reels + Stories → Buyer 
   <img src="https://images.unsplash.com/photo-1497366216548-37526070297c?w=1200&q=80&auto=format&fit=crop" width="100%" alt="BizLink marketplace preview" style="border-radius: 16px; border: 1px solid #E2E8F0;" />
 </p>
 
-| Feed | Reels | Inbox |
-|------|-------|-------|
-| Opportunity cards with type badges, ROI, capital, author-role pills | Vertical snap-scroll pitch videos with smart thumbnails | Private buyer–seller threads with quotes, polls, files, Meet |
-| Filter chips (All / Franchise / Wholesale / Resell / Following) | Autoplay in view, tap to unmute, like/inquire overlays | Last-message preview, unread dot, live updates |
+| Opportunity Feed | Pitch Reels | Real-Time Messenger |
+|---|---|---|
+| Rich cards with business type badges, verified checkmarks, ROI & capital chips, bookmarking, and inquiry triggers. | Vertical snap-scroll pitch videos with smart brightest-frame thumbnails, autoplay, and audio toggles. | Live WebSocket chat with quote cards, interactive polls, attachments, and Google Meet scheduling. |
 
 ---
 
 ## Getting the code
+
+Clone the official repository:
 
 ```bash
 git clone https://github.com/NewToCodingExtra/BizLink.git
@@ -83,166 +101,303 @@ cd BizLink
 ```
 
 > [!IMPORTANT]
-> Clone into a folder path **without spaces** if you can (for example `C:\projects\BizLink`). Paths like `C:\xampp\htdocs\3RD YEAR\BuseLink` work, but you must quote them in every PowerShell command and some tooling handles them poorly.
+> **Path Gotcha:** Clone into a directory path **without spaces** (e.g., `C:\projects\BizLink` or `~/projects/BizLink`). Spaces in parent directory paths (such as `...\3RD YEAR\...`) can cause path-quoting issues in PowerShell, npm script runners, and native binary builds.
 
-No submodules, no Git LFS, no monorepo tricks — a plain clone is enough.
+### Repository Branches
+- `main` / `master`: Stable production releases deployed to Railway.
+- `untested`: Active integration and staging branch.
 
 ---
 
 ## Prerequisites
 
-| Tool | Version | Why it matters | Link |
-|------|---------|----------------|------|
-| [PHP](https://www.php.net/downloads) | 8.2+ | Backend runtime; older PHP cannot run Laravel 12 | [php.net](https://www.php.net/downloads) |
-| [Composer](https://getcomposer.org/) | 2.x | Installs Laravel dependencies | [getcomposer.org](https://getcomposer.org/) |
-| [MySQL](https://www.mysql.com/) | 8.0 | Primary database (isolated instance on `:3307` so existing installs are untouched) | [mysql.com](https://www.mysql.com/) |
-| [Node.js + npm](https://nodejs.org/) | 18+ / 10+ | Builds the React frontend | [nodejs.org](https://nodejs.org/) |
+Ensure all runtime tools are installed and verified before starting:
 
-Optional but recommended:
+| Tool | Minimum Version | Why it Matters | Link |
+|------|-----------------|----------------|------|
+| [PHP](https://www.php.net/downloads) | **8.2+** | Backend runtime required by Laravel 11/12; includes typed properties and performance improvements. | [php.net](https://www.php.net/downloads) |
+| [Composer](https://getcomposer.org/) | **2.x** | PHP dependency manager for Laravel, Fortify, and Spatie packages. | [getcomposer.org](https://getcomposer.org/) |
+| [Node.js](https://nodejs.org/) | **18+** (20+ recommended) | JavaScript runtime required for Vite 7 and React 19 builds. | [nodejs.org](https://nodejs.org/) |
+| [npm](https://docs.npmjs.com/) | **10+** | Package manager for frontend dependencies. | [nodejs.org](https://nodejs.org/) |
+| [MySQL](https://www.mysql.com/) | **8.0+** | Relational database for relational data, full-text indexing, and audit logging. | [mysql.com](https://www.mysql.com/) |
 
-| Tool | Purpose |
-|------|---------|
-| [Google Cloud OAuth app](https://console.cloud.google.com/apis/credentials) | Google sign-in + Calendar/Meet connection (see [Auth](#auth)) |
-| [Facebook Login app](https://developers.facebook.com/apps) | Facebook sign-in |
-| [Meilisearch](https://www.meilisearch.com/) | Typo-tolerant search; the app falls back to database search when it is down |
+### Optional Integrations
+- **Google Cloud OAuth 2.0:** Enables Google Sign-In and automated Google Calendar / Meet link generation.
+- **Facebook Login:** Enables Facebook OAuth authentication.
+- **Meilisearch:** High-performance typo-tolerant search engine (app gracefully falls back to SQL `LIKE` queries if unavailable).
 
-Verify your toolchain:
+Verify your local environment:
 
-```powershell
-php --version      # 8.2+
-composer --version # 2.x
-node --version     # 18+
-npm --version      # 10+
+```bash
+php --version      # Must report 8.2 or higher
+composer --version # Must report 2.x
+node --version     # Must report v18.0.0 or higher
+npm --version      # Must report 10.x or higher
 ```
 
 > [!TIP]
-> On Windows, put XAMPP's PHP first in `PATH` before running Composer (`$env:PATH = "C:\xampp\php;" + $env:PATH`) so the `openssl` extension is available.
+> On Windows with XAMPP, ensure XAMPP's PHP is prioritized in your system PATH so that the `openssl`, `pdo_mysql`, and `mbstring` extensions are active:
+> ```powershell
+> $env:PATH = "C:\xampp\php;" + $env:PATH
+> ```
 
 ---
 
 ## Getting started
 
-### 0) Database
+### 1) Database Setup
 
-A dedicated MySQL instance on `:3307` keeps existing installs untouched:
-
-```powershell
-# data dir already initialized at C:\temp\bizlink-mysql\data
-# or run .\start-bizlink.ps1 from the repo root, which does steps 0–2 for you:
-& "C:\Program Files\MySQL\MySQL Server 8.0\bin\mysqld.exe" --datadir=C:\temp\bizlink-mysql\data --port=3307 --mysqlx-port=33070 --bind-address=127.0.0.1 --server-id=99
-```
-
-Database `bizlink`, user `bizlink` / `Bizlink123!` must exist once (see [Configuration](#configuration)):
+Ensure a MySQL instance is running. Create the dedicated database and user:
 
 ```sql
 CREATE DATABASE bizlink CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 CREATE USER 'bizlink'@'127.0.0.1' IDENTIFIED BY 'Bizlink123!';
 GRANT ALL ON bizlink.* TO 'bizlink'@'127.0.0.1';
+FLUSH PRIVILEGES;
 ```
 
-### 1) Backend (`http://localhost:8000`)
+### 2) Backend Setup (`http://localhost:8000`)
 
 ```powershell
 cd backend
-copy .env.example .env   # then set DB_* and APP_KEY below
+copy .env.example .env
+
+# Install backend dependencies
 composer install
+
+# Generate application encryption key
 php artisan key:generate
+
+# Run database migrations and seed default roles, permissions, and demo content
 php artisan migrate:fresh --seed
+
+# Start the Laravel development server
 php artisan serve --host=127.0.0.1 --port=8000
 ```
 
-### 2) Frontend (assets for Laravel — open `http://localhost:8000`, not `:5173`)
+### 3) Frontend Setup (Vite HMR)
+
+Open a second terminal:
 
 ```powershell
 cd frontend
 npm install
-npm run dev      # HMR via backend/public/hot
-npm run build    # production → backend/public/build
-npm run lint     # oxlint
+
+# Start Vite in development mode (hot reloading through Laravel)
+npm run dev
 ```
 
-> [!TIP]
-> One shot from the repo root: `.\start-bizlink.ps1` starts MySQL + Laravel + Reverb + Vite + Meilisearch together.
+> [!NOTE]
+> Always access the application through the Laravel server URL (**`http://localhost:8000`**), not Vite's `:5173`. Vite serves the compiled assets directly to the Inertia Blade root view.
 
-**Demo accounts (seeded):**
+### 4) Real-Time WebSockets (Laravel Reverb)
 
-| Role | Email | Password |
-|------|-------|----------|
-| Admin | `admin@bizlink.ph` | `password123` |
-| Entrepreneur | `demo@bizlink.ph` | `password123` |
-| Brand owner | `brand@bizlink.ph` | `password123` |
+Open a third terminal to run the WebSocket server for real-time messages and notifications:
+
+```powershell
+cd backend
+php artisan reverb:start --port=8080
+```
+
+*(Alternatively, run `.\start-bizlink.ps1` from the repo root on Windows to initialize MySQL, Laravel, Reverb, Vite, and Meilisearch in unified background processes).*
+
+---
+
+### Demo Accounts
+
+The database seeder (`DatabaseSeeder` + `RolesAndPermissionsSeeder`) creates three ready-to-test accounts:
+
+| Role | Email | Password | Primary Capabilities |
+|------|-------|----------|----------------------|
+| **Admin** | `admin@bizlink.ph` | `password123` | Full access to `/admin`, moderation queues, user bans, brand verification reviews, and system settings. |
+| **Brand Owner** (`Manager`) | `brand@bizlink.ph` | `password123` | Publish business opportunities, post pitch reels/stories, answer buyer inquiries, schedule consultations. |
+| **Entrepreneur** (`User`) | `demo@bizlink.ph` | `password123` | Browse feeds, submit inquiries, chat in real-time, save opportunities, configure personalized feed preferences. |
+
+---
+
+## Authentication & RBAC Architecture
+
+BizLink utilizes an enterprise-grade security and access control architecture pairing **Laravel Fortify** (headless authentication) with **Spatie Laravel-Permission** (granular Role-Based Access Control).
+
+```
+                      ┌────────────────────────────────────────┐
+                      │            User Requests               │
+                      └──────────────────┬─────────────────────┘
+                                         │
+                         [CheckSuspension Middleware]
+                                         │ (Passes if active)
+                                         ▼
+                   ┌─────────────────────────────────────────────┐
+                   │        Laravel Fortify / Session Auth       │
+                   │  - Registration & Login                     │
+                   │  - IP Rate Limiting (5 req/min)             │
+                   │  - FortifyLoginResponse (Role Redirect)     │
+                   └─────────────────────┬───────────────────────┘
+                                         │
+                                         ▼
+            ┌────────────────────────────────────────────────────────┐
+            │         Spatie Laravel-Permission (RBAC)               │
+            │   Roles: Admin  |  Manager (Brand)  |  User (Client)   │
+            └──────────────┬──────────────────────────┬──────────────┘
+                           │                          │
+        Admin Routes (role:Admin)             Content Routes (can:...)
+                           │                          │
+                           ▼                          ▼
+               ┌──────────────────────┐   ┌──────────────────────┐
+               │    /admin Console    │   │  OpportunityPolicy   │
+               │  - User discipline   │   │  - Spatie permission │
+               │  - Report queue      │   │  - Ownership check   │
+               │  - Verifications     │   │    (user_id === post)│
+               └──────────────────────┘   └──────────────────────┘
+```
+
+---
+
+### 1. Laravel Fortify (Headless Authentication)
+
+[Laravel Fortify](https://laravel.com/docs/fortify) handles all authentication logic without tying the backend to Blade templates:
+- **Service Provider:** Configured in [`FortifyServiceProvider.php`](file:///backend/app/Providers/FortifyServiceProvider.php).
+- **Inertia View Binding:** Fortify's authentication views (`loginView`, `registerView`, `requestPasswordResetLinkView`, `resetPasswordView`) render customized React components via Inertia (`Login.jsx`, `Register.jsx`, `ForgotPassword.jsx`, `ResetPassword.jsx`).
+- **Registration Flow ([`CreateNewUser.php`](file:///backend/app/Actions/Fortify/CreateNewUser.php)):**
+  - Accepts `name`, `email`, `password`, and optional `role` (`brand` or `entrepreneur`).
+  - Creates the `User` record with hashed credentials.
+  - Automatically assigns the corresponding Spatie role:
+    ```php
+    $user->assignRole(($input['role'] ?? 'entrepreneur') === 'brand' ? 'Manager' : 'User');
+    ```
+- **Contextual Post-Login Redirect ([`FortifyLoginResponse.php`](file:///backend/app/Http/Responses/FortifyLoginResponse.php)):**
+  - Admins are redirected directly to the administrative dashboard (`/admin`).
+  - Brand managers and regular entrepreneurs are routed to the main feed (`/feed`).
+- **Brute Force Defense:** Rate-limited to **5 attempts per minute** keyed by lowercase username and client IP.
+- **Social OAuth Integration:** Google and Facebook logins (via Laravel Socialite) integrate with the [`EnsureRoleSelected.php`](file:///backend/app/Http/Middleware/EnsureRoleSelected.php) middleware. First-time social sign-ups are routed to `/welcome/role` to select their platform role before accessing the feed.
+
+---
+
+### 2. Spatie Laravel-Permission (Role-Based Access Control)
+
+Granular authorization is implemented with [`spatie/laravel-permission`](https://spatie.be/docs/laravel-permission).
+The [`User`](file:///backend/app/Models/User.php) model implements the `HasRoles` trait:
+
+```php
+use Spatie\Permission\Traits\HasRoles;
+
+class User extends Authenticatable
+{
+    use HasFactory, Notifiable, HasApiTokens, HasRoles;
+    // ...
+}
+```
+
+The system defines three core roles seeded by [`RolesAndPermissionsSeeder.php`](file:///backend/database/seeders/RolesAndPermissionsSeeder.php):
+
+1. **`Admin`**: Platform operator possessing global moderation and administrative authority.
+2. **`Manager` (Brand Owner)**: Merchant or franchisor listing opportunities and answering buyer inquiries.
+3. **`User` (Entrepreneur / Client)**: Investor or buyer discovering ventures and negotiating deals.
+
+---
+
+### 3. Permissions Matrix
+
+| Permission String | Description | `Admin` | `Manager` (Brand) | `User` (Entrepreneur) |
+|-------------------|-------------|:-------:|:-----------------:|:--------------------:|
+| `opportunities.create` | Publish new opportunity listings, reels, and stories | ✅ | ✅ | ✅ |
+| `opportunities.update` | Edit opportunity details and media | ✅ | ✅ (Own items) | ✅ (Own items) |
+| `opportunities.delete` | Delete opportunity listings | ✅ | ✅ (Own items) | ✅ (Own items) |
+| `opportunities.verify` | Approve/revoke official brand verification status | ✅ | ❌ | ❌ |
+| `comments.moderate` | Remove abusive comments across any post | ✅ | ❌ | ❌ |
+| `users.manage` | Warn, suspend, ban, unlock, or reassign user roles | ✅ | ❌ | ❌ |
+| `inquiries.respond` | Access consultation inboxes and reply to direct messages | ✅ | ✅ | ✅ |
+
+---
+
+### 4. Policy-Level Ownership Checks
+
+While Spatie permissions define what a role is capable of doing globally, resource ownership is strictly enforced by Laravel Policies.
+
+In [`OpportunityPolicy.php`](file:///backend/app/Policies/OpportunityPolicy.php):
+```php
+public function update(User $user, Opportunity $opportunity): bool
+{
+    // Admins can update any opportunity; creators can only update their own
+    return $user->hasRole('Admin') || 
+           ($user->can('opportunities.update') && $user->id === $opportunity->user_id);
+}
+
+public function delete(User $user, Opportunity $opportunity): bool
+{
+    // Admins can delete any opportunity; creators can only delete their own
+    return $user->hasRole('Admin') || 
+           ($user->can('opportunities.delete') && $user->id === $opportunity->user_id);
+}
+```
+
+This prevents IDOR (Insecure Direct Object Reference) vulnerabilities while allowing admins to perform moderation without duplicating controllers.
+
+---
+
+### 5. Security & Moderation Enforcement
+
+- **Route Guarding:** Administrative routes in [`routes/admin.php`](file:///backend/routes/admin.php) are strictly encapsulated:
+  ```php
+  Route::middleware(['auth', 'role:Admin', 'suspension'])->prefix('admin')->group(...);
+  ```
+- **Suspension Middleware ([`CheckSuspension.php`](file:///backend/app/Http/Middleware/CheckSuspension.php)):**
+  - Intercepts mutating HTTP verbs (`POST`, `PUT`, `PATCH`, `DELETE`).
+  - If a user has an active ban or timed suspension, the request is terminated with a `403 Forbidden` response (or redirect with warning message).
+  - Filing reports (`/report`) remains accessible so suspended accounts can appeal.
+- **Anti-Orphan Data Integrity:** The `User` model's `deleting` lifecycle hook prevents deleting accounts that still own active opportunities or stories without prior moderation or content transfer.
 
 ---
 
 ## Features
 
-| Area | What ships | Detail |
-|------|------------|--------|
-| **Landing / About** | `BusinessOverview`, `MissionVision`, `BusinessObjectives`, `BusinessFeatures` | Hero, dual-role explainer, verbatim mission/vision, 3 objectives, 4 benefit cards |
-| **Feed** | `OpportunityFeed` + `OpportunityCard` | Infinite scroll with skeletons, type badges, ROI/capital chips, author-role pills (Brand/Entrepreneur), like/save/inquire |
-| **Post overlay** | `PostModal` | Facebook-style modal: post summary + full comment thread, keeps cards compact |
-| **Comments** | `CommentTree` | Threaded (depth 2), reply/react/edit/delete/report, media comments, seller badge, `#comment-{id}` deep links |
-| **Video** | `FeedVideo`, `SmartMedia` | Autoplay muted in view with play overlay + mute chip; thumbnails captured from the brightest video frame, never a black intro |
-| **Reels** | `/reels` | Snap-scroll pitch videos, tap to unmute, profile grids deep-link via `/reels?slug=` |
-| **Stories** | `StoriesBar` → `/stories/:slug` | Public daily rail, gradient ring if unseen, auto-advance, like support |
-| **Search** | `/search` | Debounced 300ms, Meilisearch typo-tolerant engine with database fallback |
-| **Messenger** | `/messages`, `/messages/:id` | Quote cards, polls with live results, file attachments, sales-insight shares, Google Meet scheduling, live delivery over Reverb with poll fallback |
-| **Notifications** | Bell + `/notifications` | Unread badge with live bump, mark-read + mark-all-read, deep links for replies/reactions/inquiries |
-| **Saved / Profile / Preferences** | `/saved`, `/profile/:id`, `/settings/preferences` | Bookmarks, `?tab=reels` grids, follows, category/budget auto-sort + onboarding modal |
-| **Uploads** | `POST /uploads` | Photos ≤20MB, video ≤100MB, docs ≤25MB — server-sniffed MIME whitelist, extension derived from MIME, GCS when configured else local |
-| **Help Center** | `/help` | In-app guides (User, Admin, Deployment, Development) rendered from `docs/*.md` — ships with every deploy |
-| **Auth** | `/login`, `/register`, `/welcome/role` | Email + Google/Facebook, first-run role picker for new social accounts, password reset, show/hide passwords |
+| Feature | Description | Technical Implementation |
+|---------|-------------|--------------------------|
+| **Curated Opportunity Feed** | Infinite-scroll feed with type filters (Franchise, Wholesale, Distribution, Resell), investment ranges, and ROI metrics. | `OpportunityFeed.jsx`, `OpportunityController.php`, scored feed ranking. |
+| **Pitch Reels** | Vertical snap-scroll reel player for quick video pitches with auto-extracted video thumbnail posters. | `Reels.jsx`, `SmartMedia.jsx`, HTML5 canvas frame extraction. |
+| **Daily Stories Rail** | 24-hour visual opportunity highlights with seen-state tracking and gradient indicator rings. | `StoriesBar.jsx`, `StoryViewer.jsx`, `Story.php`. |
+| **Real-Time Messenger** | Buyer-seller conversation threads featuring quote cards, live polls, file sharing, and Google Meet scheduling. | `ConversationController.php`, `MessageSent.php` broadcast, Laravel Reverb. |
+| **Google Meet Scheduling** | Schedule consultations directly in the chat with automatic OAuth token refresh and meeting link generation. | `MeetController.php`, `MeetService.php`, Google Calendar API v3. |
+| **Unified Moderation Queue** | 9-category reporting system with severity weights, audit logs, reporter alerts, and automated user strikes. | `ReportAdminController.php`, `EnforcementService.php`. |
+| **Brand Verification** | Document review workflow granting the prestigious `✓ Verified` badge to authenticated brand representatives. | `VerificationAdminController.php`, `VerificationRequest.php`. |
+| **Export Engine** | Download filtered audit logs, user lists, and moderation reports in styled Excel (`.xlsx`) or CSV formats. | `ExportController.php`, FastExcel / OpenSpout. |
 
 ---
 
 ## Admin console
 
-Restricted to the Admin role (`/admin`): live stats, newest accounts, top posts, and four working modules plus global settings.
+Accessible exclusively to users with the **`Admin`** role at `/admin`:
 
-| Module | Route | What it does |
-|--------|-------|--------------|
-| **Reports queue** | `/admin/reports` | Unified moderation for posts, reels, comments, stories, messages, chats, users. Severity-weighted priorities, filters/sort/search, reject-with-reason (reporter notified) or accept with warn / remove / timed-suspend / ban (both parties notified) |
-| **Users** | `/admin/users` | Search/filter/sort, strike history, warn, suspend, ban/unban, role changes, password resets, rate-limit lockout view + unlock |
-| **Verifications** | `/admin/verifications` | Brand verification requests with document review; approval issues the `✓ Verified` badge (never shown without it) |
-| **Analytics** | `/admin/analytics` | Signups, posts, inquiries, report outcomes, resolve times, leaderboards (Recharts) |
-| **Settings** | `/admin/settings` | Rate limits, session/demo/registration flags, storage meter, admin accounts, feature flags, local + external backups with restore |
-| **Exports** | `/admin/export/*` | Styled XLSX + CSV for users, reports, verifications, audit logs, honoring current filters |
-
-Every enforcement and settings action is written to an audit log and notifies the affected users.
+- **Dashboard Overview:** High-level metrics on active users, listed opportunities, monthly inquiries, and pending moderation tickets.
+- **Moderation Queue (`/admin/reports`):** Review user-flagged posts, reels, comments, and direct messages. Actions include dismiss, issue formal warning, temporary suspension, or permanent ban.
+- **User Directory (`/admin/users`):** Inspect account details, strike counts, manage role promotions, manual password resets, and lockout overrides.
+- **Brand Verifications (`/admin/verifications`):** Review government registrations and business permits to issue or revoke brand trust badges.
+- **Platform Analytics (`/admin/analytics`):** Interactive Recharts visualizing user acquisition, engagement velocity, and report resolution turnaround.
+- **System Settings (`/admin/settings`):** Configure login throttle thresholds, demo login toggles, registration flags, and storage quota meters.
 
 ---
 
 ## Design system
 
-Locked via CSS variables + Tailwind — no hardcoded hex in components.
+BizLink enforces a clean, corporate financial aesthetic using strict CSS design tokens:
 
-| Token | Value | Use |
-|-------|-------|-----|
-| `--color-primary` | `#0B1F3A` Navy | Navbar, headings, structure / trust |
-| `--color-accent` | `#C9A24B` Gold | Verified/featured badges — rare, never on buttons |
-| `--color-action` | `#2563EB` Blue | **Only** primary buttons: Inquire, Post, Send |
-| `--color-bg` | `#F8FAFC` | Page background |
-| `--color-surface` | `#FFFFFF` | Cards / modals |
-| `--color-border` | `#E2E8F0` | Borders and dividers |
-| `--color-text-primary` | `#0F172A` | Headlines |
-| `--color-text-secondary` | `#64748B` | Descriptions |
-
-**Typography:** Inter (fallback `ui-sans-serif, system-ui`). Scale: `text-4xl md:text-5xl` hero / `text-2xl md:text-3xl` section / `text-lg` card / `text-sm` meta.
-
-**Motion:** `transition-shadow duration-150`, `shadow-sm → hover:shadow-md` only — quiet, finance-grade.
-
-> **Rule enforced:** Navy = structure, Gold = status, Blue = click. Never compete on the same element.
+| Token | Hex / Value | Semantic Purpose |
+|-------|-------------|------------------|
+| `--color-primary` | `#0B1F3A` Deep Navy | Structural elements, navbars, major headings, trust. |
+| `--color-accent` | `#C9A24B` Gold | Verification checkmarks, featured badges. Never used on action buttons. |
+| `--color-action` | `#2563EB` Royal Blue | High-intent interaction targets: Inquire, Post, Submit. |
+| `--color-bg` | `#F8FAFC` Off-White | Canvas and backdrop. |
+| `--color-surface` | `#FFFFFF` Pure White | Elevated card containers, modals, and drop-downs. |
+| `--color-border` | `#E2E8F0` Border Gray | Hairline dividers and bounding boxes. |
 
 ---
 
 ## Tech stack
 
-- **Frontend:** React 19 + Vite 7 + Tailwind CSS v4 + Inertia React (session auth + CSRF via `utils/http.js`), laravel-echo + pusher-js (Reverb protocol), Recharts (admin analytics)
-- **Backend:** Laravel 12 + Fortify session auth (Sanctum kept for the legacy JSON API) + Socialite (Google + Facebook OAuth) + Spatie permissions + GCS uploads + Reverb WebSocket server
-- **Database/Search:** MySQL 8.0 (`bizlink` on `127.0.0.1:3307`), seeded demo data. Meilisearch on `127.0.0.1:7700` for typo-tolerant search with database fallback
-- **State:** Inertia page props + local component state (props re-sync via `useEffect` on paginated pages); Echo subscriptions for live threads/bell
-- **Quality:** Oxlint, PHPUnit (`AdminAccessTest`, `AdminConsoleModulesTest`, `OrphanProtectionTest`)
-- **Icons:** Shared SVG set (`Components/icons.jsx`, feather-style strokes) — no emoji glyphs anywhere in the UI
+- **Frontend:** React 19, Vite 7, Tailwind CSS v4, Inertia.js (React adapter), Lucide Icons, Recharts.
+- **Backend:** Laravel 12, Laravel Fortify (authentication), Spatie Laravel-Permission (RBAC), Laravel Socialite (OAuth), Laravel Reverb (WebSockets).
+- **Database & Storage:** MySQL 8.0, Google Cloud Storage (or local disk fallback).
+- **Tooling & Quality:** PHPUnit, Oxlint.
 
 ---
 
@@ -250,229 +405,147 @@ Locked via CSS variables + Tailwind — no hardcoded hex in components.
 
 ```
 BizLink/
-├── backend/                       Laravel: routes, controllers, Inertia props, Blade shell
-│   ├── app/Http/Controllers/      PageController, SessionAuth, Comment/Conversation/Upload,
-│   │                              Meet, Poll, Location, Report, RoleSetup…
-│   ├── app/Http/Controllers/Admin/  Dashboard data, Reports, Users, Verifications,
-│   │                              Analytics, Settings, Exports
-│   ├── app/Services/              OpportunityService (feed scoring), CommentService,
-│   │                              ReportService, EnforcementService, MeetService,
-│   │                              GoogleCalendarAdapter, NotificationService…
-│   ├── app/Models/                Opportunity, Story, Comment, Conversation, Message,
-│   │                              Report(+Category), VerificationRequest, GoogleToken…
-│   ├── app/Events/                MessageSent, NotificationCreated (ShouldBroadcastNow)
-│   ├── app/Policies/              OpportunityPolicy (ownership + permission gates)
-│   ├── routes/web.php             Inertia pages + session auth + JSON mutations
-│   ├── routes/api.php             JSON API (still available)
-│   ├── routes/admin.php           Admin console + exports
-│   ├── routes/channels.php        Broadcast channel auth (participant/self only)
-│   ├── config/reverb.php          WebSocket server config (:8080)
-│   ├── resources/views/app.blade.php  Inertia root (@vite src/app.jsx)
-│   ├── tests/Feature/             AdminAccessTest, AdminConsoleModulesTest, …
-│   └── public/build|hot           Written by frontend Vite (gitignored)
-├── frontend/                      React + Inertia + Vite (UI only)
+├── backend/                           # Laravel Application
+│   ├── app/
+│   │   ├── Actions/Fortify/           # Fortify user creation & password reset actions
+│   │   ├── Http/Controllers/          # Web, API, and Admin Controllers
+│   │   ├── Http/Middleware/           # Role verification, suspension checks, Inertia
+│   │   ├── Http/Responses/            # Custom Fortify login & registration responses
+│   │   ├── Models/                    # Eloquent models (User, Opportunity, Story...)
+│   │   ├── Policies/                  # Authorization policies (OpportunityPolicy...)
+│   │   └── Services/                  # Business logic (Enforcement, Meet, Reports...)
+│   ├── config/                        # Laravel configuration (fortify.php, reverb.php...)
+│   ├── database/                      # Migrations, factories, and seeders
+│   ├── routes/                        # web.php, api.php, admin.php, channels.php
+│   └── tests/                         # PHPUnit feature and unit tests
+├── frontend/                          # React + Vite Application
 │   ├── src/
-│   │   ├── app.jsx                Inertia entry + AppLayout
-│   │   ├── Pages/                 Landing, HomeFeed, Reels, MessageThread, PostModal
-│   │   │                          flows, Admin/*, Welcome/Role, Legal/*
-│   │   ├── Components/            Navbar, Footer, feeds, CommentTree, QuoteCard,
-│   │   │                          SmartMedia, FeedVideo, DropdownMenu, icons.jsx, …
-│   │   ├── Layouts/               AppLayout
-│   │   ├── context/               Theme + Toast
-│   │   ├── utils/                 http.js (session + CSRF), echo.js, inquire.js,
-│   │   │                          profilePath, videoThumb.js
-│   │   └── css/app.css            Design tokens + Tailwind
-│   └── vite.config.js             laravel-vite-plugin → ../backend/public
-├── docs/                          User, Admin, Deployment, Development guides — also served in-app at /help
-└── start-bizlink.ps1              MySQL:3307 + Laravel:8000 + Reverb:8080 + Vite + Meilisearch:7700
+│   │   ├── Components/                # Modular UI elements (Feed, Navbar, Modals...)
+│   │   ├── Pages/                     # Inertia page views (Feed, Reels, Admin...)
+│   │   ├── utils/                     # HTTP client (CSRF + Session), WebSocket echo
+│   │   └── css/                       # Design tokens and Tailwind stylesheet
+│   └── vite.config.js                 # Vite asset compiler configuration
+├── docker/                            # Docker & Supervisor configuration for Railway
+├── Dockerfile                         # Production container build
+└── railway.json                       # Railway platform deployment configuration
 ```
-
-**Activity 4 → Rubric Mapping**
-
-| Rubric line | Component | Route | Verifiable? |
-|-------------|-----------|-------|-------------|
-| Company/Business Name | `Navbar.jsx` + `<title>` | Every page | Logo + browser tab |
-| Business Profile | `BusinessOverview.jsx` | `/` landing | Tagline + dual-role + search |
-| Mission & Vision | `MissionVision.jsx` | `/about` | Labeled verbatim |
-| Business Objectives | `BusinessObjectives.jsx` | `/about` | 3 numbered cards |
-| Products/Services | `OpportunityFeed` `.map()` | `/feed` | Live cards with keys |
-| Features / Why Choose Us | `BusinessFeatures.jsx` | `/` + `/about` | 4 benefit cards |
-| Contact | `ContactForm.jsx` | `/contact` + modal | Standalone + pre-filled |
-| Footer | `Footer.jsx` | Every page | Links + social + email |
 
 ---
 
 ## API endpoints
 
-| Method | Path | Auth | Description |
-|--------|------|------|-------------|
-| GET | `/api/health` | – | Liveness probe |
-| POST | `/api/auth/register` | – | Create account + token |
-| POST | `/api/auth/login` | – | Login + token |
-| POST | `/api/auth/logout` | token | Revoke current token |
-| GET | `/api/auth/me` | token | Current user |
-| GET | `/api/auth/{provider}/status` | – | Social setup check the frontend calls before redirecting |
-| GET | `/api/auth/{provider}/redirect` | – | Social OAuth (503 if unconfigured) |
-| GET | `/api/auth/{provider}/callback` | – | Social callback → frontend token (`&new_account=1` for new users) |
-| POST | `/api/auth/forgot-password` | – | Email a 60-minute reset link (email accounts only) |
-| POST | `/api/auth/reset-password` | – | Set new password with token |
-| POST | `/api/auth/uploads` | token | Photo/video upload → GCS when configured, else local |
-| GET | `/api/users/:id` | – | Public profile (numeric id, `brand-N` or `me`) with posts + stories |
-| GET | `/api/opportunities` | – | Paginated list with `?type=&q=&category=&user_id=&brand_id=&following=&page=&per_page=` |
-| POST | `/api/opportunities` | token | Publish opportunity |
-| GET | `/api/opportunities/:id` | – | Detail with comments |
-| POST | `/api/opportunities/:id/like` | token | Toggle like |
-| POST | `/api/opportunities/:id/save` | token | Toggle save |
-| POST | `/api/opportunities/:id/report` | token | Report post/reel (9-category catalog, feeds admin priority queue) |
-| GET | `/api/saved` | token | Saved list |
-| GET/POST | `/api/opportunities/:id/comments` | GET –, POST token | Threaded list / add comment (reply via `parent_id`, media via `media_url`) |
-| PATCH/DELETE | `/api/comments/:id` | token | Edit (owner ≤15 min) / soft-delete (owner or post owner) |
-| POST | `/api/comments/:id/react` | token | Toggle reaction (👍❤️😮😂🙏) |
-| POST | `/api/comments/:id/report` | token | Report comment into the unified moderation queue |
-| GET | `/api/comments/:id/replies` | token | Lazy-load replies |
-| GET | `/api/stories`, `/api/stories/:id/seen` | GET –, POST token | Public daily rail / mark seen |
-| POST | `/api/stories/:id/report`, `/api/messages/:id/report`, `/api/conversations/:id/report`, `/api/users/:id/report` | token | Report any surface into the unified queue |
-| GET | `/report-categories` | token | The 9 report categories with severity weights |
-| GET | `/api/conversations`, `/api/conversations/:id` | token | Inbox + thread |
-| POST | `/api/inquiries` | token | Inquire → conversation + notification (legacy modal flow) |
-| POST | `/api/inquiries/resolve` | session | Find-or-create thread for a post/reel/story → `{url}` with `?inquiry=` quote (used by all Inquire buttons) |
-| POST | `/api/conversations/:id/messages` | token | Send message (optional `attachment{type,id}` quote) — broadcasts live |
-| POST | `/api/conversations/:id/polls` | token | Create a poll (5/day) |
-| POST | `/api/polls/:id/vote`, `/api/polls/:id/close` | token | Vote / close poll |
-| GET/POST | `/api/notifications`, `/api/notifications/:id/read`, `/api/notifications/read-all` | token | List / mark read |
-| GET/PUT | `/api/preferences` | token | Get / save categories + budget |
-| GET/POST | `/api/follows`, `/api/follows/toggle` | token | List / follow brand |
-| GET | `/api/locations/regions`, `/api/locations/search` | – | Location lookup for tagging |
-| POST | `/api/contact` | – | Contact form (logged, notification if authed) |
-
-Web (Inertia) additions: `/auth/{provider}/redirect|callback` (primary social flow), `/welcome/role` (new-account role picker), `/meet/connect|callback|status` (Calendar/Meet OAuth), `/meet/disconnect`, `POST /logout` (Fortify). Admin: `/admin`, `/admin/reports*`, `/admin/users*`, `/admin/verifications*`, `/admin/analytics`, `/admin/settings*`, `/admin/export/*` (xlsx/csv).
-
----
-
-## Auth
-
-- **Session auth** via [Laravel Fortify](https://laravel.com/docs/fortify): `POST /login`, `POST /register` (role picker: entrepreneur/brand), `POST /logout`. Brands land on `/feed` after login; admins land on `/admin`.
-- **Social sign-in** (primary flow): `/auth/{provider}/redirect` → provider → `/auth/{provider}/callback`. Brand-new accounts go through **`/welcome/role`** to pick Entrepreneur vs Brand before entering the app; returning users keep their existing role. Google sign-in also requests Calendar scope once, auto-connecting Google Calendar + Meet. Legacy token flow (`/api/auth/...` + `/auth/social/callback?token=`) is kept for API clients.
-- **Authorization** via [Spatie Laravel Permission](https://spatie.be/docs/laravel-permission): `Admin` (everything) / `Manager` (brands) / `User` (entrepreneurs). Posting, messaging, and admin routes are permission-gated; ownership rules live in `OpportunityPolicy`.
-- **Password reset** (email accounts only; social accounts are directed to their provider button): forgot-password emails a 60-minute link (log mailer in dev) → `/reset-password?email=...&token=...`.
-- **Guards:** `/create`, `/messages*`, `/notifications`, `/saved`, `/settings/preferences` require auth; feed/search/reels stay readable for guests with login prompts on actions.
-- **Google setup:** `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, `GOOGLE_REDIRECT_URI=http://localhost:8000/api/auth/google/callback` in `backend/.env` (Cloud Console → APIs & Services → Credentials; whitelist the exact redirect URI; add testers under Audience while in Testing mode). **Facebook:** `FACEBOOK_CLIENT_ID`, `FACEBOOK_CLIENT_SECRET`, `FACEBOOK_REDIRECT_URI=...` (developers.facebook.com → your app → Facebook Login → Valid OAuth Redirect URIs; add testers under App Roles while in Development mode).
-- Callback failures redirect with specific codes (`*_not_configured`, `*_denied`, `*_failed`) explained on the callback page.
-
-Demo accounts: `admin@bizlink.ph`, `brand@bizlink.ph`, `demo@bizlink.ph` (all `password123`).
+| Method | Endpoint | Protection | Description |
+|--------|----------|------------|-------------|
+| `GET` | `/api/health` | Public | Platform health and liveness probe |
+| `POST` | `/api/auth/login` | Fortify Rate-Limit | Authenticate user session |
+| `POST` | `/api/auth/register` | Public | Create new account with role assignment |
+| `POST` | `/api/auth/logout` | `auth` | Terminate session and revoke tokens |
+| `GET` | `/api/opportunities` | Public | Browse opportunity feed with filters |
+| `POST` | `/api/opportunities` | `auth`, `can:opportunities.create` | Publish a new opportunity |
+| `GET` | `/api/opportunities/{id}` | Public | Detailed opportunity view |
+| `POST` | `/api/opportunities/{id}/like` | `auth` | Toggle opportunity favorite/like |
+| `POST` | `/api/opportunities/{id}/save` | `auth` | Bookmark opportunity to saved list |
+| `POST` | `/api/inquiries/resolve` | `auth` | Start or retrieve conversation thread for an opportunity |
+| `POST` | `/api/conversations/{id}/messages` | `auth` | Send chat message with real-time broadcast |
+| `POST` | `/api/conversations/{id}/meet` | `auth` | Generate and schedule Google Meet consultation |
+| `POST` | `/api/reports` | `auth` | File a moderation ticket for any post, reel, or user |
+| `GET` | `/admin/users` | `auth`, `role:Admin` | User management directory |
+| `POST` | `/admin/users/{id}/suspend` | `auth`, `role:Admin` | Issue timed account suspension |
+| `POST` | `/admin/verifications/{id}/approve` | `auth`, `role:Admin` | Grant brand verification badge |
 
 ---
 
 ## Configuration
 
-The only config file that matters locally is `backend/.env` (copied from `.env.example`). Vite reads it too (no separate frontend env file).
+All primary local variables reside in `backend/.env`:
 
-| Variable | Default (dev) | Purpose |
-|----------|---------------|---------|
-| `APP_URL` | `http://localhost:8000` | Canonical URL (OAuth, links, Vite) |
-| `DB_HOST` / `DB_PORT` / `DB_DATABASE` / `DB_USERNAME` / `DB_PASSWORD` | `127.0.0.1` / `3307` / `bizlink` / `bizlink` / `Bizlink123!` | Isolated MySQL instance |
-| `SESSION_DRIVER`, `CACHE_STORE`, `QUEUE_CONNECTION` | `database` | Shared, persistent stores — no Redis needed locally |
-| `REVERB_APP_KEY` / `REVERB_APP_SECRET` | (any random hex locally) | WebSocket auth; `REVERB_HOST=127.0.0.1`, `REVERB_PORT=8080` |
-| `MAIL_MAILER` | `log` | Password resets print to the log in dev; use `smtp` in production |
-| `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET` / `GOOGLE_REDIRECT_URI` | empty | Google sign-in + Meet (leave empty to disable cleanly with a 503 message) |
-| `FACEBOOK_CLIENT_ID` / `FACEBOOK_CLIENT_SECRET` / `FACEBOOK_REDIRECT_URI` | empty | Facebook sign-in |
-| `GOOGLE_CLOUD_STORAGE_BUCKET` (+ project/key) | empty | Uploads target; empty = local `public` disk |
-| `DEMO_LOGIN` | `true` | One-click demo sign-in — **set `false` in any real deployment** |
-| `APP_DEBUG` | `true` locally | **Must be `false` in production** |
+| Key | Development Default | Production / Railway | Purpose |
+|-----|---------------------|----------------------|---------|
+| `APP_URL` | `http://localhost:8000` | `https://bizlink-production-e3ee.up.railway.app` | Canonical app URL |
+| `APP_ENV` | `local` | `production` | Environment mode |
+| `APP_DEBUG` | `true` | `false` | Disable stack traces in production |
+| `DB_CONNECTION` | `mysql` | `mysql` | Primary database driver |
+| `DB_HOST` | `127.0.0.1` | Assigned by Railway | MySQL hostname |
+| `DB_PORT` | `3306` (or `3307`) | `3306` | MySQL port |
+| `SESSION_DRIVER` | `database` | `database` | Distributed session persistence |
+| `REVERB_APP_KEY` | *(Local string)* | *(Secure key)* | Reverb WebSocket authentication |
+| `GOOGLE_CLIENT_ID` | Optional | OAuth Client ID | Google Sign-In & Meet API |
+| `DEMO_LOGIN` | `true` | `false` | Disable instant demo credentials on public apps |
 
 ---
 
 ## Build, test, and deploy
 
+### Running Tests & Linters
+```powershell
+# Frontend linting
+cd frontend
+npm run lint
+
+# Backend test suite
+cd ../backend
+php artisan test
+```
+
+### Production Build
 ```powershell
 cd frontend
-npm run build   # production → backend/public/build
-npm run lint    # oxlint
+npm run build   # Compiles frontend assets into backend/public/build
 ```
 
-```powershell
-cd backend
-php artisan test            # PHPUnit: AdminAccessTest, AdminConsoleModulesTest, …
-php artisan migrate --force # production-safe migrations (never :fresh outside dev)
-```
-
-Deployment is Railway-first: `Dockerfile` + `railway.json` + `docker/` (Apache, Supervisor running web + queue + Reverb + scheduler, entrypoint migrates and caches config). Steps: push, add the MySQL plugin, attach a volume at `backend/storage`, fill the variables below, deploy. Vercel-style serverless hosting does **not** fit (PHP runtime, websockets, local disk).
-
-| Variable | Value on Railway |
-|----------|------------------|
-| `APP_URL` | `https://<service>.up.railway.app` |
-| `APP_ENV` / `APP_DEBUG` / `DEMO_LOGIN` | `production` / `false` / `false` |
-| `APP_KEY` | `base64:…` (generate once, keep stable — sessions/cookies depend on it) |
-| `DB_*` | From the MySQL plugin (`MYSQLHOST`, `MYSQLPORT`, `MYSQLDATABASE`, `MYSQLUSER`, `MYSQLPASSWORD`) |
-| `SESSION_DOMAIN` | empty (host-only cookie) or your custom domain |
-| `SESSION_SECURE_COOKIE` | `true` |
-| `LOG_CHANNEL` | `stderr` (shows in Railway logs) |
-| `SCOUT_DRIVER` | `database` (or add a Meilisearch service and point `MEILISEARCH_HOST` at it) |
-| `REVERB_APP_KEY` / `REVERB_APP_SECRET` | any random hex (must also reach the browser — set matching `VITE_REVERB_APP_KEY`); host/port auto-derive, websockets share the web domain via `/app` proxy |
-| `MAIL_*` | Real SMTP (password resets go nowhere on `log`) |
-| Google/Facebook `*_CLIENT_ID/SECRET` + `*_REDIRECT_URI` | Pointed at `https://<domain>/auth/{google,facebook}/callback` and `/meet/callback`; add them as authorized URIs in each provider console |
-
-Then create your admin once: `railway run php artisan db:seed --class=AdminUserSeeder` (change the default password after first login).
+### Production Deployment (Railway)
+BizLink is packaged with an optimized multi-stage `Dockerfile` and `railway.json`:
+1. Connect your GitHub repository to [Railway](https://railway.app/).
+2. Attach a Railway **MySQL** database service.
+3. Configure environment variables (`APP_KEY`, `APP_URL`, `DB_*`, `REVERB_*`).
+4. Railway automatically builds the container, executes production optimizations (`php artisan config:cache`, `php artisan route:cache`, `php artisan view:cache`), runs non-destructive migrations (`php artisan migrate --force`), and boots Supervisor to run Apache, the queue worker, and the Reverb WebSocket daemon.
 
 ---
 
 ## Troubleshooting
 
-| Symptom | Cause | Fix |
-|---------|-------|-----|
-| `419` on like/comment/post | Stale CSRF token (tab open across logout/login) | The app retries once automatically; otherwise refresh the page |
-| Chat sends fail / bell never bumps | Reverb not running | Start it (`start-bizlink.ps1` does) and check `REVERB_APP_KEY/SECRET` match `.env` |
-| Search feels basic | Meilisearch down | Expected — the app falls back to database search; restart Meilisearch on `:7700` |
-| Google `403 access_denied` | App in Testing mode / email not a tester | Add the Gmail under Audience → Test users; rename the consent-screen **App name** (not the project or client name) to BizLink |
-| New build not showing on phone | Mobile browser cache | Hard-refresh or open an incognito tab to compare |
-| Locked out after bad logins | IP rate limit (`login_rate_limit`, default 5) | Wait a minute, or ask an admin to unlock you in `/admin/users` |
-| `composer install` SSL/openssl errors | Wrong PHP first in PATH | `$env:PATH = "C:\xampp\php;" + $env:PATH`, then retry |
-| Port already in use (`8000`/`5173`/`8080`) | Leftover dev processes | Stop old terminals, or change the port and matching `.env` URLs together |
+| Issue | Root Cause | Solution |
+|-------|------------|----------|
+| **`419 Page Expired`** | Stale CSRF token after idle session or server restart. | Refresh the page; the Axios client will automatically fetch a fresh CSRF cookie. |
+| **WebSocket connection failed** | Laravel Reverb daemon is not running or port `:8080` is blocked. | Run `php artisan reverb:start` locally or check Railway web proxy settings for `/app`. |
+| **`403 Forbidden` on update** | Attempting to edit another user's post without `Admin` role. | Verify logged-in account ownership. Only the creator or an Admin can modify posts. |
+| **Google Meet 422 Error** | OAuth tokens expired or invalid time format. | Disconnect and reconnect Google Calendar via `/meet/connect` to renew tokens. |
+| **Images not loading** | Storage symlink missing in local environment. | Run `php artisan storage:link` inside the `backend` folder. |
 
 ---
 
 ## Security notes
 
-- Uploads are **MIME-sniffed server-side** with an extension-from-MIME whitelist (SVG, executables, and office macros rejected); client-side size checks are UX only.
-- Authenticated mutations are CSRF-protected (Inertia) or Sanctum-token authed (API); broadcast channels authorize participant-or-self only.
-- Login is IP rate-limited and failure-counted per account; admins can lock/unlock in `/admin/users`. Suspended/banned accounts cannot log in or mutate.
-- Social sign-in never accepts an admin role — new accounts get Entrepreneur or Brand only.
-- Never commit `.env`, OAuth secrets, or service-account JSON. The repo ships `.env.example` with safe placeholders only.
+- **Authentication Integrity:** Passwords hashed with `bcrypt` (work factor 12).
+- **CSRF Defense:** All state-changing web mutations require valid CSRF tokens verified via Laravel middleware.
+- **Upload Hardening:** Uploaded files undergo server-side MIME sniffing. Executable scripts, SVGs, and unsafe extensions are rejected.
+- **Rate Limiting:** Protects login endpoints from brute-force attempts and limits conversational polling.
 
 ---
 
 ## Contributing
 
-- **Bugs and features:** [open an issue](https://github.com/NewToCodingExtra/BizLink/issues).
-- Keep design tokens in `frontend/src/css/app.css` — never hardcode hex. Follow existing component patterns (flat cards, `border-border` + `shadow-sm`).
-- Run `npm run lint` (frontend) and `php artisan test` (backend) before opening a PR.
-- Branch naming: `feat/your-feature`, `fix/what-broke`. One concern per PR.
-
-```powershell
-git clone https://github.com/NewToCodingExtra/BizLink.git
-cd BizLink
-# backend in one terminal, frontend in another (see Getting started)
-git checkout -b feat/your-feature
-# ... work, then PR
-```
+1. Fork or clone the repository:
+   ```bash
+   git clone https://github.com/NewToCodingExtra/BizLink.git
+   ```
+2. Create a feature branch:
+   ```bash
+   git checkout -b feat/your-feature
+   ```
+3. Commit your changes with concise, descriptive messages.
+4. Run `npm run lint` and `php artisan test` before opening a pull request against `untested`.
 
 ---
 
 ## Team
 
-Built for **CLSU — 3rd Year (Information Organization and Visual Presentation)**.
-Collaborators: [@JP16D](https://github.com/JP16D) · [@Daion88](https://github.com/Daion88) · [@NewToCodingExtra](https://github.com/NewToCodingExtra)
+Developed for **Central Luzon State University (CLSU)** — 3rd Year Information Organization and Visual Presentation.
+
+- **Collaborators:** [@JP16D](https://github.com/JP16D) · [@Daion88](https://github.com/Daion88) · [@NewToCodingExtra](https://github.com/NewToCodingExtra)
 
 ---
 
 ## License
 
-[MIT](LICENSE) — free to fork, learn, and extend.
-
-<div align="center">
-
-**If this helped you, give it a ⭐ — it helps reviewers find it.**
-
-*Made with navy, gold, and restraint.*
-
-</div>
+This project is licensed under the **[MIT License](LICENSE)**.
