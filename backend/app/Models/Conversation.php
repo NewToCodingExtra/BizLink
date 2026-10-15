@@ -117,4 +117,33 @@ class Conversation extends Model
         }
         return (int) $this->user_id;
     }
+
+    public function mutes()
+    {
+        return $this->hasMany(\App\Models\ConversationMute::class);
+    }
+
+    public function reads()
+    {
+        return $this->hasMany(\App\Models\ConversationRead::class);
+    }
+
+    public function isMutedBy(?int $userId): bool
+    {
+        if (!$userId) return false;
+        return \Illuminate\Support\Facades\DB::table('conversation_mutes')
+            ->where('conversation_id', $this->id)
+            ->where('user_id', $userId)
+            ->exists();
+    }
+
+    public function lastReadBy(?int $userId): ?string
+    {
+        if (!$userId) return null;
+        $read = \Illuminate\Support\Facades\DB::table('conversation_reads')
+            ->where('conversation_id', $this->id)
+            ->where('user_id', $userId)
+            ->value('read_at');
+        return $read ? \Carbon\Carbon::parse($read)->toIso8601String() : null;
+    }
 }

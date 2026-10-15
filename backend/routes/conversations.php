@@ -33,4 +33,19 @@ Route::middleware('auth')->group(function () {
 
     Route::post('/inquiries', [ConversationController::class, 'inquire'])->name('inquiries.store');
     Route::post('/inquiries/resolve', [ConversationController::class, 'resolve'])->name('inquiries.resolve');
+
+    // Messenger 3-Pane & Rich Chat endpoints
+    Route::get('/conversations/{conversation}/messages/search', [ConversationController::class, 'searchMessages'])
+        ->name('conversations.messages.search');
+    Route::get('/conversations/{conversation}/media', [ConversationController::class, 'media'])
+        ->name('conversations.media');
+    Route::post('/conversations/{conversation}/mute', [ConversationController::class, 'toggleMute'])
+        ->name('conversations.mute');
+    Route::post('/conversations/{conversation}/read', [ConversationController::class, 'markRead'])
+        ->name('conversations.read');
+    Route::post('/conversations/{conversation}/block', [ConversationController::class, 'blockUser'])
+        ->name('conversations.block');
+    Route::post('/link-preview', [ConversationController::class, 'linkPreview'])
+        ->middleware('throttle:30,1')
+        ->name('link-preview');
 });

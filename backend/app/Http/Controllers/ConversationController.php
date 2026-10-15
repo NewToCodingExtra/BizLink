@@ -33,8 +33,16 @@ class ConversationController extends Controller
         if (!$conversation->isParticipant($user?->id)) {
             return response()->json(['message' => 'Forbidden'], 403);
         }
-        $conversation->load(['messages.sender:id,name,avatar', 'messages.attachment', 'messages.poll.votes']);
+        $conversation->load(['messages.sender:id,name,avatar', 'messages.attachment', 'messages.poll.votes', 'messages.replyTo.sender:id,name']);
         $conversation->update(['unread' => 0]);
+
+        if ($user) {
+            \Illuminate\Support\Facades\DB::table('conversation_reads')->updateOrInsert(
+                ['conversation_id' => $conversation->id, 'user_id' => $user->id],
+                ['read_at' => now(), 'updated_at' => now()]
+            );
+        }
+
         return response()->json(['data' => $this->serialize($conversation, true)]);
     }
 
@@ -155,12 +163,29 @@ class ConversationController extends Controller
         if (!$conversation->isParticipant($user?->id)) {
             return response()->json(['message' => 'Forbidden'], 403);
         }
+
+        $otherId = $conversation->getOtherParticipantId($user->id);
+        if ($otherId) {
+            $isBlocked = \Illuminate\Support\Facades\DB::table('user_blocks')
+                ->where(function ($q) use ($user, $otherId) {
+                    $q->where('blocker_id', $otherId)->where('blocked_id', $user->id);
+                })
+                ->orWhere(function ($q) use ($user, $otherId) {
+                    $q->where('blocker_id', $user->id)->where('blocked_id', $otherId);
+                })
+                ->exists();
+            if ($isBlocked) {
+                return response()->json(['message' => 'Cannot send messages in this conversation.'], 403);
+            }
+        }
+
         $data = $request->validate([
             'text' => 'nullable|string|max:2000',
             'media_url' => 'nullable|string|max:2048',
             'media_type' => 'nullable|in:image,video,file',
             'media_name' => 'nullable|string|max:255',
             'media_size' => 'nullable|integer|min:0',
+            'reply_to_id' => 'nullable|integer|exists:messages,id',
             'attachment.type' => 'nullable|in:opportunity,story',
             'attachment.id' => 'nullable|integer',
         ]);
@@ -168,6 +193,14 @@ class ConversationController extends Controller
         $text = trim((string) ($data['text'] ?? ''));
         if ($text === '' && empty($data['media_url'])) {
             return response()->json(['message' => 'Write something or attach a file.'], 422);
+        }
+
+        $replyToId = null;
+        if (!empty($data['reply_to_id'])) {
+            $parentMsg = Message::where('conversation_id', $conversation->id)->find($data['reply_to_id']);
+            if ($parentMsg) {
+                $replyToId = $parentMsg->id;
+            }
         }
 
         $attachmentId = null;
@@ -185,6 +218,7 @@ class ConversationController extends Controller
 
         $message = Message::create([
             'conversation_id' => $conversation->id,
+            'reply_to_id' => $replyToId,
             'sender_id' => $request->user()->id,
             'from_side' => 'me',
             'text' => $text,
@@ -298,8 +332,22 @@ class ConversationController extends Controller
 
     private function serializeMessage(Message $message): array
     {
-        $message->loadMissing(['attachment', 'poll.votes']);
+        $message->loadMissing(['attachment', 'poll.votes', 'replyTo.sender:id,name']);
         $viewerId = auth()->id() ?: request()->user()?->id;
+
+        $replyTo = null;
+        if ($message->reply_to_id) {
+            $rep = $message->replyTo ?? Message::with('sender:id,name')->find($message->reply_to_id);
+            if ($rep) {
+                $replyTo = [
+                    'id' => $rep->id,
+                    'senderName' => $rep->sender?->name ?? 'User',
+                    'text' => $rep->is_hidden ? '[Removed by moderation]' : $rep->text,
+                    'mediaType' => $rep->media_type,
+                ];
+            }
+        }
+
         return [
             'id' => $message->id,
             'conversationId' => $message->conversation_id,
@@ -307,6 +355,8 @@ class ConversationController extends Controller
             'from' => (int) $message->sender_id === (int) $viewerId ? 'me' : 'them',
             'text' => $message->is_hidden ? '[Removed by moderation]' : $message->text,
             'time' => $message->created_at?->diffForHumans(),
+            'rawTime' => $message->created_at?->toIso8601String(),
+            'replyTo' => $replyTo,
             'mediaUrl' => $message->media_url,
             'mediaType' => $message->media_type,
             'mediaName' => $message->media_name,
@@ -338,6 +388,22 @@ class ConversationController extends Controller
         $owner = $this->resolveOwner($c);
         $buyer = \App\Models\User::find($c->user_id);
         
+        $otherUserId = $c->getOtherParticipantId($viewerId);
+        $peerReadAt = $otherUserId ? $c->lastReadBy($otherUserId) : null;
+        $isMuted = $viewerId ? $c->isMutedBy($viewerId) : false;
+
+        $isBlocked = false;
+        if ($viewerId && $otherUserId) {
+            $isBlocked = \Illuminate\Support\Facades\DB::table('user_blocks')
+                ->where(function ($q) use ($viewerId, $otherUserId) {
+                    $q->where('blocker_id', $viewerId)->where('blocked_id', $otherUserId);
+                })
+                ->orWhere(function ($q) use ($viewerId, $otherUserId) {
+                    $q->where('blocker_id', $otherUserId)->where('blocked_id', $viewerId);
+                })
+                ->exists();
+        }
+
         $payload = [
             'id' => $c->id,
             'with' => $isBuyer ? $c->with_name : ($buyer?->name ?? 'User'),
@@ -348,14 +414,219 @@ class ConversationController extends Controller
             'unread' => (int) $c->unread,
             'brandId' => $c->brand_id,
             'isSeller' => !$isBuyer,
+            'isMuted' => $isMuted,
+            'peerReadAt' => $peerReadAt,
+            'isBlocked' => $isBlocked,
         ];
         if ($withMessages || $c->relationLoaded('messages')) {
             $c->loadMissing('messages.attachment');
             $c->loadMissing('messages.poll.votes');
+            $c->loadMissing('messages.replyTo.sender:id,name');
             $payload['messages'] = $c->messages->map(fn($m) => $this->serializeMessage($m))->values();
             $payload['isSeller'] = !((int) $c->user_id === $viewerId);
         }
         return $payload;
+    }
+
+    /**
+     * Search messages inside this conversation.
+     */
+    public function searchMessages(Request $request, Conversation $conversation)
+    {
+        $user = $request->user();
+        if (!$conversation->isParticipant($user?->id)) {
+            return response()->json(['message' => 'Forbidden'], 403);
+        }
+
+        $q = trim((string) $request->query('q', ''));
+        if (strlen($q) < 2) {
+            return response()->json(['data' => []]);
+        }
+
+        $results = Message::where('conversation_id', $conversation->id)
+            ->where('is_hidden', false)
+            ->where('text', 'like', "%{$q}%")
+            ->with('sender:id,name')
+            ->latest()
+            ->limit(30)
+            ->get();
+
+        return response()->json([
+            'data' => $results->map(function ($m) {
+                return [
+                    'id' => $m->id,
+                    'text' => $m->text,
+                    'senderName' => $m->sender?->name ?? 'User',
+                    'time' => $m->created_at?->diffForHumans(),
+                    'rawTime' => $m->created_at?->toIso8601String(),
+                ];
+            }),
+        ]);
+    }
+
+    /**
+     * Media, files, and links browser for this conversation.
+     */
+    public function media(Request $request, Conversation $conversation)
+    {
+        $user = $request->user();
+        if (!$conversation->isParticipant($user?->id)) {
+            return response()->json(['message' => 'Forbidden'], 403);
+        }
+
+        $type = $request->query('type', 'all'); // photo, video, file, link, all
+
+        $query = Message::where('conversation_id', $conversation->id)->where('is_hidden', false);
+
+        if ($type === 'photo') {
+            $query->where('media_type', 'image');
+        } elseif ($type === 'video') {
+            $query->where('media_type', 'video');
+        } elseif ($type === 'file') {
+            $query->where('media_type', 'file');
+        } elseif ($type === 'link') {
+            $query->where(function ($q) {
+                $q->where('text', 'like', '%http://%')
+                  ->orWhere('text', 'like', '%https://%');
+            });
+        } else {
+            // Default: any media, file or link
+            $query->where(function ($q) {
+                $q->whereNotNull('media_url')
+                  ->orWhere('text', 'like', '%http://%')
+                  ->orWhere('text', 'like', '%https://%');
+            });
+        }
+
+        $messages = $query->latest()->limit(50)->get();
+        $previewService = app(\App\Services\LinkPreviewService::class);
+
+        $items = [];
+        foreach ($messages as $m) {
+            $base = [
+                'id' => $m->id,
+                'mediaUrl' => $m->media_url,
+                'mediaType' => $m->media_type,
+                'mediaName' => $m->media_name,
+                'mediaSize' => $m->media_size,
+                'time' => $m->created_at?->diffForHumans(),
+                'rawTime' => $m->created_at?->toIso8601String(),
+            ];
+
+            if ($m->media_url && ($type === 'all' || $type === 'photo' || $type === 'video' || $type === 'file')) {
+                if ($type === 'all' || ($type === 'photo' && $m->media_type === 'image') || ($type === 'video' && $m->media_type === 'video') || ($type === 'file' && $m->media_type === 'file')) {
+                    $items[] = $base;
+                }
+            }
+
+            if (($type === 'all' || $type === 'link') && preg_match_all('/https?:\/\/[^\s]+/i', $m->text ?? '', $matches)) {
+                foreach (array_slice($matches[0], 0, 3) as $url) {
+                    $cleanUrl = rtrim($url, '.,!?;:');
+                    $preview = $previewService->getPreview($cleanUrl);
+                    $items[] = [
+                        'id' => $m->id,
+                        'mediaType' => 'link',
+                        'url' => $cleanUrl,
+                        'title' => $preview['title'] ?? parse_url($cleanUrl, PHP_URL_HOST),
+                        'description' => $preview['description'] ?? null,
+                        'image' => $preview['image'] ?? null,
+                        'siteName' => $preview['siteName'] ?? parse_url($cleanUrl, PHP_URL_HOST),
+                        'time' => $m->created_at?->diffForHumans(),
+                        'rawTime' => $m->created_at?->toIso8601String(),
+                    ];
+                }
+            }
+        }
+
+        return response()->json(['data' => $items]);
+    }
+
+    /**
+     * Toggle mute on a conversation.
+     */
+    public function toggleMute(Request $request, Conversation $conversation)
+    {
+        $user = $request->user();
+        if (!$conversation->isParticipant($user?->id)) {
+            return response()->json(['message' => 'Forbidden'], 403);
+        }
+
+        $existing = \Illuminate\Support\Facades\DB::table('conversation_mutes')
+            ->where('conversation_id', $conversation->id)
+            ->where('user_id', $user->id)
+            ->first();
+
+        if ($existing) {
+            \Illuminate\Support\Facades\DB::table('conversation_mutes')
+                ->where('conversation_id', $conversation->id)
+                ->where('user_id', $user->id)
+                ->delete();
+            $muted = false;
+        } else {
+            \Illuminate\Support\Facades\DB::table('conversation_mutes')->insert([
+                'conversation_id' => $conversation->id,
+                'user_id' => $user->id,
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+            $muted = true;
+        }
+
+        return response()->json(['muted' => $muted]);
+    }
+
+    /**
+     * Explicit read receipt ping.
+     */
+    public function markRead(Request $request, Conversation $conversation)
+    {
+        $user = $request->user();
+        if (!$conversation->isParticipant($user?->id)) {
+            return response()->json(['message' => 'Forbidden'], 403);
+        }
+
+        \Illuminate\Support\Facades\DB::table('conversation_reads')->updateOrInsert(
+            ['conversation_id' => $conversation->id, 'user_id' => $user->id],
+            ['read_at' => now(), 'updated_at' => now()]
+        );
+
+        $conversation->update(['unread' => 0]);
+
+        return response()->json(['readAt' => now()->toIso8601String()]);
+    }
+
+    /**
+     * Block the user on the other side of this conversation.
+     */
+    public function blockUser(Request $request, Conversation $conversation)
+    {
+        $user = $request->user();
+        if (!$conversation->isParticipant($user?->id)) {
+            return response()->json(['message' => 'Forbidden'], 403);
+        }
+
+        $otherId = $conversation->getOtherParticipantId($user->id);
+        if (!$otherId) {
+            return response()->json(['message' => 'Cannot resolve user to block.'], 422);
+        }
+
+        \Illuminate\Support\Facades\DB::table('user_blocks')->updateOrInsert(
+            ['blocker_id' => $user->id, 'blocked_id' => $otherId],
+            ['created_at' => now(), 'updated_at' => now()]
+        );
+
+        return response()->json(['blocked' => true, 'message' => 'User blocked successfully.']);
+    }
+
+    /**
+     * Extract rich link preview metadata.
+     */
+    public function linkPreview(Request $request)
+    {
+        $request->validate(['url' => 'required|url|max:2048']);
+        $url = $request->input('url');
+        $preview = app(\App\Services\LinkPreviewService::class)->getPreview($url);
+        return response()->json(['data' => $preview]);
     }
 
     /**

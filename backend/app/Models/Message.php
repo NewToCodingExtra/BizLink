@@ -11,6 +11,7 @@ class Message extends Model
 
     protected $fillable = [
         'conversation_id',
+        'reply_to_id',
         'sender_id',
         'from_side',
         'text',
@@ -40,6 +41,11 @@ class Message extends Model
     public function conversation()
     {
         return $this->belongsTo(Conversation::class);
+    }
+
+    public function replyTo()
+    {
+        return $this->belongsTo(Message::class, 'reply_to_id');
     }
 
     public function sender()
