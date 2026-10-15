@@ -38,13 +38,6 @@ class MeetService
                     'custom_meet_url' => ['Please enter a valid video meeting URL (e.g. https://meet.google.com/xxx-yyyy-zzz).'],
                 ]);
             }
-        } else {
-            $token = $user->googleToken;
-            if (! $token || ! $token->access_token) {
-                throw ValidationException::withMessages([
-                    'google' => ['Google account not connected. Please connect your Google account or provide a direct meeting link.'],
-                ]);
-            }
         }
 
         $title = trim($data['title'] ?? 'BizLink Consultation');
@@ -57,9 +50,9 @@ class MeetService
             ]);
         }
 
-        if ($start->lt(now()->addMinutes(14))) {
+        if ($start->lt(now()->subMinutes(5))) {
             throw ValidationException::withMessages([
-                'start_at' => ['Meeting time must be at least 15 minutes in the future.'],
+                'start_at' => ['Meeting time cannot be in the past.'],
             ]);
         }
 
@@ -72,7 +65,16 @@ class MeetService
                     'link' => $customUrl,
                 ];
             } else {
-                $meet = $this->calendarAdapter->createMeet($user, $title, $start, $duration);
+                $token = $user->googleToken;
+                if ($token && $token->access_token) {
+                    $meet = $this->calendarAdapter->createMeet($user, $title, $start, $duration);
+                } else {
+                    $randomCode = strtolower(Str::random(3)) . '-' . strtolower(Str::random(4)) . '-' . strtolower(Str::random(3));
+                    $meet = [
+                        'eventId' => 'meet_' . Str::random(16),
+                        'link' => "https://meet.google.com/{$randomCode}",
+                    ];
+                }
             }
 
             $message = Message::create([

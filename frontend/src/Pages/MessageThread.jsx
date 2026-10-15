@@ -676,7 +676,7 @@ export default function MessageThread({ conv: initialConv, conversations = [], q
       return;
     }
     try {
-      const res = await httpApi.post(`/conversations/${conv.id}/polls`, {
+      await httpApi.post(`/conversations/${conv.id}/polls`, {
         question: pollQuestion.trim(),
         options: validOpts,
       });
@@ -1552,12 +1552,9 @@ export default function MessageThread({ conv: initialConv, conversations = [], q
                   required
                   value={meetDate}
                   onChange={(e) => setMeetDate(e.target.value)}
-                  min={new Date(Date.now() + 15 * 60000 - new Date().getTimezoneOffset() * 60000)
-                    .toISOString()
-                    .slice(0, 16)}
                   className="w-full px-3 py-2 rounded-lg border border-border bg-bg text-sm text-text-primary focus:border-action focus:ring-2 focus:ring-action/20 outline-none"
                 />
-                <p className="text-[11px] text-text-secondary mt-1">Must be at least 15 minutes in advance.</p>
+                <p className="text-[11px] text-text-secondary mt-1">Select meeting start time.</p>
               </div>
               <div>
                 <label className="block text-xs font-semibold text-text-secondary mb-1">Duration</label>
