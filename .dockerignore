@@ -1,0 +1,15 @@
+# Never bake local secrets or heavy dev artifacts into the Railway image.
+backend/.env
+backend/node_modules
+backend/vendor
+backend/storage/logs/*
+backend/storage/framework/cache/*
+backend/storage/framework/sessions/*
+backend/storage/framework/views/*
+frontend/node_modules
+frontend/dist
+.git
+dumps/
+*.tgz
+backend/meilisearch.exe
+cline-windows-x64-3.0.64.tgz
