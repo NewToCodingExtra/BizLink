@@ -20,6 +20,16 @@ export default function AppLayout({ children }) {
   const lastToasted = useRef(null);
   const toastRef = useRef(null);
 
+  // Back/forward cache guard: Safari restores the previous DOM without a
+  // request, showing whoever was logged in before. Reload forces fresh auth.
+  useEffect(() => {
+    const onPageShow = (e) => {
+      if (e.persisted) window.location.reload();
+    };
+    window.addEventListener("pageshow", onPageShow);
+    return () => window.removeEventListener("pageshow", onPageShow);
+  }, []);
+
   // Server flash messages (redirects) surface as toasts, once each.
   useEffect(() => {
     toastRef.current = toast;
