@@ -18,14 +18,15 @@ function badgeClasses(type) {
 
 export default function OpportunityDetail({ opp: initialOpp }) {
   const toast = useToast();
-  const { auth } = usePage().props;
+  const page = usePage();
+  const { auth } = page.props;
   const user = auth?.user ?? null;
   const [opp, setOpp] = useState(initialOpp ?? null);
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const ownerId = opp?.user_id ?? opp?.authorId ?? opp?.user?.id;
   const isOwner = !!user && !!opp && String(user.id) === String(ownerId);
-  const canManage = !!user && !!opp && (can(usePage(), 'opportunities.update') && isOwner || hasRole(usePage(), 'Admin'));
+  const canManage = !!user && !!opp && (can(page, 'opportunities.update') && isOwner || hasRole(page, 'Admin'));
 
   useEffect(() => {
     setOpp(initialOpp ?? null);

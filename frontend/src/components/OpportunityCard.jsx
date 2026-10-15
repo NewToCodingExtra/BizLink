@@ -31,7 +31,8 @@ function formatDate(createdAt) {
 
 export default function OpportunityCard({ opp, comments, onToggleLike, onToggleSave, onAddComment, onInquire, saved }) {
   const toast = useToast();
-  const { auth } = usePage().props;
+  const page = usePage();
+  const { auth } = page.props;
   const user = auth?.user ?? null;
   const [showComments, setShowComments] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
@@ -40,7 +41,7 @@ export default function OpportunityCard({ opp, comments, onToggleLike, onToggleS
   const commentCount = typeof opp.commentsCount === "number" ? opp.commentsCount : (comments || []).filter((c) => String(c.postId) === String(opp.id)).length;
   const ownerId = opp.user_id ?? opp.authorId ?? opp.user?.id;
   const isOwner = !!user && String(user.id) === String(ownerId);
-  const canManage = !!user && (can(usePage(), 'opportunities.update') && isOwner || hasRole(usePage(), 'Admin'));
+  const canManage = !!user && (can(page, 'opportunities.update') && isOwner || hasRole(page, 'Admin'));
 
   return (
     <article className="bg-surface rounded-xl border border-border shadow-sm hover:shadow-md transition-shadow duration-150 overflow-hidden">
