@@ -4,6 +4,7 @@ use App\Http\Controllers\AuthController;
 use App\Http\Controllers\ContactController;
 use App\Http\Controllers\FollowController;
 use App\Http\Controllers\NotificationController;
+use App\Http\Controllers\OpportunityController;
 use App\Http\Controllers\PageController;
 use App\Http\Controllers\PreferenceController;
 use App\Http\Controllers\SocialAuthController;
@@ -58,7 +59,7 @@ Route::get('/csrf-token', function () {
 
 // Authenticated pages
 Route::middleware('auth')->group(function () {
-    Route::middleware(['auth', 'role:Admin|Manager'])->get('/create', [PageController::class, 'create'])->name('opportunities.create');
+    Route::middleware(['auth', 'role:Admin|Manager'])->get('/create', [OpportunityController::class, 'create'])->name('opportunities.create');
 
     Route::get('/notifications', [PageController::class, 'notifications'])->name('notifications.index');
     Route::get('/saved', [PageController::class, 'saved'])->name('saved');

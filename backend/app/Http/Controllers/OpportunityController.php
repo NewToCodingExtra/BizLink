@@ -142,6 +142,13 @@ class OpportunityController extends Controller
         return response()->json(['data' => new OpportunityResource($opp)], 201);
     }
 
+    public function create()
+    {
+        $this->authorize('create', Opportunity::class);
+
+        return Inertia::render('CreateOpportunity');
+    }
+
     public function edit(Request $request, Opportunity $opportunity)
     {
         $this->authorize('update', $opportunity);

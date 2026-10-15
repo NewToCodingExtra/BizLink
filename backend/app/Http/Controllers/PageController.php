@@ -247,11 +247,6 @@ class PageController extends Controller
         ]);
     }
 
-    public function create()
-    {
-        return Inertia::render('CreateOpportunity');
-    }
-
     public function about()
     {
         return Inertia::render('About');
