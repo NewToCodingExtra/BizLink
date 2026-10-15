@@ -37,7 +37,16 @@ class ReportService
 
     public function categories()
     {
-        return ReportCategory::where('active', true)->orderByDesc('severity')->get();
+        $cats = ReportCategory::where('active', true)->orderByDesc('severity')->get();
+        if ($cats->isEmpty()) {
+            try {
+                (new \Database\Seeders\ReportCategorySeeder())->run();
+                $cats = ReportCategory::where('active', true)->orderByDesc('severity')->get();
+            } catch (\Throwable $e) {
+                // If seeder fails, continue with empty collection
+            }
+        }
+        return $cats;
     }
 
     /**
@@ -47,6 +56,13 @@ class ReportService
     {
         abort_unless(in_array($type, self::VALID_TYPES, true), 422, 'Invalid report target.');
         $category = ReportCategory::where('key', $categoryKey)->where('active', true)->first();
+        if (! $category) {
+            try {
+                (new \Database\Seeders\ReportCategorySeeder())->run();
+                $category = ReportCategory::where('key', $categoryKey)->where('active', true)->first();
+            } catch (\Throwable $e) {
+            }
+        }
         abort_if(! $category, 422, 'Invalid report category.');
 
         $target = $this->resolveTarget($type, $targetId);

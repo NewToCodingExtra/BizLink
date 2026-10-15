@@ -20,6 +20,7 @@ class DatabaseSeeder extends Seeder
     {
         $this->call(RolesAndPermissionsSeeder::class);
         $this->call(AdminUserSeeder::class);
+        $this->call(ReportCategorySeeder::class);
 
         $entrepreneur = User::firstOrCreate(
             ['email' => 'demo@bizlink.ph'],
@@ -435,6 +436,11 @@ class DatabaseSeeder extends Seeder
             if ($opp->user_id !== $owner->id) {
                 $opp->update(['user_id' => $owner->id, 'brand_avatar' => $owner->avatar]);
             }
+            if (empty($opp->slug)) {
+                $base = Str::slug($opp->headline ?: ($opp->brand_name ?: 'post')) ?: 'post';
+                $opp->slug = $base . '-' . $opp->id;
+                $opp->saveQuietly();
+            }
             $oppModels[] = $opp->fresh();
         }
 
@@ -485,7 +491,7 @@ class DatabaseSeeder extends Seeder
 
         foreach ($stories as $s) {
             $storyOwner = $brandUsers[$s['brand_id']] ?? $brandOwner;
-            Story::firstOrCreate(
+            $story = Story::firstOrCreate(
                 ['brand_name' => $s['brand_name'], 'caption' => $s['caption']],
                 [
                     'user_id' => $storyOwner->id,
@@ -496,6 +502,11 @@ class DatabaseSeeder extends Seeder
                     'seen' => $s['seen'],
                 ]
             );
+            if (empty($story->slug)) {
+                $base = Str::slug($story->brand_name ?: 'story') ?: 'story';
+                $story->slug = $base . '-' . $story->id;
+                $story->saveQuietly();
+            }
         }
 
         $conv1 = Conversation::firstOrCreate(
@@ -591,6 +602,38 @@ class DatabaseSeeder extends Seeder
                 'created_at' => now()->subDays(7),
             ]
         );
+
+        // Ensure all Opportunities, Stories, and Users have unique slugs / usernames
+        Opportunity::whereNull('slug')
+            ->orWhere('slug', '')
+            ->orWhere('slug', 'null')
+            ->chunkById(100, function ($rows) {
+                foreach ($rows as $opp) {
+                    $base = Str::slug($opp->headline ?: ($opp->brand_name ?: 'post')) ?: 'post';
+                    $opp->slug = $base . '-' . $opp->id;
+                    $opp->saveQuietly();
+                }
+            });
+
+        Story::whereNull('slug')
+            ->orWhere('slug', '')
+            ->orWhere('slug', 'null')
+            ->chunkById(100, function ($rows) {
+                foreach ($rows as $story) {
+                    $base = Str::slug($story->brand_name ?: 'story') ?: 'story';
+                    $story->slug = $base . '-' . $story->id;
+                    $story->saveQuietly();
+                }
+            });
+
+        User::whereNull('username')
+            ->orWhere('username', '')
+            ->chunkById(100, function ($rows) {
+                foreach ($rows as $user) {
+                    $user->username = User::makeUsername($user->name ?? 'user', $user->id);
+                    $user->saveQuietly();
+                }
+            });
     }
 
     public static function parseCapitalAmount(?string $value): ?int
