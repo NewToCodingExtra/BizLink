@@ -288,4 +288,15 @@ class AdminConsoleModulesTest extends TestCase
         $this->actingAs($this->admin)->get('/admin/export/verifications')->assertOk();
         $this->actingAs($this->admin)->get('/admin/export/audit-logs')->assertOk();
     }
+
+    public function test_admin_receives_persistent_admin_badges_via_inertia(): void
+    {
+        $response = $this->actingAs($this->admin)->get('/admin');
+        $response->assertOk();
+        $response->assertInertia(function (\Inertia\Testing\AssertableInertia $page) {
+            $page->has('adminBadges')
+                ->where('adminBadges.reports', fn ($v) => is_int($v))
+                ->where('adminBadges.verifications', fn ($v) => is_int($v));
+        });
+    }
 }

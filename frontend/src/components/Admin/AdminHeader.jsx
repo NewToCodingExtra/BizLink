@@ -18,8 +18,16 @@ export default function AdminHeader({
   actions = null,
   needsAttention = null,
 }) {
-  const { auth } = usePage().props;
+  const { auth, adminBadges: sharedBadges } = usePage().props;
   const user = auth?.user ?? null;
+
+  const resolvedBadges = {
+    reports: badges.reports ?? sharedBadges?.reports ?? 0,
+    verifications: badges.verifications ?? sharedBadges?.verifications ?? 0,
+    ...(badges.users !== undefined || sharedBadges?.users !== undefined
+      ? { users: badges.users ?? sharedBadges?.users }
+      : {}),
+  };
 
   const tabs = [
     { id: "overview", label: "Overview", href: "/admin", icon: ShieldIcon },
@@ -28,7 +36,7 @@ export default function AdminHeader({
       label: "Users",
       href: "/admin/users",
       icon: UsersIcon,
-      badge: badges.users ?? 0,
+      badge: resolvedBadges.users,
       badgeColor: "bg-amber-500/15 text-amber-600 dark:text-amber-400 border-amber-500/30",
     },
     {
@@ -36,7 +44,7 @@ export default function AdminHeader({
       label: "Reports",
       href: "/admin/reports",
       icon: FlagIcon,
-      badge: badges.reports ?? 0,
+      badge: resolvedBadges.reports ?? 0,
       badgeColor: "bg-rose-500/15 text-rose-600 dark:text-rose-400 border-rose-500/30",
     },
     {
@@ -44,7 +52,7 @@ export default function AdminHeader({
       label: "Verifications",
       href: "/admin/verifications",
       icon: BadgeCheckIcon,
-      badge: badges.verifications ?? 0,
+      badge: resolvedBadges.verifications ?? 0,
       badgeColor: "bg-blue-500/15 text-blue-600 dark:text-blue-400 border-blue-500/30",
     },
     { id: "analytics", label: "Analytics", href: "/admin/analytics", icon: ChartIcon },
@@ -104,18 +112,16 @@ export default function AdminHeader({
               href={tab.href}
               className={`inline-flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs sm:text-sm font-medium whitespace-nowrap transition-all duration-150 cursor-pointer select-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-action active:scale-[0.98] ${
                 isActive
-                  ? "bg-action text-white shadow-sm font-semibold"
+                  ? "bg-surface text-text-primary border border-border/90 shadow-xs font-semibold"
                   : "text-text-secondary hover:text-text-primary hover:bg-bg/60 border border-transparent hover:border-border/60"
               }`}
             >
-              <Icon className={`w-4 h-4 ${isActive ? "text-white" : "text-text-secondary"}`} />
+              <Icon className={`w-4 h-4 ${isActive ? "text-text-primary" : "text-text-secondary"}`} />
               <span>{tab.label}</span>
-              {tab.badge > 0 && (
+              {tab.badge !== undefined && tab.badge !== null && (
                 <span
                   className={`inline-flex items-center justify-center min-w-[18px] h-[18px] px-1 text-[10px] font-bold rounded-full border tabular-nums ${
-                    isActive
-                      ? "bg-white/20 text-white border-white/30"
-                      : tab.badgeColor ?? "bg-action/15 text-action border-action/30"
+                    tab.badgeColor ?? "bg-action/15 text-action border-action/30"
                   }`}
                 >
                   {tab.badge}
