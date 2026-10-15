@@ -87,16 +87,13 @@ class SessionAuthController extends Controller
     }
 
     /**
-     * Role-aware landing page. Managers (brands) start where they can post;
-     * admins start in the console; everyone else gets the feed.
+     * Role-aware landing page. Admins start in the console; everyone else
+     * (brands included) lands on the feed homepage.
      */
     private function homeFor(User $user): string
     {
         if ($user->hasRole('Admin')) {
             return '/admin';
-        }
-        if ($user->hasRole('Manager')) {
-            return '/create';
         }
         return '/feed';
     }

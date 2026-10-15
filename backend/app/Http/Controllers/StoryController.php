@@ -10,16 +10,13 @@ class StoryController extends Controller
 {
     public function index(Request $request)
     {
-        // Stories are private to the account that posted them: guests see
-        // none, and users only see their own.
-        $user = $request->user();
-        if (! $user) {
-            return response()->json(['data' => []]);
-        }
-
-        $stories = Story::where('user_id', $user->id)->where('hidden_by_moderation', false)->where(function ($q) {
+        // Daily Opportunities is a public rail: every account's live stories
+        // show, whether or not the viewer follows them. Following only
+        // influences feed ranking (OpportunityService), never story
+        // visibility — so this query intentionally has no follow filter.
+        $stories = Story::where('hidden_by_moderation', false)->where(function ($q) {
             $q->whereNull('expires_at')->orWhere('expires_at', '>', now());
-        })->latest()->get();
+        })->latest()->limit(60)->get();
 
         $usernames = \App\Models\User::whereIn('id', $stories->pluck('user_id')->filter()->unique())
             ->pluck('username', 'id');

@@ -10,9 +10,8 @@ use Laravel\Fortify\Fortify;
  * Post-login redirect, role-aware.
  *
  * Fortify owns POST /login (see route:list), so this response class — not a
- * controller — is what decides where the user lands. Sending every role to
- * /feed is why an admin login used to feel useless; the console, the brand
- * posting form and the buyer feed each get their own entry point.
+ * controller — is what decides where the user lands. Admins start in the
+ * console; everyone else (brands included) lands on the feed homepage.
  */
 class FortifyLoginResponse implements LoginResponseContract
 {
@@ -31,9 +30,6 @@ class FortifyLoginResponse implements LoginResponseContract
         }
         if ($user->hasRole('Admin')) {
             return '/admin';
-        }
-        if ($user->hasRole('Manager')) {
-            return '/create';
         }
 
         return '/feed';
