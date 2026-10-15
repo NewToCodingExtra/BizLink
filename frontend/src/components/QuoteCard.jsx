@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { Link } from "@inertiajs/react";
 import { XIcon } from "./icons";
 
@@ -11,14 +12,26 @@ export function quoteHref(q) {
 const KIND_LABEL = { post: "Post", reel: "Reel", story: "Story" };
 
 function CardBody({ quote, compact }) {
-  const thumb = quote.videoUrl || quote.mediaUrl;
+  const [videoError, setVideoError] = useState(false);
+  const imgThumb = quote.mediaUrl;
+  const videoThumb = !videoError && quote.videoUrl;
+
   return (
     <>
-      {thumb && (
-        quote.videoUrl
-          ? <video src={quote.videoUrl} className={`${compact ? "w-9 h-9" : "w-12 h-12"} rounded object-cover shrink-0 bg-black`} muted />
-          : <img src={thumb} alt="" className={`${compact ? "w-9 h-9" : "w-12 h-12"} rounded object-cover shrink-0 bg-bg`} />
-      )}
+      {imgThumb ? (
+        <img
+          src={imgThumb}
+          alt=""
+          className={`${compact ? "w-9 h-9" : "w-12 h-12"} rounded object-cover shrink-0 bg-bg`}
+        />
+      ) : videoThumb ? (
+        <video
+          src={videoThumb}
+          onError={() => setVideoError(true)}
+          className={`${compact ? "w-9 h-9" : "w-12 h-12"} rounded object-cover shrink-0 bg-black`}
+          muted
+        />
+      ) : null}
       <div className="flex-1 min-w-0">
         <p className={`${compact ? "text-[11px]" : "text-xs"} font-semibold truncate`}>{quote.headline}</p>
         <p className="text-[10px] uppercase tracking-wider opacity-70">{KIND_LABEL[quote.kind] || quote.type}</p>

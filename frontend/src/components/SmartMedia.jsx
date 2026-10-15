@@ -24,7 +24,8 @@ export function useVideoPoster(videoUrl, fallback = null) {
  * render a plain <img>. Same component is reused by the post modal.
  */
 export default function SmartMedia({ opp, className = "", videoProps = {} }) {
-  const isVideo = opp?.mediaType === "video" && opp?.videoUrl;
+  const [videoError, setVideoError] = useState(false);
+  const isVideo = opp?.mediaType === "video" && opp?.videoUrl && !videoError;
   const smart = useVideoPoster(isVideo ? opp.videoUrl : null, opp?.image);
 
   if (!isVideo) {
@@ -37,8 +38,9 @@ export default function SmartMedia({ opp, className = "", videoProps = {} }) {
       loop
       playsInline
       preload="metadata"
-      poster={smart || undefined}
+      poster={smart || opp?.image || undefined}
       className={className}
+      onError={() => setVideoError(true)}
       {...videoProps}
     />
   );

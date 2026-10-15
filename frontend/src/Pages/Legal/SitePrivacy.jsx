@@ -3,7 +3,7 @@ import LegalLayout from "../../Components/LegalLayout";
 
 export default function SitePrivacy() {
   return (
-    <LegalLayout title="Privacy Policy" lastUpdated="September 23, 2026">
+    <LegalLayout title="Privacy Policy" lastUpdated="October 15, 2026">
       <Head title="Privacy Policy" />
       <p>
         Welcome to <strong>BizLink</strong>. This Privacy Policy explains how we collect, use,
@@ -19,8 +19,8 @@ export default function SitePrivacy() {
       </p>
       <ul>
         <li><strong>Account Data:</strong> Your name, email address, password, role, and profile biography.</li>
-        <li><strong>Third-Party Login Data:</strong> If you register using Google or Facebook, we collect your authentication ID and public avatar URL provided by those services.</li>
-        <li><strong>User-Generated Content:</strong> Business opportunities, franchise details, images, direct messages with other users, and temporary "stories" that you upload.</li>
+        <li><strong>Third-Party Login Data:</strong> If you register using Google or Facebook, we collect your authentication ID and public avatar URL provided by those services. If you connect Google Calendar, we store the calendar authorization tokens needed to schedule meetings on your behalf — you can revoke this anytime from your profile.</li>
+        <li><strong>User-Generated Content:</strong> Business opportunities, franchise details, images, videos, direct messages with other users, and temporary "stories" that you upload. Media is stored on our servers or Google Cloud Storage.</li>
         <li><strong>Activity Data:</strong> Which opportunities you "like" or "save" to tailor your experience.</li>
         <li><strong>Technical Data:</strong> Your IP address and User-Agent (browser type) which is collected temporarily for security and session management.</li>
       </ul>
@@ -32,6 +32,7 @@ export default function SitePrivacy() {
         <li>To allow you to post and manage business and franchise opportunities.</li>
         <li>To enable direct messaging and communication between entrepreneurs.</li>
         <li>To send you transactional emails (like password resets) or important platform notifications.</li>
+        <li>To review user reports and enforce our Acceptable Use Policy, which may include warning, suspending, or banning accounts that violate it.</li>
       </ul>
       <p>
         <strong>We do not sell your personal data.</strong> Because BizLink is a B2B matching platform,
@@ -60,10 +61,8 @@ export default function SitePrivacy() {
         access, rectify, erase, or block your personal data, as well as the right to data portability.
       </p>
       <p>
-        <span className="bg-yellow-100 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-200 px-1 py-0.5 rounded">REQUIRES BUSINESS/LEGAL CONFIRMATION</span>
-        <br />
         To exercise any of these rights, including requesting the <strong>deletion of your account and personal data</strong>,
-        please contact our Data Protection Officer (DPO) at <strong>[privacy.bizlink@gmail.com]</strong>. We will respond
+        please contact our Data Protection Officer (DPO) at <strong>support@bizlink.ph</strong>. We will respond
         to your request within the timeframe required by law.
       </p>
 
@@ -92,9 +91,9 @@ export default function SitePrivacy() {
         If you have any questions or concerns about this Privacy Policy or our data practices, please contact us at:
       </p>
       <address className="not-italic text-text-secondary bg-surface p-4 rounded-xl border border-border mt-4">
-        <strong>[BizLink Co.]</strong><br />
-        [Pasay City, Metro Manila, Philippines]<br />
-        Email: [privacy.bizlink@gmail.com]
+        <strong>BizLink</strong><br />
+        Metro Manila, Philippines<br />
+        Email: support@bizlink.ph
       </address>
     </LegalLayout>
   );
