@@ -19,13 +19,20 @@ export function getEcho() {
       echo = null;
       return echo;
     }
+    // No VITE_* values are baked in on hosted builds — derive sane defaults
+    // from the page itself so wss://domain (443) just works in production
+    // while local dev keeps 127.0.0.1:8080 over plain ws.
+    const pageHttps = typeof window !== "undefined" && window.location.protocol === "https:";
+    const host = import.meta.env.VITE_REVERB_HOST || window.location.hostname;
+    const port = import.meta.env.VITE_REVERB_PORT || (pageHttps ? 443 : 8080);
+    const scheme = import.meta.env.VITE_REVERB_SCHEME || (pageHttps ? "https" : "http");
     echo = new Echo({
       broadcaster: "reverb",
       key,
-      wsHost: import.meta.env.VITE_REVERB_HOST ?? window.location.hostname,
-      wsPort: Number(import.meta.env.VITE_REVERB_PORT ?? 8080),
-      wssPort: Number(import.meta.env.VITE_REVERB_PORT ?? 8080),
-      forceTLS: (import.meta.env.VITE_REVERB_SCHEME ?? "http") === "https",
+      wsHost: host,
+      wsPort: Number(port),
+      wssPort: Number(port),
+      forceTLS: scheme === "https",
       enabledTransports: ["ws", "wss"],
       authEndpoint: "/broadcasting/auth",
       auth: {
