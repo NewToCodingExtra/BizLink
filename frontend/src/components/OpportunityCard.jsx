@@ -6,6 +6,7 @@ import { HeartIcon, CommentIcon, BookmarkIcon, SparkleIcon } from "./icons";
 import { profilePath } from "../utils/profilePath";
 import { displayCapital, displayRoi } from "../utils/money";
 import { useToast } from "../context/ToastContext";
+import { useShare } from "../context/ShareContext";
 import Modal from "./Modal";
 import Button from "./Button";
 import ReportModal from "./ReportModal";
@@ -35,6 +36,7 @@ function formatDate(createdAt) {
 
 export default function OpportunityCard({ opp, comments, onToggleLike, onToggleSave, onAddComment, onInquire, saved }) {
   const toast = useToast();
+  const share = useShare();
   const page = usePage();
   const { auth } = page.props;
   const user = auth?.user ?? null;
@@ -114,6 +116,20 @@ export default function OpportunityCard({ opp, comments, onToggleLike, onToggleS
             <button
               onClick={() => {
                 setMenuOpen(false);
+                share({
+                  title: opp.headline,
+                  text: opp.description,
+                  url: `/post/${opp.slug}`,
+                });
+              }}
+              className="w-full text-left px-4 py-2 min-h-[44px] flex items-center text-sm text-text-primary hover:bg-bg gap-2"
+            >
+              <svg className="w-4 h-4 text-action" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" /></svg>
+              Share
+            </button>
+            <button
+              onClick={() => {
+                setMenuOpen(false);
                 if (window.onHideOpp) window.onHideOpp(opp.id);
               }}
               className="w-full text-left px-4 py-2 min-h-[44px] flex items-center text-sm text-text-primary hover:bg-bg gap-2"
@@ -184,6 +200,19 @@ export default function OpportunityCard({ opp, comments, onToggleLike, onToggleS
             >
               <BookmarkIcon filled={!!saved} />
               <span className="hidden sm:inline">{saved ? "Saved" : "Save"}</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => share({
+                title: opp.headline,
+                text: opp.description,
+                url: `/post/${opp.slug}`,
+              })}
+              aria-label="Share"
+              className="inline-flex items-center gap-1 sm:gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-full border border-border bg-surface text-text-secondary hover:bg-bg hover:text-text-primary text-xs sm:text-sm font-medium transition-colors"
+            >
+              <svg className="w-3.5 h-3.5 text-action" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" /></svg>
+              <span className="hidden sm:inline">Share</span>
             </button>
           </div>
           <button

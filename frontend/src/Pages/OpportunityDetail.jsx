@@ -7,6 +7,7 @@ import { displayCapital, displayRoi } from "../utils/money";
 import { httpApi } from "../utils/http";
 import { goInquire } from "../utils/inquire";
 import { useToast } from "../context/ToastContext";
+import { useShare } from "../context/ShareContext";
 import { profilePath } from "../utils/profilePath";
 import Modal from "../components/Modal";
 import Button from "../components/Button";
@@ -23,6 +24,7 @@ function badgeClasses(type) {
 
 export default function OpportunityDetail({ opp: initialOpp }) {
   const toast = useToast();
+  const share = useShare();
   const page = usePage();
   const { auth } = page.props;
   const user = auth?.user ?? null;
@@ -140,6 +142,19 @@ export default function OpportunityDetail({ opp: initialOpp }) {
               </>
             )}
             <button
+              onClick={() => {
+                setMenuOpen(false);
+                share({
+                  title: opp.headline,
+                  text: opp.description,
+                  url: `/post/${opp.slug}`,
+                });
+              }}
+              className="w-full text-left px-4 py-2 min-h-[44px] flex items-center gap-2.5 text-sm text-text-primary hover:bg-bg"
+            >
+              <svg className="w-4 h-4 text-action" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" /></svg> Share post
+            </button>
+            <button
               onClick={() => { setMenuOpen(false); copyLink(); }}
               className="w-full text-left px-4 py-2 min-h-[44px] flex items-center gap-2.5 text-sm text-text-primary hover:bg-bg"
             >
@@ -199,7 +214,7 @@ export default function OpportunityDetail({ opp: initialOpp }) {
             >
               <CommentIcon className="w-4 h-4" /> Inquire about this opportunity
             </button>
-            <div className="grid grid-cols-3 gap-2">
+            <div className="grid grid-cols-4 gap-2">
               <button
                 type="button"
                 onClick={onToggleLike}
@@ -216,7 +231,7 @@ export default function OpportunityDetail({ opp: initialOpp }) {
                 aria-label={saved ? "Unsave" : "Save"}
                 className={`inline-flex items-center justify-center gap-1.5 px-3 py-2.5 min-h-[44px] rounded-xl border text-sm font-medium transition-colors ${saved ? "bg-primary text-white border-[#0B1F3A]" : "bg-surface border-border text-text-secondary hover:bg-bg"}`}
               >
-                <BookmarkIcon filled={saved} /> <span>{saved ? "Saved" : "Save"}</span>
+                <BookmarkIcon filled={saved} /> <span className="hidden sm:inline">{saved ? "Saved" : "Save"}</span>
               </button>
               <a
                 href="#post-comments"
@@ -224,6 +239,19 @@ export default function OpportunityDetail({ opp: initialOpp }) {
               >
                 <CommentIcon /> <span className="tabular-nums">{commentTotal}</span>
               </a>
+              <button
+                type="button"
+                onClick={() => share({
+                  title: opp.headline,
+                  text: opp.description,
+                  url: `/post/${opp.slug}`,
+                })}
+                aria-label="Share"
+                className="inline-flex items-center justify-center gap-1.5 px-3 py-2.5 min-h-[44px] rounded-xl border border-border bg-surface text-text-secondary hover:bg-bg hover:text-text-primary text-sm font-medium transition-colors"
+              >
+                <svg className="w-4 h-4 text-action" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" /></svg>
+                <span className="hidden sm:inline">Share</span>
+              </button>
             </div>
           </div>
           <div id="post-comments" className="mt-6 scroll-mt-20">

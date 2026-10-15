@@ -4,12 +4,14 @@ import { HeartIcon, CommentIcon, VolumeOffIcon } from "./icons";
 import { profilePath } from "../utils/profilePath";
 import { displayCapital, displayRoi } from "../utils/money";
 import { useToast } from "../context/ToastContext";
+import { useShare } from "../context/ShareContext";
 import ReportModal from "./ReportModal";
 import DropdownMenu from "./DropdownMenu";
 import AuthorRoleBadge from "./AuthorRoleBadge";
 import { useVideoPoster } from "./SmartMedia";
 
 export default function ReelCard({ opp, onToggleLike, onInquire, onOpenComments }) {
+  const share = useShare();
   const ref = useRef(null);
   const [muted, setMuted] = useState(true);
   // Toggle via the DOM property (React's muted prop doesn't propagate after
@@ -64,6 +66,17 @@ export default function ReelCard({ opp, onToggleLike, onInquire, onOpenComments 
         <div className="flex flex-col items-center gap-2.5 shrink-0">
           <button onClick={()=>onToggleLike(opp.id)} aria-label="Like" className={`w-10 h-10 rounded-full grid place-items-center ${opp.liked ? "bg-error text-white" : "bg-white/20 text-white"}`}><HeartIcon filled={!!opp.liked} className="w-5 h-5" /></button>
           <button onClick={()=>onOpenComments && onOpenComments(opp)} aria-label="Comments" className="w-10 h-10 rounded-full grid place-items-center bg-white/20 text-white text-sm font-semibold"><CommentIcon className="w-5 h-5" />{commentCount > 0 ? <span className="text-[10px] ml-0.5">{commentCount}</span> : null}</button>
+          <button
+            onClick={() => share({
+              title: opp.headline,
+              text: opp.description,
+              url: `/post/${opp.slug}`,
+            })}
+            aria-label="Share"
+            className="w-10 h-10 rounded-full grid place-items-center bg-white/20 text-white hover:bg-white/30 active:scale-95 transition-all"
+          >
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" /></svg>
+          </button>
           <button onClick={()=>onInquire(opp)} className="px-3 py-1.5 rounded-full bg-action text-white text-xs font-semibold">Inquire</button>
           {muted && (
             <button onClick={toggleMute} aria-label="Unmute" className="w-8 h-8 rounded-full bg-white/20 text-white grid place-items-center"><VolumeOffIcon className="w-4 h-4" /></button>
@@ -80,6 +93,20 @@ export default function ReelCard({ opp, onToggleLike, onInquire, onOpenComments 
               <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M12 8c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zm0 2c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm0 6c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2z" /></svg>
             </button>
             <DropdownMenu open={menuOpen} onClose={() => setMenuOpen(false)} triggerRef={menuBtnRef} align="right" width={192} preferAbove>
+              <button
+                onClick={() => {
+                  setMenuOpen(false);
+                  share({
+                    title: opp.headline,
+                    text: opp.description,
+                    url: `/post/${opp.slug}`,
+                  });
+                }}
+                className="w-full text-left px-4 py-2 min-h-[44px] flex items-center text-sm text-[var(--color-text-primary)] hover:bg-[var(--color-bg)] gap-2"
+              >
+                <svg className="w-4 h-4 text-action" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" /></svg>
+                Share
+              </button>
               <button
                 onClick={() => {
                   setMenuOpen(false);

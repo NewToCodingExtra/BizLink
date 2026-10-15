@@ -5,6 +5,8 @@ import { createInertiaApp } from '@inertiajs/react';
 import { resolvePageComponent } from 'laravel-vite-plugin/inertia-helpers';
 import { ThemeProvider } from './context/ThemeContext';
 import { ToastProvider } from './context/ToastContext';
+import { ConfirmProvider } from './context/ConfirmContext';
+import { ShareProvider } from './context/ShareContext';
 import AppLayout from './Layouts/AppLayout';
 
 createInertiaApp({
@@ -17,7 +19,11 @@ createInertiaApp({
     createRoot(el).render(
       <ThemeProvider>
         <ToastProvider>
-          <App {...props} />
+          <ConfirmProvider>
+            <ShareProvider>
+              <App {...props} />
+            </ShareProvider>
+          </ConfirmProvider>
         </ToastProvider>
       </ThemeProvider>
     );

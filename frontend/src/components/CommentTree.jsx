@@ -2,6 +2,8 @@ import { useEffect, useRef, useState } from "react";
 import { usePage } from "@inertiajs/react";
 import { httpApi, csrfFetch } from "../utils/http";
 import { useToast } from "../context/ToastContext";
+import { useConfirm } from "../context/ConfirmContext";
+import { useShare } from "../context/ShareContext";
 import DropdownMenu from "./DropdownMenu";
 import {
   DotsIcon, PencilIcon, TrashIcon, FlagIcon, LinkIcon, ReplyIcon,
@@ -167,6 +169,7 @@ function Node({ c, depth, ctx }) {
               </button>
               <DropdownMenu open={menu === c.id} onClose={() => setMenu(null)} triggerRef={dotsBtnRef} align="left" width={176}>
                 {depth === 0 && viewer && <button onClick={() => { setMenu(null); setReplyFor(c.id); }} className="w-full text-left px-3 py-1.5 min-h-[44px] flex items-center hover:bg-bg gap-2 text-text-primary"><ReplyIcon className="w-3.5 h-3.5" /> Reply</button>}
+                <button onClick={() => { setMenu(null); ctx.onShare && ctx.onShare(c); }} className="w-full text-left px-3 py-1.5 min-h-[44px] flex items-center hover:bg-bg gap-2 text-text-primary"><svg className="w-3.5 h-3.5 text-action" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" /></svg> Share comment</button>
                 <button onClick={() => { setMenu(null); onCopy(c, false); }} className="w-full text-left px-3 py-1.5 min-h-[44px] flex items-center hover:bg-bg gap-2 text-text-primary"><ReplyIcon className="w-3.5 h-3.5 rotate-180" /> Copy text</button>
                 <button onClick={() => { setMenu(null); onCopy(c, true); }} className="w-full text-left px-3 py-1.5 min-h-[44px] flex items-center hover:bg-bg gap-2 text-text-primary"><LinkIcon className="w-3.5 h-3.5" /> Copy link</button>
                 {canEdit && <button onClick={() => { setMenu(null); setEditing(true); setDraft(c.text || ""); }} className="w-full text-left px-3 py-1.5 min-h-[44px] flex items-center hover:bg-bg gap-2 text-text-primary"><PencilIcon className="w-3.5 h-3.5" /> Edit</button>}
@@ -219,6 +222,8 @@ function forPost(list, postId) {
 
 export default function CommentTree({ postId, postSlug, authorId, initialComments = [], autoLoad = true, onAdd, previewLimit = null, totalCount = null, onViewAll = null }) {
   const toast = useToast();
+  const confirm = useConfirm();
+  const share = useShare();
   const { auth } = usePage().props;
   const viewer = auth?.user ?? null;
   const isPostOwner = !!(viewer && authorId && String(viewer.id) === String(authorId));
@@ -328,11 +333,19 @@ export default function CommentTree({ postId, postSlug, authorId, initialComment
   };
 
   const remove = (id) => {
-    if (!window.confirm("Delete this comment?")) return;
-    mutate(async () => {
-      await httpApi.del(`/comments/${id}`);
-      setTree((prev) => mapNode(prev, id, (c) => ({ ...c, text: "This comment was deleted.", mediaUrl: null, mediaType: null, deleted: true })));
-    }, "Could not delete comment");
+    (async () => {
+      const ok = await confirm({
+        title: "Delete comment?",
+        message: "Are you sure you want to delete this comment? This cannot be undone.",
+        confirmText: "Delete",
+        variant: "danger",
+      });
+      if (!ok) return;
+      mutate(async () => {
+        await httpApi.del(`/comments/${id}`);
+        setTree((prev) => mapNode(prev, id, (c) => ({ ...c, text: "This comment was deleted.", mediaUrl: null, mediaType: null, deleted: true })));
+      }, "Could not delete comment");
+    })();
   };
 
   const report = (id, reason) => mutate(async () => {
@@ -368,7 +381,7 @@ export default function CommentTree({ postId, postSlug, authorId, initialComment
   const ctx = {
     viewer, isPostOwner, postId, postSlug,
     onReply: sendReply, onReact: react, onEdit: edit, onRemove: remove, onReport: report,
-    onCopy: copy, onExpand: expand, menu, setMenu, replyFor, setReplyFor, sending, highlight,
+    onCopy: copy, onShare: (c) => share({ title: `Comment on ${postSlug || "post"}`, text: c.text, url: `/post/${postSlug || postId}#comment-${c.id}` }), onExpand: expand, menu, setMenu, replyFor, setReplyFor, sending, highlight,
   };
 
   if (!loaded && loading && !(tree || []).length) {
