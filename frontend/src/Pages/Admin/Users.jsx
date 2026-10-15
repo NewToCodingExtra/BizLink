@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import { Head, Link, router, usePage } from "@inertiajs/react";
 import { hasRole } from "../../utils/can";
 import { httpApi } from "../../utils/http";
+import { profilePath } from "../../utils/profilePath";
 import { useToast } from "../../context/ToastContext";
 import AdminHeader from "../../Components/Admin/AdminHeader";
 import ExportDropdown from "../../Components/Admin/ExportDropdown";
@@ -410,16 +411,22 @@ export default function AdminUsers({
                     {/* User Profile */}
                     <td className="py-3 px-4">
                       <div className="flex items-center gap-3 min-w-0">
-                        <img
-                          src={u.avatar}
-                          alt=""
-                          className="w-9 h-9 rounded-full object-cover bg-bg border border-border shrink-0 shadow-xs"
-                        />
+                        <Link href={profilePath(u)} className="shrink-0 cursor-pointer">
+                          <img
+                            src={u.avatar}
+                            alt=""
+                            className="w-9 h-9 rounded-full object-cover bg-bg border border-border shrink-0 shadow-xs hover:border-action transition-all"
+                          />
+                        </Link>
                         <div className="min-w-0">
                           <div className="flex items-center gap-1.5">
-                            <span className="font-bold text-text-primary truncate">
+                            <Link
+                              href={profilePath(u)}
+                              className="font-bold text-text-primary hover:text-action hover:underline cursor-pointer truncate transition-colors block"
+                              title={`View ${u.name}'s profile`}
+                            >
                               {u.name}
-                            </span>
+                            </Link>
                             {u.isBrandVerified && (
                               <span
                                 title="Verified Brand"
@@ -430,7 +437,13 @@ export default function AdminUsers({
                             )}
                           </div>
                           <p className="text-xs text-text-secondary truncate">
-                            @{u.username} · {u.email}
+                            <Link
+                              href={profilePath(u)}
+                              className="hover:text-action hover:underline cursor-pointer transition-colors"
+                            >
+                              @{u.username}
+                            </Link>
+                            {" "}· {u.email}
                           </p>
                         </div>
                       </div>
@@ -603,16 +616,22 @@ export default function AdminUsers({
           <div className="space-y-4">
             {/* Profile Snapshot Header */}
             <div className="flex items-center gap-4 p-4 rounded-xl bg-bg border border-border">
-              <img
-                src={selectedUser.avatar}
-                alt=""
-                className="w-14 h-14 rounded-full object-cover border border-border shadow-xs"
-              />
+              <Link href={profilePath(selectedUser)} className="shrink-0 cursor-pointer">
+                <img
+                  src={selectedUser.avatar}
+                  alt=""
+                  className="w-14 h-14 rounded-full object-cover border border-border shadow-xs hover:border-action transition-all"
+                />
+              </Link>
               <div className="min-w-0 flex-1">
                 <div className="flex items-center gap-2">
-                  <h3 className="text-base font-bold text-text-primary truncate">
+                  <Link
+                    href={profilePath(selectedUser)}
+                    className="text-base font-bold text-text-primary hover:text-action hover:underline cursor-pointer truncate transition-colors"
+                    title={`Open ${selectedUser.name}'s public profile`}
+                  >
                     {selectedUser.name}
-                  </h3>
+                  </Link>
                   {selectedUser.isBrandVerified && (
                     <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-action/10 text-action border border-action/20">
                       Verified Brand
@@ -620,7 +639,13 @@ export default function AdminUsers({
                   )}
                 </div>
                 <p className="text-xs text-text-secondary truncate mt-0.5">
-                  @{selectedUser.username} · {selectedUser.email}
+                  <Link
+                    href={profilePath(selectedUser)}
+                    className="hover:text-action hover:underline cursor-pointer"
+                  >
+                    @{selectedUser.username}
+                  </Link>
+                  {" "}· {selectedUser.email}
                 </p>
                 <div className="flex items-center gap-2 mt-2">
                   <span className="text-[11px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-md bg-surface border border-border">
