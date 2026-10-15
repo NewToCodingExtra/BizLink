@@ -299,4 +299,61 @@ class AdminConsoleModulesTest extends TestCase
                 ->where('adminBadges.verifications', fn ($v) => is_int($v));
         });
     }
+
+    public function test_admin_revoke_verification_tracks_attribution_and_supports_reapplication(): void
+    {
+        $this->brand->update(['is_brand_verified' => true]);
+
+        VerificationRequest::create([
+            'user_id' => $this->brand->id,
+            'business_name' => 'Original Brand Inc.',
+            'status' => 'approved',
+            'admin_id' => $this->admin->id,
+            'resolved_at' => now(),
+        ]);
+
+        $response = $this->actingAs($this->admin)->post("/admin/verifications/{$this->brand->id}/revoke", [
+            'reason' => 'Business registry document has expired and is invalid',
+        ]);
+        $response->assertRedirect();
+
+        $this->brand->refresh();
+        $this->assertFalse($this->brand->is_brand_verified);
+
+        // Check verification request record is updated with admin attribution
+        $latest = VerificationRequest::where('user_id', $this->brand->id)->latest()->first();
+        $this->assertNotNull($latest);
+        $this->assertEquals('rejected', $latest->status);
+        $this->assertEquals($this->admin->id, $latest->admin_id);
+        $this->assertStringContainsString('Business registry document has expired', $latest->admin_note);
+
+        // Check notification exists with admin attribution
+        $notif = \App\Models\AppNotification::where('user_id', $this->brand->id)
+            ->where('type', 'verification_revoked')
+            ->first();
+        $this->assertNotNull($notif);
+        $this->assertStringContainsString($this->admin->name, $notif->message);
+        $this->assertStringContainsString('Business registry document has expired', $notif->message);
+
+        // Check status API endpoint returns admin attribution
+        $statusRes = $this->actingAs($this->brand)->getJson('/verifications/status');
+        $statusRes->assertOk();
+        $statusData = $statusRes->json();
+        $this->assertFalse($statusData['isBrandVerified']);
+        $this->assertEquals($this->admin->name, $statusData['latestRequest']['adminName']);
+        $this->assertStringContainsString('Business registry document has expired', $statusData['latestRequest']['adminNote']);
+
+        // Check re-application can be submitted via JSON
+        $reapplyRes = $this->actingAs($this->brand)->postJson('/verifications', [
+            'business_name' => 'Brand Renewed Corporation',
+            'document_url' => 'https://example.com/renewed-dti.pdf',
+            'notes' => 'Here is our renewed registration document.',
+        ]);
+        $reapplyRes->assertOk();
+        $reapplyRes->assertJsonFragment(['success' => true]);
+
+        $newLatest = VerificationRequest::where('user_id', $this->brand->id)->latest('id')->first();
+        $this->assertEquals('pending', $newLatest->status);
+        $this->assertEquals('Brand Renewed Corporation', $newLatest->business_name);
+    }
 }

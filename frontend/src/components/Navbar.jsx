@@ -11,6 +11,7 @@ import { useTheme } from "../context/ThemeContext";
 import Modal from "./Modal";
 import Button from "./Button";
 import { XIcon, MenuIcon, ArrowRightIcon } from "./icons";
+import VerificationRevokedModal from "./VerificationRevokedModal";
 
 export default function Navbar() {
   const page = usePage();
@@ -20,6 +21,8 @@ export default function Navbar() {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [showBell, setShowBell] = useState(false);
   const [notifications, setNotifications] = useState([]);
+  const [showRevocationModal, setShowRevocationModal] = useState(false);
+  const [selectedRevocationNotif, setSelectedRevocationNotif] = useState(null);
   const url = page.url;
   const pathname = url.split("?")[0];
   const { isDark, setIsDark } = useTheme();
@@ -160,6 +163,15 @@ export default function Navbar() {
                         onClick={() => {
                           markRead(n.id);
                           setShowBell(false);
+                          if (
+                            n.type === "verification_revoked" ||
+                            n.link?.includes("verification_revoked") ||
+                            (n.message?.toLowerCase().includes("revoked") && n.message?.toLowerCase().includes("verification"))
+                          ) {
+                            setSelectedRevocationNotif(n);
+                            setShowRevocationModal(true);
+                            return;
+                          }
                           router.visit(n.link || "/notifications");
                         }}
                         className={`w-full min-h-[56px] text-left px-4 py-3 flex gap-3 hover:bg-bg active:bg-bg transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-action ${!n.read ? "bg-action/10" : ""}`}
@@ -243,6 +255,15 @@ export default function Navbar() {
           <p className="text-text-primary text-base font-medium">We'll miss you. Are you sure you want to log out?</p>
         </div>
       </Modal>
+
+      {showRevocationModal && (
+        <VerificationRevokedModal
+          isOpen={showRevocationModal}
+          onClose={() => setShowRevocationModal(false)}
+          notification={selectedRevocationNotif}
+          user={user}
+        />
+      )}
     </header>
   );
 }

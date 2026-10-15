@@ -1,13 +1,36 @@
-import { useState } from "react";
-import { Head, Link } from "@inertiajs/react";
+import { useState, useEffect } from "react";
+import { Head, Link, usePage } from "@inertiajs/react";
 import { ArrowRightIcon } from "../Components/icons";
 import { httpApi } from "../utils/http";
 import { useToast } from "../context/ToastContext";
+import VerificationRevokedModal from "../Components/VerificationRevokedModal";
 
 export default function Notifications({ notifications: initial = [], unread: initialUnread = 0 }) {
+  const { auth } = usePage().props;
+  const user = auth?.user ?? null;
   const [notifications, setNotifications] = useState(initial || []);
   const [unread, setUnread] = useState(initialUnread || 0);
+  const [showRevocationModal, setShowRevocationModal] = useState(false);
+  const [selectedRevocationNotif, setSelectedRevocationNotif] = useState(null);
   const toast = useToast();
+
+  const isRevocationNotif = (n) =>
+    n.type === "verification_revoked" ||
+    n.link?.includes("verification_revoked") ||
+    (n.message?.toLowerCase().includes("revoked") && n.message?.toLowerCase().includes("verification"));
+
+  // Check URL param on mount (e.g. redirected with ?verification_revoked=1)
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const params = new URLSearchParams(window.location.search);
+      if (params.get("verification_revoked") === "1" || params.get("revocation") === "1") {
+        const found = (notifications || []).find((n) => isRevocationNotif(n));
+        setSelectedRevocationNotif(found || null);
+        setShowRevocationModal(true);
+      }
+    }
+  }, [notifications]);
+
   const onMarkRead = async (id) => {
     const target = notifications.find((n) => String(n.id) === String(id));
     try {
@@ -17,6 +40,17 @@ export default function Notifications({ notifications: initial = [], unread: ini
     } catch (err) {
       toast.error(err.message || "Mark read failed");
     }
+  };
+
+  const handleNotificationClick = (e, n) => {
+    if (isRevocationNotif(n)) {
+      e.preventDefault();
+      onMarkRead(n.id);
+      setSelectedRevocationNotif(n);
+      setShowRevocationModal(true);
+      return;
+    }
+    onMarkRead(n.id);
   };
 
   const onMarkAll = async () => {
@@ -42,22 +76,40 @@ export default function Notifications({ notifications: initial = [], unread: ini
       <div className="mt-6 bg-surface rounded-xl border border-border shadow-sm divide-y divide-slate-100 overflow-hidden">
         {notifications.length === 0 && <p className="p-8 text-center text-sm text-text-secondary">No notifications</p>}
         {notifications.map((n) => {
+          const isRevocation = isRevocationNotif(n);
           const body = (
             <>
               <span className={`mt-1 w-2 h-2 rounded-full shrink-0 ${n.read ? "bg-bg" : "bg-action"}`}></span>
               <div className="flex-1 min-w-0">
                 <p className="text-sm text-text-primary">{n.message}</p>
-                <p className="text-xs text-text-secondary mt-1">{n.timestamp}{n.link ? <span> · Tap to view <ArrowRightIcon className="w-3 h-3 inline-block -mt-0.5" /></span> : ""}</p>
+                <p className="text-xs text-text-secondary mt-1">{n.timestamp}{n.link || isRevocation ? <span> · Tap to view details <ArrowRightIcon className="w-3 h-3 inline-block -mt-0.5" /></span> : ""}</p>
               </div>
               {!n.read && <span className="text-xs font-medium text-action shrink-0">Mark read</span>}
             </>
           );
-          return n.link ? (
-            <Link key={n.id} href={n.link} onClick={() => onMarkRead(n.id)} className={`p-4 flex gap-3 hover:bg-bg transition-colors ${!n.read ? "bg-action/10" : ""}`}>
+          return isRevocation ? (
+            <button
+              key={n.id}
+              onClick={(e) => handleNotificationClick(e, n)}
+              className={`w-full text-left p-4 flex gap-3 hover:bg-bg transition-colors cursor-pointer ${!n.read ? "bg-action/10" : ""}`}
+            >
+              {body}
+            </button>
+          ) : n.link ? (
+            <Link
+              key={n.id}
+              href={n.link}
+              onClick={(e) => handleNotificationClick(e, n)}
+              className={`p-4 flex gap-3 hover:bg-bg transition-colors ${!n.read ? "bg-action/10" : ""}`}
+            >
               {body}
             </Link>
           ) : (
-            <button key={n.id} onClick={() => onMarkRead(n.id)} className={`w-full text-left p-4 flex gap-3 ${!n.read ? "bg-action/10" : ""}`}>
+            <button
+              key={n.id}
+              onClick={(e) => handleNotificationClick(e, n)}
+              className={`w-full text-left p-4 flex gap-3 ${!n.read ? "bg-action/10" : ""}`}
+            >
               {body}
             </button>
           );
@@ -65,6 +117,15 @@ export default function Notifications({ notifications: initial = [], unread: ini
       </div>
       {notifications.length > 0 && (
         <p className="text-center text-xs text-text-secondary mt-4">That's everything — no older notifications.</p>
+      )}
+
+      {showRevocationModal && (
+        <VerificationRevokedModal
+          isOpen={showRevocationModal}
+          onClose={() => setShowRevocationModal(false)}
+          notification={selectedRevocationNotif}
+          user={user}
+        />
       )}
     </div>
   );

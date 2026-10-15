@@ -233,27 +233,45 @@ class VerificationAdminController extends Controller
             'reason' => 'required|string|min:5|max:1000',
         ]);
 
+        $admin = $request->user();
+
         $user->forceFill(['is_brand_verified' => false])->save();
         $user->opportunities()->update(['verified' => false]);
 
-        VerificationRequest::where('user_id', $user->id)
+        $existing = VerificationRequest::where('user_id', $user->id)
             ->where('status', 'approved')
-            ->update([
+            ->latest()
+            ->first();
+
+        if ($existing) {
+            $existing->update([
                 'status' => 'rejected',
-                'admin_id' => $request->user()->id,
+                'admin_id' => $admin->id,
                 'admin_note' => 'Revoked: ' . $data['reason'],
                 'resolved_at' => now(),
             ]);
+        } else {
+            VerificationRequest::create([
+                'user_id' => $user->id,
+                'business_name' => $user->name,
+                'document_url' => '',
+                'notes' => 'Brand verification revoked by platform admin',
+                'status' => 'rejected',
+                'admin_id' => $admin->id,
+                'admin_note' => 'Revoked: ' . $data['reason'],
+                'resolved_at' => now(),
+            ]);
+        }
 
         $this->notifications->push(
             $user->id,
             'verification_revoked',
-            "Your verified brand status has been revoked. Reason: {$data['reason']}",
-            '/profile/edit'
+            "Your verified brand status has been revoked by {$admin->name}. Reason: {$data['reason']}",
+            '/notifications?verification_revoked=1'
         );
 
         AdminAction::log(
-            adminId: $request->user()->id,
+            adminId: $admin->id,
             action: 'verification.revoke',
             targetType: 'User',
             targetId: $user->id,

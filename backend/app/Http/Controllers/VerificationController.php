@@ -34,6 +34,14 @@ class VerificationController extends Controller
             'notes' => $data['notes'] ?? null,
         ]);
 
+        if ($request->wantsJson()) {
+            return response()->json([
+                'success' => true,
+                'message' => 'Verification request submitted. Our admin team will review your business credentials.',
+                'request' => $req,
+            ]);
+        }
+
         return back()->with('success', 'Verification request submitted. Our admin team will review your business credentials.');
     }
 
@@ -44,7 +52,10 @@ class VerificationController extends Controller
             return response()->json(['status' => 'unauthenticated']);
         }
 
-        $latest = VerificationRequest::where('user_id', $user->id)->latest()->first();
+        $latest = VerificationRequest::with('admin:id,name,username,avatar')
+            ->where('user_id', $user->id)
+            ->latest('id')
+            ->first();
 
         return response()->json([
             'isBrandVerified' => (bool) $user->is_brand_verified,
@@ -53,7 +64,14 @@ class VerificationController extends Controller
                 'status' => $latest->status,
                 'businessName' => $latest->business_name,
                 'adminNote' => $latest->admin_note,
+                'admin' => $latest->admin ? [
+                    'id' => $latest->admin->id,
+                    'name' => $latest->admin->name,
+                    'username' => $latest->admin->username,
+                ] : null,
+                'adminName' => $latest->admin?->name ?? 'Platform Administrator',
                 'createdAt' => $latest->created_at?->diffForHumans(),
+                'resolvedAt' => $latest->resolved_at?->format('M d, Y h:i A') ?? $latest->updated_at?->format('M d, Y h:i A'),
             ] : null,
         ]);
     }
