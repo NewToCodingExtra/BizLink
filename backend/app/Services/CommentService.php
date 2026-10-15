@@ -107,7 +107,8 @@ class CommentService
             $message = $type === 'comment_reply'
                 ? "{$author->name} replied to your comment on {$opp->headline}"
                 : "{$author->name} commented on {$opp->headline}";
-            $this->notifications->push($userId, $type, $message, "/post/{$opp->slug}#comment-{$comment->id}");
+            $oppSlug = $opp->slug ?: (string) $opp->id;
+            $this->notifications->push($userId, $type, $message, "/post/{$oppSlug}#comment-{$comment->id}");
         }
     }
 
@@ -129,11 +130,12 @@ class CommentService
             if ($userId === (int) $user->id) {
                 continue;
             }
+            $oppSlug = $opp->slug ?: (string) $opp->id;
             $this->notifications->push(
                 $userId,
                 'comment_reaction',
                 "{$user->name} reacted {$emoji} to a comment on {$opp->headline}",
-                "/post/{$opp->slug}#comment-{$comment->id}"
+                "/post/{$oppSlug}#comment-{$comment->id}"
             );
         }
 

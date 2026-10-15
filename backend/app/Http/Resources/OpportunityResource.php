@@ -20,7 +20,7 @@ class OpportunityResource extends JsonResource
 
         return [
             'id' => $this->id,
-            'slug' => $this->slug,
+            'slug' => $this->slug ?: (string) $this->id,
             'user_id' => $this->user_id,
             'authorId' => $this->user_id,
             'authorUsername' => $this->relationLoaded('user') && $this->user ? $this->user->username : null,

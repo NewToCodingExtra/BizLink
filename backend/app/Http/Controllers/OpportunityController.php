@@ -120,7 +120,7 @@ class OpportunityController extends Controller
         
         $slug = $base;
         $count = 1;
-        while (Opportunity::where('slug', $slug)->exists()) {
+        while (Opportunity::where('slug', $slug)->where('id', '!=', $opp->id)->exists()) {
             $slug = $base . '-' . $count;
             $count++;
         }

@@ -182,6 +182,13 @@ class VerificationAdminController extends Controller
             meta: ['user_id' => $user?->id, 'business_name' => $verificationRequest->business_name]
         );
 
+        if ($request->wantsJson()) {
+            return response()->json([
+                'success' => true,
+                'message' => "Verification for {$verificationRequest->business_name} approved!",
+            ]);
+        }
+
         return back()->with('success', "Verification for {$verificationRequest->business_name} approved!");
     }
 
@@ -222,10 +229,17 @@ class VerificationAdminController extends Controller
             meta: ['user_id' => $user?->id, 'business_name' => $verificationRequest->business_name]
         );
 
+        if ($request->wantsJson()) {
+            return response()->json([
+                'success' => true,
+                'message' => "Verification for {$verificationRequest->business_name} rejected.",
+            ]);
+        }
+
         return back()->with('success', "Verification for {$verificationRequest->business_name} rejected.");
     }
 
-    public function revoke(Request $request, User $user)
+    public function revoke(Request $request, string $identifier)
     {
         abort_unless($request->user()?->can('users.manage'), 403, 'Admin access only.');
 
@@ -234,6 +248,16 @@ class VerificationAdminController extends Controller
         ]);
 
         $admin = $request->user();
+
+        // Support either user_id or verification_request_id
+        $user = User::find($identifier);
+        if (!$user) {
+            $vr = VerificationRequest::find($identifier);
+            if ($vr) {
+                $user = $vr->user;
+            }
+        }
+        abort_unless($user, 404, 'User not found.');
 
         $user->forceFill(['is_brand_verified' => false])->save();
         $user->opportunities()->update(['verified' => false]);
@@ -263,20 +287,35 @@ class VerificationAdminController extends Controller
             ]);
         }
 
-        $this->notifications->push(
-            $user->id,
-            'verification_revoked',
-            "Your verified brand status has been revoked by {$admin->name}. Reason: {$data['reason']}",
-            '/notifications?verification_revoked=1'
-        );
+        try {
+            $this->notifications->push(
+                $user->id,
+                'verification_revoked',
+                "Your verified brand status has been revoked by {$admin->name}. Reason: {$data['reason']}",
+                '/notifications?verification_revoked=1'
+            );
+        } catch (\Throwable $e) {
+            \Illuminate\Support\Facades\Log::warning('Revoke notification failed: ' . $e->getMessage());
+        }
 
-        AdminAction::log(
-            adminId: $admin->id,
-            action: 'verification.revoke',
-            targetType: 'User',
-            targetId: $user->id,
-            reason: $data['reason']
-        );
+        try {
+            AdminAction::log(
+                adminId: $admin->id,
+                action: 'verification.revoke',
+                targetType: 'User',
+                targetId: $user->id,
+                reason: $data['reason']
+            );
+        } catch (\Throwable $e) {
+            \Illuminate\Support\Facades\Log::warning('Revoke audit log failed: ' . $e->getMessage());
+        }
+
+        if ($request->wantsJson()) {
+            return response()->json([
+                'success' => true,
+                'message' => "Brand verification badge revoked for {$user->name}.",
+            ]);
+        }
 
         return back()->with('success', "Brand verification badge revoked for {$user->name}.");
     }

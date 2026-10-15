@@ -74,16 +74,24 @@ class PageController extends Controller
 
     public function post(Request $request, string $slug)
     {
-        $opp = Opportunity::where('slug', $slug)->firstOrFail();
+        if ($slug === 'null' || $slug === 'undefined' || trim($slug) === '') {
+            abort(404, 'Post not found');
+        }
+
+        $opp = Opportunity::where('slug', $slug)
+            ->orWhere('id', is_numeric($slug) ? (int) $slug : 0)
+            ->firstOrFail();
+
         $data = app(OpportunityController::class)->show($request, $opp)->getData(true)['data'];
 
         return Inertia::render('OpportunityDetail', ['opp' => $data]);
     }
 
-    public function storyViewer()
+    public function storyViewer(Request $request, string $slug = '')
     {
         return Inertia::render('StoryViewer', [
-            'stories' => $this->stories(request()),
+            'stories' => $this->stories($request),
+            'storyId' => $slug,
         ]);
     }
 
