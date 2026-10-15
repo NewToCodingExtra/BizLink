@@ -262,7 +262,7 @@ class ReportAdminController extends Controller
                         'kind' => $type === 'opportunity_reel' ? 'reel' : 'post',
                         'headline' => $o->headline,
                         'preview' => $o->headline . ' — ' . mb_substr((string) $o->description, 0, 160),
-                        'link' => '/post/' . $o->slug,
+                        'link' => '/post/' . ($o->slug ?: $o->id),
                         'image' => $o->image,
                         'offenderId' => $o->user_id,
                         'hidden' => (bool) ($o->hidden_by_moderation ?? false),
@@ -277,7 +277,7 @@ class ReportAdminController extends Controller
                     $s = Story::find($id);
                     return $s ? [
                         'kind' => 'story', 'preview' => mb_substr((string) ($s->caption ?? 'Story'), 0, 280),
-                        'link' => '/stories/' . ($s->slug ?? ''), 'image' => $s->media_url,
+                        'link' => '/stories/' . ($s->slug ?: $s->id), 'image' => $s->media_url,
                         'offenderId' => $s->user_id, 'hidden' => (bool) ($s->hidden_by_moderation ?? false),
                     ] : ['kind' => 'story', 'preview' => '[deleted]', 'offenderId' => null];
                 case 'message':

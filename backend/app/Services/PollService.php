@@ -16,6 +16,15 @@ class PollService
 {
     public function __construct(private NotificationService $notifications) {}
 
+    private function safeBroadcast($event): void
+    {
+        try {
+            broadcast($event);
+        } catch (\Throwable $e) {
+            \Illuminate\Support\Facades\Log::warning('Poll broadcast failed: ' . $e->getMessage());
+        }
+    }
+
     public function create(User $user, Conversation $conversation, array $data): Poll
     {
         $options = array_values(array_filter(array_map(
@@ -57,8 +66,8 @@ class PollService
 
             $conversation->update(['last_message' => 'Poll: '.$poll->question]);
             $poll->load('votes');
-            broadcast(new MessageSent($message));
-            broadcast(new PollUpdated($poll, $user->id));
+            $this->safeBroadcast(new MessageSent($message));
+            $this->safeBroadcast(new PollUpdated($poll, $user->id));
 
             return $poll;
         });
@@ -78,7 +87,7 @@ class PollService
         );
 
         $poll->load('votes');
-        broadcast(new PollUpdated($poll, $user->id));
+        $this->safeBroadcast(new PollUpdated($poll, $user->id));
 
         return $poll;
     }
@@ -101,8 +110,8 @@ class PollService
         ]);
 
         $poll->conversation?->update(['last_message' => 'Poll closed.']);
-        broadcast(new MessageSent($note));
-        broadcast(new PollClosed($poll, $user->id));
+        $this->safeBroadcast(new MessageSent($note));
+        $this->safeBroadcast(new PollClosed($poll, $user->id));
 
         $otherId = $this->otherParticipantId($poll, $user->id);
         if ($otherId) {

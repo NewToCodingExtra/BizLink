@@ -272,7 +272,7 @@ class UserAdminController extends Controller
             ->get(['id', 'slug', 'brand_name', 'headline', 'type', 'likes_count', 'verified', 'hidden_by_moderation'])
             ->map(fn($o) => [
                 'id' => $o->id,
-                'slug' => $o->slug,
+                'slug' => $o->slug ?: (string) $o->id,
                 'headline' => $o->headline,
                 'type' => $o->type,
                 'likes' => (int) $o->likes_count,

@@ -139,7 +139,7 @@ class AdminController extends Controller
                 ->get(['id', 'slug', 'brand_name', 'headline', 'type', 'likes_count', 'verified', 'user_id'])
                 ->map(fn($o) => [
                     'id' => $o->id,
-                    'slug' => $o->slug,
+                    'slug' => $o->slug ?: (string) $o->id,
                     'brandName' => $o->brand_name,
                     'headline' => $o->headline,
                     'type' => $o->type,

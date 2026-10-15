@@ -3,10 +3,12 @@ import { Link } from "@inertiajs/react";
 import { XIcon } from "./icons";
 
 export function quoteHref(q) {
-  if (!q || q.expired || !q.slug) return null;
-  if (q.kind === "reel") return `/reels?slug=${q.slug}`;
-  if (q.kind === "story") return `/stories/${q.slug}`;
-  return `/post/${q.slug}`;
+  if (!q || q.expired) return null;
+  const target = q.slug || q.id;
+  if (!target) return null;
+  if (q.kind === "reel") return `/reels?slug=${target}`;
+  if (q.kind === "story") return `/stories/${target}`;
+  return `/post/${target}`;
 }
 
 const KIND_LABEL = { post: "Post", reel: "Reel", story: "Story" };

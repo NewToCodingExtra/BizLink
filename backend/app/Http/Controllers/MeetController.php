@@ -179,8 +179,8 @@ class MeetController extends Controller
 
         $validated = $request->validate([
             'title' => 'nullable|string|max:255',
-            'start_at' => 'required|date',
-            'duration' => 'required|integer|in:15,30,60',
+            'start_at' => 'nullable',
+            'duration' => 'nullable',
             'custom_meet_url' => 'nullable|string|max:500',
         ]);
 
@@ -208,7 +208,7 @@ class MeetController extends Controller
         $this->authorizeParticipant($request, $conversation);
 
         $validated = $request->validate([
-            'meet_url' => 'required|string|url|max:500',
+            'meet_url' => 'required|string|max:500',
         ]);
 
         $message = $meetService->updateLink($request->user(), $conversation, $eventId, $validated['meet_url']);

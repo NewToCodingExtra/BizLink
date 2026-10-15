@@ -37,12 +37,12 @@ export default function PostModal({
               <span className="truncate min-w-0">{opp.category} · {opp.type}</span>
             </div>
           </div>
-          <Link href={`/post/${opp.slug}`} className="text-xs font-medium text-action hover:underline shrink-0">
+          <Link href={`/post/${opp.slug || opp.id}`} className="text-xs font-medium text-action hover:underline shrink-0">
             Open page
           </Link>
         </div>
 
-        <Link href={`/post/${opp.slug}`} className="block mt-3 rounded-xl overflow-hidden bg-bg border border-border">
+        <Link href={`/post/${opp.slug || opp.id}`} className="block mt-3 rounded-xl overflow-hidden bg-bg border border-border">
           {opp.mediaType === "video" && opp.videoUrl ? (
             <FeedVideo opp={opp} className="w-full max-h-[320px]" />
           ) : (

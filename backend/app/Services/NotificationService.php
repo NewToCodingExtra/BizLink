@@ -22,7 +22,11 @@ class NotificationService
             'read' => false,
         ]);
 
-        broadcast(new NotificationCreated($notification));
+        try {
+            broadcast(new NotificationCreated($notification));
+        } catch (\Throwable $e) {
+            \Illuminate\Support\Facades\Log::warning('Notification broadcast failed: ' . $e->getMessage());
+        }
 
         return $notification;
     }

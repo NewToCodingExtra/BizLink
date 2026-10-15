@@ -62,6 +62,18 @@ class Opportunity extends Model
             if (empty($opp->user_id) || ! User::whereKey($opp->user_id)->exists()) {
                 throw new \RuntimeException('Opportunity requires a valid user_id owner.');
             }
+            if (empty($opp->slug)) {
+                $base = \Illuminate\Support\Str::slug($opp->headline ?: 'post');
+                if (empty($base)) {
+                    $base = 'post';
+                }
+                $slug = $base;
+                $counter = 1;
+                while (static::where('slug', $slug)->where('id', '!=', $opp->id ?? 0)->exists()) {
+                    $slug = $base . '-' . $counter++;
+                }
+                $opp->slug = $slug;
+            }
         });
     }
 

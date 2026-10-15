@@ -36,7 +36,7 @@ Route::middleware(['auth', 'role:Admin', 'suspension'])->prefix('admin')->name('
     Route::get('/verifications', [VerificationAdminController::class, 'index'])->name('verifications.index');
     Route::post('/verifications/{verificationRequest}/approve', [VerificationAdminController::class, 'approve'])->name('verifications.approve');
     Route::post('/verifications/{verificationRequest}/reject', [VerificationAdminController::class, 'reject'])->name('verifications.reject');
-    Route::post('/verifications/{user}/revoke', [VerificationAdminController::class, 'revoke'])->name('verifications.revoke');
+    Route::post('/verifications/{identifier}/revoke', [VerificationAdminController::class, 'revoke'])->name('verifications.revoke');
 
     // 5. Analytics (Module C)
     Route::get('/analytics', [AnalyticsController::class, 'index'])->name('analytics.index');

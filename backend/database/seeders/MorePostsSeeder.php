@@ -6,6 +6,7 @@ use App\Models\Opportunity;
 use App\Models\Story;
 use App\Models\User;
 use Illuminate\Database\Seeder;
+use Illuminate\Support\Str;
 
 class MorePostsSeeder extends Seeder
 {
@@ -46,7 +47,7 @@ class MorePostsSeeder extends Seeder
                 $headline = "New Opportunity from {$brand->name} #{$i}";
                 $capitalAmount = rand(100, 999) * 1000;
                 $roiPercent = rand(15, 45);
-                Opportunity::firstOrCreate(['headline' => $headline], [
+                $opp = Opportunity::firstOrCreate(['headline' => $headline], [
                     'brand_name' => $brand->name,
                     'brand_avatar' => $brand->avatar,
                     'brand_id' => $brandId,
@@ -68,12 +69,17 @@ class MorePostsSeeder extends Seeder
                     'saves_count' => rand(5, 100),
                     'is_new' => true,
                 ]);
+                if (empty($opp->slug)) {
+                    $base = Str::slug($opp->headline ?: ($opp->brand_name ?: 'post')) ?: 'post';
+                    $opp->slug = $base . '-' . $opp->id;
+                    $opp->saveQuietly();
+                }
             }
 
             // Add 2 Stories (Reels) — firstOrCreate by caption so reseeds never duplicate.
             for ($j = 1; $j <= 2; $j++) {
                 $caption = "Behind the scenes at {$brand->name} #{$j}";
-                Story::firstOrCreate(['brand_name' => $brand->name, 'caption' => $caption], [
+                $story = Story::firstOrCreate(['brand_name' => $brand->name, 'caption' => $caption], [
                     'user_id' => $brand->id,
                     'brand_name' => $brand->name,
                     'brand_id' => $brandId,
@@ -83,6 +89,11 @@ class MorePostsSeeder extends Seeder
                     'expires_at' => now()->addHours(rand(12, 24)),
                     'seen' => false,
                 ]);
+                if (empty($story->slug)) {
+                    $base = Str::slug($story->brand_name ?: 'story') ?: 'story';
+                    $story->slug = $base . '-' . $story->id;
+                    $story->saveQuietly();
+                }
             }
         }
     }

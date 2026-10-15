@@ -189,7 +189,7 @@ export default function Profile({
             <p className="text-xs font-semibold tracking-widest text-text-secondary">STORIES BY {profileUser.name.toUpperCase()}</p>
             <div className="mt-3 flex gap-3 overflow-auto pb-1">
               {stories.map((s) => (
-                <Link key={s.id} href={`/stories/${s.slug}`} className="shrink-0 text-center group">
+                <Link key={s.id} href={`/stories/${s.slug || s.id}`} className="shrink-0 text-center group">
                   <img src={s.mediaUrl} alt={s.caption} className="w-24 h-32 rounded-xl object-cover border border-border group-hover:shadow-md transition" />
                   <span className="block mt-1 text-[11px] text-text-secondary truncate w-24">{s.caption}</span>
                 </Link>

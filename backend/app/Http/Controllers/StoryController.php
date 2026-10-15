@@ -52,7 +52,7 @@ class StoryController extends Controller
         
         $slug = $base;
         $count = 1;
-        while (Story::where('slug', $slug)->exists()) {
+        while (Story::where('slug', $slug)->where('id', '!=', $story->id)->exists()) {
             $slug = $base . '-' . $count;
             $count++;
         }
@@ -137,7 +137,7 @@ class StoryController extends Controller
     {
         return [
             'id' => $s->id,
-            'slug' => $s->slug,
+            'slug' => $s->slug ?: (string) $s->id,
             'authorId' => $s->user_id,
             'authorUsername' => $username ?? \App\Models\User::where('id', $s->user_id)->value('username'),
             'brandId' => $s->brand_id,

@@ -189,7 +189,7 @@ class AnalyticsController extends Controller
                 ->get(['id', 'slug', 'brand_name', 'headline', 'type', 'likes_count', 'saves_count', 'verified'])
                 ->map(fn($o) => [
                     'id' => $o->id,
-                    'slug' => $o->slug,
+                    'slug' => $o->slug ?: (string) $o->id,
                     'headline' => $o->headline,
                     'brandName' => $o->brand_name,
                     'type' => $o->type,

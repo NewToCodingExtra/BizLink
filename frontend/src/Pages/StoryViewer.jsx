@@ -114,17 +114,19 @@ export default function StoryViewer({ stories: serverStories, id: idProp, storyI
       const filtered = finalStories.filter((s) => String(s.brandId) === String(authorFilter));
       if (filtered.length > 0) finalStories = filtered;
       else {
-        const target = finalStories.find((st) => String(st.slug) === String(routeId));
+        const target = finalStories.find((st) => String(st.slug) === String(routeId) || String(st.id) === String(routeId));
         if (target) finalStories = finalStories.filter((s) => s.brandId === target.brandId);
       }
     }
     return finalStories;
   }, [localStories, authorFilter, routeId]);
 
-  const idx = stories.findIndex((s) => s.slug === routeId);
-  const story = stories[idx];
+  const matchIdx = stories.findIndex((s) => String(s.slug) === String(routeId) || String(s.id) === String(routeId));
+  const idx = matchIdx !== -1 ? matchIdx : 0;
+  const story = stories[idx] || null;
   const authorStories = story ? stories.filter((s) => s.brandId === story.brandId) : [];
-  const localIdx = authorStories.findIndex((s) => s.slug === routeId);
+  const localMatchIdx = authorStories.findIndex((s) => String(s.slug) === String(routeId) || String(s.id) === String(routeId));
+  const localIdx = localMatchIdx !== -1 ? localMatchIdx : 0;
 
   const visitStory = useCallback(
     (nextId, replace = true) => {
@@ -146,7 +148,7 @@ export default function StoryViewer({ stories: serverStories, id: idProp, storyI
           clearInterval(iv);
           const nextStory = stories[idx + 1];
           if (nextStory && nextStory.expiresAt > Date.now()) {
-            visitStory(nextStory.slug, true);
+            visitStory(nextStory.slug || nextStory.id, true);
           } else {
             closeViewer();
           }
@@ -176,11 +178,11 @@ export default function StoryViewer({ stories: serverStories, id: idProp, storyI
       if (e.key === "Escape") closeViewer();
       if (e.key === "ArrowLeft") {
         const prev = stories[idx - 1];
-        if (prev) visitStory(prev.slug, true);
+        if (prev) visitStory(prev.slug || prev.id, true);
       }
       if (e.key === "ArrowRight") {
         const nxt = stories[idx + 1];
-        if (nxt) visitStory(nxt.slug, true);
+        if (nxt) visitStory(nxt.slug || nxt.id, true);
         else closeViewer();
       }
     };
@@ -205,10 +207,12 @@ export default function StoryViewer({ stories: serverStories, id: idProp, storyI
   const handleLike = async (e) => {
     e.stopPropagation();
     if (!user) return toast.error("Log in to like stories.");
+    if (!story) return;
+    const targetIdentifier = story.id;
     const originalStories = [...localStories];
     setLocalStories((prev) =>
       prev.map((s) =>
-        s.slug === routeId
+        (s.id === story.id || (story.slug && s.slug === story.slug))
           ? {
               ...s,
               liked: !s.liked,
@@ -219,10 +223,10 @@ export default function StoryViewer({ stories: serverStories, id: idProp, storyI
     );
 
     try {
-      const res = await httpApi.post(`/stories/${routeId}/like`);
+      const res = await httpApi.post(`/stories/${targetIdentifier}/like`);
       setLocalStories((prev) =>
         prev.map((s) =>
-          s.slug === routeId
+          (s.id === story.id || (story.slug && s.slug === story.slug))
             ? { ...s, liked: res.liked ?? s.liked, likesCount: res.likes_count ?? res.likesCount ?? s.likesCount }
             : s
         )
@@ -243,16 +247,16 @@ export default function StoryViewer({ stories: serverStories, id: idProp, storyI
     setDeleting(true);
     setIsPaused(true);
     try {
-      await httpApi.del(`/stories/${story.slug}`);
+      await httpApi.del(`/stories/${story.slug || story.id}`);
       toast.success("Story deleted.");
       setConfirmDelete(false);
-      const remaining = localStories.filter((s) => String(s.slug) !== String(story.slug));
+      const remaining = localStories.filter((s) => String(s.slug || s.id) !== String(story.slug || story.id));
       setLocalStories(remaining);
       // Jump to next story from the same author, else close.
       const next = remaining.find((s) => String(s.brandId) === String(story.brandId))
         ?? remaining[idx] ?? remaining[idx - 1];
       if (next) {
-        visitStory(next.slug, true);
+        visitStory(next.slug || next.id, true);
       } else {
         closeViewer();
       }
@@ -267,19 +271,18 @@ export default function StoryViewer({ stories: serverStories, id: idProp, storyI
   const handlePrev = (e) => {
     e.stopPropagation();
     const prev = stories[idx - 1];
-    if (prev) visitStory(prev.slug, true);
+    if (prev) visitStory(prev.slug || prev.id, true);
   };
 
   const handleNext = (e) => {
     e.stopPropagation();
     const nxt = stories[idx + 1];
-    if (nxt) visitStory(nxt.slug, true);
+    if (nxt) visitStory(nxt.slug || nxt.id, true);
     else closeViewer();
   };
 
   if (!serverStories) return <CreativeLoader text="Loading story..." fullScreen={true} />;
-  if (stories.length > 0 && !story) return <div className="grid place-items-center h-[100dvh] bg-black text-white">Story not found or expired.</div>;
-  if (!story) return <div className="grid place-items-center h-[100dvh] bg-black text-white">No stories found.</div>;
+  if (stories.length === 0 || !story) return <div className="grid place-items-center h-[100dvh] bg-black text-white">No stories found.</div>;
 
   return (
     <div className="fixed inset-0 z-50 bg-[#0B1121] flex flex-col items-center select-none">

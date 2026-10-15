@@ -17,6 +17,22 @@ class RepairPostOwnersSeeder extends Seeder
         $oppFixed = $this->repairOpportunities($brandUsers);
         $storyFixed = $this->repairStories($brandUsers);
         $commentFixed = $this->repairComments();
+
+        Opportunity::whereNull('slug')->orWhere('slug', '')->orWhere('slug', 'null')->chunkById(100, function ($rows) {
+            foreach ($rows as $opp) {
+                $base = \Illuminate\Support\Str::slug($opp->headline ?: ($opp->brand_name ?: 'post')) ?: 'post';
+                $opp->slug = $base . '-' . $opp->id;
+                $opp->saveQuietly();
+            }
+        });
+        Story::whereNull('slug')->orWhere('slug', '')->orWhere('slug', 'null')->chunkById(100, function ($rows) {
+            foreach ($rows as $s) {
+                $base = \Illuminate\Support\Str::slug($s->brand_name ?: 'story') ?: 'story';
+                $s->slug = $base . '-' . $s->id;
+                $s->saveQuietly();
+            }
+        });
+
         $this->command->info("owners repaired: opps={$oppFixed} stories={$storyFixed} comments={$commentFixed}");
     }
 
