@@ -42,4 +42,79 @@ class Conversation extends Model
     {
         return $this->hasMany(Poll::class);
     }
+
+    public function getOwnerId(): ?int
+    {
+        if ($this->opportunity_id) {
+            $oppOwner = Opportunity::where('id', $this->opportunity_id)->value('user_id');
+            if ($oppOwner) {
+                return (int) $oppOwner;
+            }
+        }
+
+        foreach ($this->messages()->whereNotNull('attachment_id')->get(['attachment_type', 'attachment_id']) as $m) {
+            if ($m->attachment_type === Opportunity::class) {
+                $uid = Opportunity::where('id', $m->attachment_id)->value('user_id');
+                if ($uid) return (int) $uid;
+            }
+            if ($m->attachment_type === Story::class) {
+                $uid = Story::where('id', $m->attachment_id)->value('user_id');
+                if ($uid) return (int) $uid;
+            }
+        }
+
+        if ($this->with_name) {
+            $owner = Opportunity::where('brand_name', $this->with_name)->value('user_id')
+                ?? Story::where('brand_name', $this->with_name)->value('user_id');
+            if ($owner) return (int) $owner;
+        }
+
+        if ($this->brand_id) {
+            $owner = Opportunity::where('brand_id', $this->brand_id)->value('user_id')
+                ?? Story::where('brand_id', $this->brand_id)->value('user_id');
+            if ($owner) return (int) $owner;
+        }
+
+        return null;
+    }
+
+    public function isBuyer(?int $userId): bool
+    {
+        return $userId !== null && (int) $this->user_id === (int) $userId;
+    }
+
+    public function isSeller(?int $userId): bool
+    {
+        if (!$userId || $this->isBuyer($userId)) {
+            return false;
+        }
+
+        $ownerId = $this->getOwnerId();
+        if ($ownerId && (int) $ownerId === (int) $userId) {
+            return true;
+        }
+
+        if ($this->brand_id) {
+            $hasOpp = Opportunity::where('user_id', $userId)->where('brand_id', $this->brand_id)->exists();
+            $hasStory = Story::where('user_id', $userId)->where('brand_id', $this->brand_id)->exists();
+            if ($hasOpp || $hasStory) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    public function isParticipant(?int $userId): bool
+    {
+        return $this->isBuyer($userId) || $this->isSeller($userId);
+    }
+
+    public function getOtherParticipantId(?int $userId): ?int
+    {
+        if ((int) $this->user_id === (int) $userId) {
+            return $this->getOwnerId();
+        }
+        return (int) $this->user_id;
+    }
 }

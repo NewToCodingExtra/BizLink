@@ -10,12 +10,14 @@ import {
   VideoIcon,
   GoogleIcon,
   DotsIcon,
-} from "../Components/icons";
-import QuoteCard from "../Components/QuoteCard";
-import PollCard from "../Components/PollCard";
-import InsightsCard from "../Components/InsightsCard";
-import MeetingCard from "../Components/MeetingCard";
+} from "../components/icons";
+import QuoteCard from "../components/QuoteCard";
+import PollCard from "../components/PollCard";
+import InsightsCard from "../components/InsightsCard";
+import MeetingCard from "../components/MeetingCard";
 import ConversationList from "../components/ConversationList";
+import DropdownMenu from "../components/DropdownMenu";
+import ReportModal from "../components/ReportModal";
 import { httpApi, csrfFetch } from "../utils/http";
 import { getEcho, watchEchoHealth } from "../utils/echo";
 import { profilePath } from "../utils/profilePath";
@@ -46,6 +48,8 @@ export default function MessageThread({ conv: initialConv, conversations = [], q
   const [showMeetModal, setShowMeetModal] = useState(false);
   const [showConnectModal, setShowConnectModal] = useState(false);
   const [showThreadMenu, setShowThreadMenu] = useState(false);
+  const threadMenuBtnRef = useRef(null);
+  const [reportTarget, setReportTarget] = useState(null);
   const [meetTitle, setMeetTitle] = useState("");
   const [meetDate, setMeetDate] = useState("");
   const [meetDuration, setMeetDuration] = useState(30);
@@ -385,7 +389,7 @@ export default function MessageThread({ conv: initialConv, conversations = [], q
           <ArrowLeftIcon className="w-5 h-5" />
         </Link>
         <Link href={profilePath({ username: conv.withUsername, authorId: conv.withId, brandId: conv.brandId })}>
-          <img src={conv.avatar} alt={conv.with} className="w-8 h-8 rounded-full" />
+          <img src={conv.avatar} alt={conv.with} className="w-8 h-8 rounded-full object-cover shrink-0 aspect-square" />
         </Link>
         <div className="flex flex-col min-w-0 flex-1">
           <Link href={profilePath({ username: conv.withUsername, authorId: conv.withId, brandId: conv.brandId })} className="text-sm font-semibold text-text-primary hover:text-action truncate">
@@ -395,52 +399,63 @@ export default function MessageThread({ conv: initialConv, conversations = [], q
         </div>
 
         {/* ⋯ Actions Menu */}
-        <div className="relative">
+        <div>
           <button
+            ref={threadMenuBtnRef}
             type="button"
-            onClick={() => setShowThreadMenu(!showThreadMenu)}
-            className="p-1.5 rounded-lg text-text-secondary hover:text-text-primary hover:bg-bg border border-transparent hover:border-border transition-colors"
+            onClick={() => setShowThreadMenu((v) => !v)}
+            className="flex items-center justify-center w-11 h-11 rounded-lg text-text-secondary hover:text-text-primary hover:bg-bg border border-transparent hover:border-border transition-colors"
             aria-label="Conversation options"
+            aria-haspopup="menu"
+            aria-expanded={showThreadMenu}
           >
             <DotsIcon className="w-5 h-5" />
           </button>
-          {showThreadMenu && (
-            <div className="absolute right-0 mt-1 w-52 bg-surface rounded-xl border border-border shadow-lg py-1.5 z-30 animate-in fade-in">
+          <DropdownMenu open={showThreadMenu} onClose={() => setShowThreadMenu(false)} triggerRef={threadMenuBtnRef} align="right" width={208}>
+            <button
+              type="button"
+              onClick={() => {
+                setShowThreadMenu(false);
+                openMeetScheduler();
+              }}
+              className="w-full text-left px-3.5 py-2 min-h-[44px] flex items-center text-xs font-medium text-text-primary hover:bg-bg gap-2"
+            >
+              <VideoIcon className="w-4 h-4 text-action" />
+              <span>Schedule Google Meet</span>
+            </button>
+
+            {googleConnected ? (
               <button
                 type="button"
                 onClick={() => {
                   setShowThreadMenu(false);
-                  openMeetScheduler();
+                  handleDisconnectGoogle();
                 }}
-                className="w-full text-left px-3.5 py-2 text-xs font-medium text-text-primary hover:bg-bg flex items-center gap-2"
+                className="w-full text-left px-3.5 py-2 min-h-[44px] flex items-center text-xs font-medium text-error hover:bg-error/10 gap-2"
               >
-                <VideoIcon className="w-4 h-4 text-action" />
-                <span>Schedule Google Meet</span>
+                <GoogleIcon className="w-4 h-4" />
+                <span>Disconnect Google</span>
               </button>
-
-              {googleConnected ? (
-                <button
-                  type="button"
-                  onClick={() => {
-                    setShowThreadMenu(false);
-                    handleDisconnectGoogle();
-                  }}
-                  className="w-full text-left px-3.5 py-2 text-xs font-medium text-error hover:bg-error/10 flex items-center gap-2"
-                >
-                  <GoogleIcon className="w-4 h-4" />
-                  <span>Disconnect Google</span>
-                </button>
-              ) : (
-                <a
-                  href={`/meet/connect?return_to=${encodeURIComponent(window.location.pathname)}`}
-                  className="w-full text-left px-3.5 py-2 text-xs font-medium text-text-primary hover:bg-bg flex items-center gap-2"
-                >
-                  <GoogleIcon className="w-4 h-4" />
-                  <span>Connect Google</span>
-                </a>
-              )}
-            </div>
-          )}
+            ) : (
+              <a
+                href={`/meet/connect?return_to=${encodeURIComponent(window.location.pathname)}`}
+                className="w-full text-left px-3.5 py-2 min-h-[44px] flex items-center text-xs font-medium text-text-primary hover:bg-bg gap-2"
+              >
+                <GoogleIcon className="w-4 h-4" />
+                <span>Connect Google</span>
+              </a>
+            )}
+            <button
+              type="button"
+              onClick={() => {
+                setShowThreadMenu(false);
+                if (conv?.id) setReportTarget({ endpoint: `/conversations/${conv.id}/report`, title: "Report conversation" });
+              }}
+              className="w-full text-left px-3.5 py-2 min-h-[44px] flex items-center text-xs font-medium text-error hover:bg-error/10 gap-2"
+              >
+                <span>Report conversation</span>
+              </button>
+          </DropdownMenu>
         </div>
       </div>
 
@@ -515,6 +530,15 @@ export default function MessageThread({ conv: initialConv, conversations = [], q
 
                 {m.text && <p className="whitespace-pre-wrap break-words">{m.text}</p>}
                 <p className={`text-[11px] mt-1 text-right ${isMe ? "text-white/70" : "text-text-secondary"}`}>{m.time}</p>
+                {!isMe && (
+                  <button
+                    type="button"
+                    onClick={() => setReportTarget({ endpoint: `/messages/${m.id}/report`, title: "Report message" })}
+                    className={`text-[11px] mt-1 underline underline-offset-2 ${isMe ? "text-white/70" : "text-text-secondary hover:text-error"}`}
+                  >
+                    Report
+                  </button>
+                )}
               </div>
             </div>
           );
@@ -815,6 +839,14 @@ export default function MessageThread({ conv: initialConv, conversations = [], q
             </div>
           </div>
         </div>
+      )}
+      {reportTarget && (
+        <ReportModal
+          isOpen={!!reportTarget}
+          onClose={() => setReportTarget(null)}
+          endpoint={reportTarget.endpoint}
+          title={reportTarget.title}
+        />
       )}
         </div>
       </div>

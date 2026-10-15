@@ -57,13 +57,6 @@ class PollController extends Controller
     private function assertParticipant(Request $request, Conversation $conversation): void
     {
         $user = $request->user();
-        $isBuyer = (int) $conversation->user_id === (int) $user->id;
-        $isSeller = false;
-        if (!$isBuyer) {
-            $ownerId = Opportunity::where('brand_id', $conversation->brand_id)->value('user_id')
-                ?? \App\Models\Story::where('brand_id', $conversation->brand_id)->value('user_id');
-            $isSeller = (int) $ownerId === (int) $user->id;
-        }
-        abort_unless($isBuyer || $isSeller, 403, 'Forbidden');
+        abort_unless($conversation->isParticipant($user?->id), 403, 'Forbidden');
     }
 }

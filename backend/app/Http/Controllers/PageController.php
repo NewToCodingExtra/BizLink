@@ -149,33 +149,22 @@ class PageController extends Controller
             }
             if (!$conversation && isset($other) && $other) {
                 // Seller viewing: conversation where $other is the buyer
-                // and the brand is one of mine.
+                // and the brand is one of mine, or opportunity is one of mine.
                 $myBrandIds = \App\Models\Opportunity::where('user_id', $user->id)->pluck('brand_id')->toArray();
                 $myStoryBrandIds = \App\Models\Story::where('user_id', $user->id)->pluck('brand_id')->toArray();
                 $allMyBrands = array_unique(array_merge($myBrandIds, $myStoryBrandIds));
 
                 $conversation = Conversation::where('user_id', $other->id)
-                    ->whereIn('brand_id', $allMyBrands)
+                    ->where(function ($q) use ($allMyBrands, $user) {
+                        $q->whereIn('brand_id', $allMyBrands)
+                          ->orWhereHas('opportunity', fn($sub) => $sub->where('user_id', $user->id));
+                    })
                     ->latest()
                     ->first();
             }
         }
 
-        if (!$conversation) {
-            return redirect('/messages')->with('error', 'Conversation not found.');
-        }
-
-        // Authorize: user must be the buyer or the seller
-        $isBuyer = (int) $conversation->user_id === (int) $user->id;
-        
-        $isSeller = false;
-        if (!$isBuyer) {
-            $ownerId = Opportunity::where('brand_id', $conversation->brand_id)->value('user_id')
-                ?? \App\Models\Story::where('brand_id', $conversation->brand_id)->value('user_id');
-            $isSeller = (int) $ownerId === (int) $user->id;
-        }
-
-        if (!$isBuyer && !$isSeller) {
+        if (!$conversation || !$conversation->isParticipant($user?->id)) {
             return redirect('/messages')->with('error', 'Conversation not found.');
         }
 

@@ -138,8 +138,7 @@ class PollService
             return null;
         }
         if ((int) $c->user_id === $actorId) {
-            $ownerId = \App\Models\Opportunity::where('brand_id', $c->brand_id)->value('user_id')
-                ?? \App\Models\Story::where('brand_id', $c->brand_id)->value('user_id');
+            $ownerId = $c->getOwnerId();
             return $ownerId && (int) $ownerId !== $actorId ? (int) $ownerId : null;
         }
         return (int) $c->user_id !== $actorId ? (int) $c->user_id : null;
@@ -151,13 +150,6 @@ class PollService
         if (!$c) {
             return '/messages';
         }
-        $owner = \App\Models\User::find(
-            \App\Models\Opportunity::where('brand_id', $c->brand_id)->value('user_id')
-            ?? \App\Models\Story::where('brand_id', $c->brand_id)->value('user_id')
-        );
-        $buyer = \App\Models\User::find($c->user_id);
-        $identifier = $owner?->username ?: ($buyer?->username ?: $c->brand_id);
-
-        return '/messages/'.$identifier;
+        return '/messages/'.$c->id;
     }
 }

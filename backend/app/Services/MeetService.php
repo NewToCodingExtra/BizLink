@@ -183,11 +183,6 @@ class MeetService
 
     public function getOtherParticipantId(Conversation $conversation, ?int $userId): ?int
     {
-        if ((int) $conversation->user_id === (int) $userId) {
-            $ownerId = Opportunity::where('brand_id', $conversation->brand_id)->value('user_id')
-                ?? Story::where('brand_id', $conversation->brand_id)->value('user_id');
-            return $ownerId ? (int) $ownerId : null;
-        }
-        return (int) $conversation->user_id;
+        return $conversation->getOtherParticipantId($userId);
     }
 }

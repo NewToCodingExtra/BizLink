@@ -19,6 +19,7 @@ class ConversationController extends Controller
 
         $convos = Conversation::where('user_id', $user->id)
             ->orWhereIn('brand_id', $allMyBrands)
+            ->orWhereHas('opportunity', fn($q) => $q->where('user_id', $user->id))
             ->with('messages')
             ->latest()
             ->get();
@@ -29,16 +30,7 @@ class ConversationController extends Controller
     public function show(Request $request, Conversation $conversation)
     {
         $user = $request->user();
-        $isBuyer = (int) $conversation->user_id === (int) $user->id;
-        $isSeller = false;
-        
-        if (!$isBuyer) {
-            $ownerId = Opportunity::where('brand_id', $conversation->brand_id)->value('user_id')
-                ?? \App\Models\Story::where('brand_id', $conversation->brand_id)->value('user_id');
-            $isSeller = (int) $ownerId === (int) $user->id;
-        }
-
-        if (!$isBuyer && !$isSeller) {
+        if (!$conversation->isParticipant($user?->id)) {
             return response()->json(['message' => 'Forbidden'], 403);
         }
         $conversation->load(['messages.sender:id,name,avatar', 'messages.attachment', 'messages.poll.votes']);
@@ -160,16 +152,7 @@ class ConversationController extends Controller
     public function send(Request $request, Conversation $conversation)
     {
         $user = $request->user();
-        $isBuyer = (int) $conversation->user_id === (int) $user->id;
-        $isSeller = false;
-
-        if (!$isBuyer) {
-            $ownerId = Opportunity::where('brand_id', $conversation->brand_id)->value('user_id')
-                ?? \App\Models\Story::where('brand_id', $conversation->brand_id)->value('user_id');
-            $isSeller = (int) $ownerId === (int) $user->id;
-        }
-
-        if (!$isBuyer && !$isSeller) {
+        if (!$conversation->isParticipant($user?->id)) {
             return response()->json(['message' => 'Forbidden'], 403);
         }
         $data = $request->validate([
@@ -259,14 +242,7 @@ class ConversationController extends Controller
     public function insights(Request $request, Conversation $conversation)
     {
         $user = $request->user();
-        $isBuyer = (int) $conversation->user_id === (int) $user->id;
-        $isSeller = false;
-        if (!$isBuyer) {
-            $ownerId = Opportunity::where('brand_id', $conversation->brand_id)->value('user_id')
-                ?? \App\Models\Story::where('brand_id', $conversation->brand_id)->value('user_id');
-            $isSeller = (int) $ownerId === (int) $user->id;
-        }
-        if (!$isSeller) {
+        if (!$conversation->isSeller($user?->id)) {
             return response()->json(['message' => 'Only the brand can share insights.'], 403);
         }
 
@@ -323,7 +299,7 @@ class ConversationController extends Controller
     private function serializeMessage(Message $message): array
     {
         $message->loadMissing(['attachment', 'poll.votes']);
-        $viewerId = request()->user()?->id;
+        $viewerId = auth()->id() ?: request()->user()?->id;
         return [
             'id' => $message->id,
             'conversationId' => $message->conversation_id,
@@ -356,7 +332,7 @@ class ConversationController extends Controller
 
     private function serialize(Conversation $c, bool $withMessages = false): array
     {
-        $viewerId = (int) request()->user()?->id;
+        $viewerId = (int) (auth()->id() ?: request()->user()?->id);
         $isBuyer = (int) $c->user_id === $viewerId;
         
         $owner = $this->resolveOwner($c);
@@ -388,17 +364,7 @@ class ConversationController extends Controller
      */
     private function resolveOwner(Conversation $c): ?\App\Models\User
     {
-        if ($c->opportunity_id) {
-            $ownerId = Opportunity::where('id', $c->opportunity_id)->value('user_id');
-            if ($ownerId) {
-                $owner = \App\Models\User::select('id', 'username')->find($ownerId);
-                if ($owner) {
-                    return $owner;
-                }
-            }
-        }
-        $ownerId = Opportunity::where('brand_id', $c->brand_id)->value('user_id')
-            ?? \App\Models\Story::where('brand_id', $c->brand_id)->value('user_id');
+        $ownerId = $c->getOwnerId();
         return $ownerId ? \App\Models\User::select('id', 'username')->find($ownerId) : null;
     }
 }

@@ -4,7 +4,8 @@ import { ChevronRightIcon } from "./icons";
 import { profilePath } from "../utils/profilePath";
 
 export function threadHref(c) {
-  return `/messages/${c.withUsername || c.brandId}`;
+  if (!c) return "/messages";
+  return `/messages/${c.id || c.withUsername || c.brandId}`;
 }
 
 export default function ConversationList({ conversations = [], activeId = null, compact = false }) {

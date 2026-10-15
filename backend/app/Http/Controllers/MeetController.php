@@ -17,16 +17,7 @@ class MeetController extends Controller
     private function authorizeParticipant(Request $request, Conversation $conversation): void
     {
         $user = $request->user();
-        $isBuyer = (int) $conversation->user_id === (int) $user->id;
-        $isSeller = false;
-
-        if (! $isBuyer) {
-            $ownerId = Opportunity::where('brand_id', $conversation->brand_id)->value('user_id')
-                ?? Story::where('brand_id', $conversation->brand_id)->value('user_id');
-            $isSeller = (int) $ownerId === (int) $user->id;
-        }
-
-        if (! $isBuyer && !$isSeller) {
+        if (!$conversation->isParticipant($user?->id)) {
             abort(403, 'Forbidden');
         }
     }
