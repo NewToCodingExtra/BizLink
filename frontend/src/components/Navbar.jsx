@@ -138,7 +138,7 @@ export default function Navbar() {
             )
           ) : (
             <>
-              <Link href="/login" className="hidden sm:inline-flex items-center min-h-[44px] px-3 py-2 text-sm font-medium text-slate-200 hover:text-white active:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-300 focus-visible:rounded">Log in</Link>
+              <Link href="/login" className="hidden sm:inline-flex items-center min-h-[44px] px-4 py-2 rounded-lg border border-white/30 text-sm font-medium text-white hover:bg-white/10 active:bg-white/15 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-300">Log in</Link>
               <Link href="/register" className="hidden sm:inline-flex items-center min-h-[44px] bg-action hover:bg-action-hover active:scale-[0.98] text-white text-sm font-medium px-4 py-2 rounded-lg transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-300">Sign up</Link>
             </>
           )}
@@ -207,7 +207,7 @@ export default function Navbar() {
             <Link href="/about" onClick={() => setMobileOpen(false)} className="inline-flex items-center min-h-[44px] px-4 py-2 rounded-full border border-white/20 text-white text-sm active:bg-white/10">About</Link>
             <Link href="/contact" onClick={() => setMobileOpen(false)} className="inline-flex items-center min-h-[44px] px-4 py-2 rounded-full border border-white/20 text-white text-sm active:bg-white/10">Contact</Link>
             {user && hasRole(page, "Admin") && <Link href="/admin" onClick={() => setMobileOpen(false)} className="inline-flex items-center min-h-[44px] px-4 py-2 rounded-full border border-white/20 text-white text-sm active:bg-white/10">Admin</Link>}
-            {!user && <Link href="/login" onClick={() => setMobileOpen(false)} className="inline-flex items-center min-h-[44px] px-4 py-2 rounded-full border border-white/20 text-white text-sm active:bg-white/10">Log in</Link>}
+            {!user && <Link href="/login" onClick={() => setMobileOpen(false)} className="inline-flex items-center min-h-[44px] px-4 py-2 rounded-lg border border-white/30 text-white text-sm font-medium active:bg-white/10">Log in</Link>}
             {!user && <Link href="/register" onClick={() => setMobileOpen(false)} className="inline-flex items-center min-h-[44px] px-4 py-2 rounded-full bg-action text-white text-sm active:scale-[0.98]">Sign up</Link>}
           </div>
           {user ? (

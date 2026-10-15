@@ -82,6 +82,10 @@ export default function BottomNav() {
   const canCreate = can(page, "opportunities.create");
   const profileHref = user ? profilePath(user) : "/profile/me";
   const isActive = (path) => pathname === path;
+  // Guests have no feed of their own: first tab is Home (/), not /feed.
+  const homeHref = user ? "/feed" : "/";
+  const homeLabel = user ? "Feed" : "Home";
+  const homeActive = user ? isActive("/feed") : isActive("/");
   const tabClass = (active) =>
     `relative flex flex-col items-center gap-0.5 py-2 mx-1 my-1 rounded-xl text-[11px] font-medium transition-colors duration-150 ${active ? "text-white bg-white/10" : "text-slate-300 hover:text-white hover:bg-white/5"}`;
 
@@ -94,9 +98,9 @@ export default function BottomNav() {
       style={{ paddingBottom: "env(safe-area-inset-bottom)" }}
     >
       <div className={`grid ${canCreate ? "grid-cols-5" : "grid-cols-4"} px-2`}>
-        <Link href="/feed" aria-current={isActive("/feed") ? "page" : undefined} className={tabClass(isActive("/feed"))}>
+        <Link href={homeHref} aria-current={homeActive ? "page" : undefined} className={tabClass(homeActive)}>
           <FeedIcon />
-          <span>Feed</span>
+          <span>{homeLabel}</span>
         </Link>
 
         <Link href="/reels" aria-current={isActive("/reels") ? "page" : undefined} className={tabClass(isActive("/reels"))}>

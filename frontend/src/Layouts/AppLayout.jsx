@@ -10,9 +10,10 @@ export default function AppLayout({ children }) {
   const page = usePage();
   const { flash } = page.props;
   const toast = useToast();
-  // Full-bleed reels: no footer under the snap feed (it read as stray whitespace).
+  // Full-bleed canvases: no footer under the reels snap feed or the admin
+  // console (both read stray footers as whitespace; admin stays desktop-first).
   const pathname = page.url.split("?")[0];
-  const hideFooter = pathname.startsWith("/reels");
+  const hideFooter = pathname.startsWith("/reels") || pathname.startsWith("/admin");
   // Toast-once guard: flash props persist across client-side visits and the
   // toast object is referentially unstable, so neither seen-state nor the
   // effect deps alone prevent repeats. Ref records the last toasted key.

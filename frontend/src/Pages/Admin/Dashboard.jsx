@@ -1,9 +1,10 @@
+import { useState } from "react";
 import { Head, Link, usePage } from "@inertiajs/react";
 import { hasRole } from "../../utils/can";
 import { profilePath } from "../../utils/profilePath";
 import { ArrowLeftIcon, CheckIcon } from "../../Components/icons";
 
-function StatCard({ label, value, accent = false }) {
+function StatCard({ label, value, accent = false, share = null }) {
   return (
     <div
       className={`min-w-0 overflow-hidden rounded-xl border p-3 sm:p-4 ${
@@ -16,14 +17,33 @@ function StatCard({ label, value, accent = false }) {
       <p className="text-xs text-text-secondary mt-0.5 leading-snug line-clamp-2 min-h-[2em]">
         {label}
       </p>
+      {share != null && (
+        <div
+          className="mt-2 h-1.5 rounded-full bg-bg overflow-hidden"
+          role="img"
+          aria-label={`${label}: ${Math.round(share * 100)} percent`}
+        >
+          <div className="h-full rounded-full bg-action" style={{ width: `${Math.round(share * 100)}%` }} />
+        </div>
+      )}
     </div>
   );
 }
+
+const TABS = [
+  { key: "overview", label: "Overview" },
+  { key: "users", label: "Users" },
+  { key: "content", label: "Content" },
+  { key: "moderation", label: "Moderation" },
+];
 
 export default function AdminDashboard({ stats = {}, recentUsers = [], topPosts = [], reportedComments = [] }) {
   const { auth } = usePage().props;
   const user = auth?.user ?? null;
   const isAdmin = hasRole(usePage(), "Admin");
+  const [tab, setTab] = useState("overview");
+  const oppTotal = stats.content?.opportunities ?? 0;
+  const shareOf = (n) => (oppTotal > 0 ? n / oppTotal : 0);
 
   return (
     <div className="max-w-6xl mx-auto px-4 sm:px-6 py-4 sm:py-6 overflow-x-clip">
@@ -60,6 +80,27 @@ export default function AdminDashboard({ stats = {}, recentUsers = [], topPosts 
         </div>
       ) : (
         <>
+          {/* Tabs keep the console scannable: stats stay on Overview, lists get their own rooms. */}
+          <div className="mt-4 flex gap-1.5 overflow-x-auto pb-1" role="tablist" aria-label="Admin sections">
+            {TABS.map((t) => (
+              <button
+                key={t.key}
+                type="button"
+                role="tab"
+                aria-selected={tab === t.key}
+                onClick={() => setTab(t.key)}
+                className={`shrink-0 inline-flex items-center min-h-[40px] px-4 rounded-full text-sm font-medium transition-colors ${
+                  tab === t.key
+                    ? "bg-action text-white"
+                    : "border border-border text-text-secondary hover:text-text-primary hover:bg-bg"
+                }`}
+              >
+                {t.label}
+              </button>
+            ))}
+          </div>
+          {tab === "overview" && (
+          <>
           {/* Users */}
           <section className="mt-6" aria-labelledby="admin-stats-users">
             <h2 id="admin-stats-users" className="text-xs font-semibold tracking-widest text-text-secondary">
@@ -80,11 +121,11 @@ export default function AdminDashboard({ stats = {}, recentUsers = [], topPosts 
               CONTENT
             </h2>
             <div className="mt-2 grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2.5 sm:gap-3">
-              <StatCard label="Opportunities" value={stats.content?.opportunities ?? 0} />
+              <StatCard label="Opportunities" value={stats.content?.opportunities ?? 0} accent />
               <StatCard label="Live stories" value={stats.content?.liveStories ?? 0} />
-              <StatCard label="Franchise" value={stats.content?.franchise ?? 0} />
-              <StatCard label="Wholesale" value={stats.content?.wholesale ?? 0} />
-              <StatCard label="Resell" value={stats.content?.resell ?? 0} />
+              <StatCard label="Franchise" value={stats.content?.franchise ?? 0} share={shareOf(stats.content?.franchise ?? 0)} />
+              <StatCard label="Wholesale" value={stats.content?.wholesale ?? 0} share={shareOf(stats.content?.wholesale ?? 0)} />
+              <StatCard label="Resell" value={stats.content?.resell ?? 0} share={shareOf(stats.content?.resell ?? 0)} />
             </div>
           </section>
 
@@ -101,7 +142,9 @@ export default function AdminDashboard({ stats = {}, recentUsers = [], topPosts 
               <StatCard label="Flagged comments" value={stats.moderation?.reportedComments ?? 0} />
             </div>
           </section>
-
+          </>
+          )}
+          {tab === "users" && (
           <div className="mt-6 sm:mt-8 grid gap-4 sm:gap-6 lg:grid-cols-2">
             {/* Recent users */}
             <section
@@ -150,7 +193,10 @@ export default function AdminDashboard({ stats = {}, recentUsers = [], topPosts 
                 </ul>
               )}
             </section>
-
+          </div>
+          )}
+          {tab === "content" && (
+          <div className="mt-6 sm:mt-8 grid gap-4 sm:gap-6 lg:grid-cols-2">
             {/* Top posts */}
             <section
               aria-labelledby="admin-top-posts"
@@ -192,7 +238,15 @@ export default function AdminDashboard({ stats = {}, recentUsers = [], topPosts 
                 </ul>
               )}
             </section>
-
+          </div>
+          )}
+          {tab === "moderation" && (
+          <div className="mt-6 sm:mt-8 grid gap-4 sm:gap-6 lg:grid-cols-2">
+            <div className="lg:col-span-2">
+              <Link href="/admin/reports" className="inline-flex items-center min-h-[44px] px-4 rounded-full bg-action text-white text-sm font-semibold hover:bg-action-hover transition-colors">
+                Open full reports queue
+              </Link>
+            </div>
             {/* Moderation queue */}
             <section
               aria-labelledby="admin-flagged"
@@ -241,6 +295,7 @@ export default function AdminDashboard({ stats = {}, recentUsers = [], topPosts 
               )}
             </section>
           </div>
+          )}
         </>
       )}
     </div>
