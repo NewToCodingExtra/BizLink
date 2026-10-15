@@ -36,7 +36,7 @@ done
 
 # Safe, idempotent boot steps (never :fresh here).
 php artisan migrate --force
-php artisan db:seed --class=RolesAndPermissionsSeeder --force || true
+php artisan db:seed --force || true
 
 php artisan config:cache
 php artisan route:cache
