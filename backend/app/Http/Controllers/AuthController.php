@@ -58,12 +58,29 @@ class AuthController extends Controller
 
         if (!$user || !$user->password || !Hash::check($data['password'], $user->password)) {
             \Illuminate\Support\Facades\RateLimiter::hit($rateLimitKey, 60);
+            \App\Models\LoginAttempt::create([
+                'user_id' => $user?->id,
+                'email' => $data['email'],
+                'ip' => $ip,
+                'successful' => false,
+                'user_agent' => $request->userAgent(),
+                'created_at' => now(),
+            ]);
             throw ValidationException::withMessages([
                 'email' => ['The provided credentials are incorrect.'],
             ]);
         }
 
         \Illuminate\Support\Facades\RateLimiter::clear($rateLimitKey);
+
+        \App\Models\LoginAttempt::create([
+            'user_id' => $user->id,
+            'email' => $data['email'],
+            'ip' => $ip,
+            'successful' => true,
+            'user_agent' => $request->userAgent(),
+            'created_at' => now(),
+        ]);
 
         if ($block = app(\App\Services\EnforcementService::class)->isBlocked($user)) {
             throw ValidationException::withMessages(['email' => [$block]]);

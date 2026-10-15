@@ -45,14 +45,33 @@ class SessionAuthController extends Controller
             ]);
         }
 
+        $userTarget = User::where('email', $data['email'])->first();
+
         if (!Auth::attempt(['email' => $data['email'], 'password' => $data['password']], true)) {
             RateLimiter::hit($rateLimitKey, 60);
+            \App\Models\LoginAttempt::create([
+                'user_id' => $userTarget?->id,
+                'email' => $data['email'],
+                'ip' => $ip,
+                'successful' => false,
+                'user_agent' => $request->userAgent(),
+                'created_at' => now(),
+            ]);
             throw ValidationException::withMessages([
                 'email' => ['The provided credentials are incorrect.'],
             ]);
         }
 
         RateLimiter::clear($rateLimitKey);
+
+        \App\Models\LoginAttempt::create([
+            'user_id' => Auth::id(),
+            'email' => $data['email'],
+            'ip' => $ip,
+            'successful' => true,
+            'user_agent' => $request->userAgent(),
+            'created_at' => now(),
+        ]);
 
         $request->session()->regenerate();
         $request->session()->put('last_activity_at', now());

@@ -23,6 +23,7 @@ class User extends Authenticatable
         'avatar',
         'bio',
         'role',
+        'is_brand_verified',
     ];
 
     protected $hidden = [
@@ -38,6 +39,7 @@ class User extends Authenticatable
             'suspended_until' => 'datetime',
             'banned_at' => 'datetime',
             'warning_count' => 'integer',
+            'is_brand_verified' => 'boolean',
         ];
     }
 

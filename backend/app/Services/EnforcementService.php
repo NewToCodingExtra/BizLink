@@ -44,6 +44,32 @@ class EnforcementService
         $user->tokens()->delete();
     }
 
+    public function unsuspend(int $userId): void
+    {
+        $user = User::findOrFail($userId);
+        $user->forceFill([
+            'status' => 'active',
+            'suspended_until' => null,
+            'ban_reason' => null,
+        ])->save();
+    }
+
+    public function unban(int $userId): void
+    {
+        $user = User::findOrFail($userId);
+        $user->forceFill([
+            'status' => 'active',
+            'banned_at' => null,
+            'ban_reason' => null,
+        ])->save();
+    }
+
+    public function clearWarnings(int $userId): void
+    {
+        $user = User::findOrFail($userId);
+        $user->forceFill(['warning_count' => 0])->save();
+    }
+
     public function isBlocked(?User $user): ?string
     {
         if (! $user) {
