@@ -64,12 +64,12 @@ export default function AdminHeader({
   return (
     <div className="space-y-4 mb-6">
       {/* Top Banner Row */}
-      <div className="flex flex-wrap items-center justify-between gap-3">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div className="flex items-center gap-3 min-w-0">
           <Link
             href="/feed"
             aria-label="Back to feed"
-            className="inline-flex items-center justify-center w-10 h-10 rounded-xl bg-surface border border-border text-text-secondary hover:text-text-primary hover:border-action/40 hover:bg-surface/80 active:scale-95 transition-all cursor-pointer shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-action"
+            className="inline-flex items-center justify-center w-10 h-10 rounded-xl bg-surface border border-border text-text-secondary hover:text-text-primary hover:border-action/40 hover:bg-surface/80 active:scale-95 transition-all cursor-pointer shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-action shrink-0"
           >
             <ArrowLeftIcon className="w-5 h-5" />
           </Link>
@@ -90,13 +90,13 @@ export default function AdminHeader({
         </div>
 
         {/* Optional Actions (e.g. Export buttons, refresh) */}
-        {actions && <div className="flex items-center gap-2 shrink-0">{actions}</div>}
+        {actions && <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto shrink-0">{actions}</div>}
       </div>
 
       {/* Navigation Tab Bar */}
       <nav
         aria-label="Admin console navigation"
-        className="flex items-center gap-1.5 p-1.5 bg-surface/80 backdrop-blur-md rounded-2xl border border-border/80 shadow-xs overflow-x-auto no-scrollbar"
+        className="flex items-center gap-1.5 p-1.5 bg-surface/80 backdrop-blur-md rounded-2xl border border-border/80 shadow-xs overflow-x-auto touch-pan-x no-scrollbar"
       >
         {tabs.map((tab) => {
           const Icon = tab.icon;
