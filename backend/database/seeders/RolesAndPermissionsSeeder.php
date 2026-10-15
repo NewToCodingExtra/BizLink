@@ -27,6 +27,10 @@ class RolesAndPermissionsSeeder extends Seeder
         Role::firstOrCreate(['name' => 'Manager'])->syncPermissions([
             'opportunities.create', 'opportunities.update', 'opportunities.delete', 'inquiries.respond',
         ]);
-        Role::firstOrCreate(['name' => 'User'])->syncPermissions([]);
+        // Entrepreneurs post too (feed + reels + stories alike) — they only
+        // manage their own content via OpportunityPolicy ownership checks.
+        Role::firstOrCreate(['name' => 'User'])->syncPermissions([
+            'opportunities.create', 'opportunities.update', 'opportunities.delete', 'inquiries.respond',
+        ]);
     }
 }
