@@ -377,7 +377,9 @@ class ConversationController extends Controller
             'mediaSize' => $message->media_size,
             'insight' => $message->insight,
             'poll' => $message->poll ? $this->pollPayload($message->poll, $viewerId) : null,
-            'meetStatus' => $message->meet_status,
+            'meetStatus' => ($message->meet_status === 'scheduled' && $message->meet_end_at && $message->meet_end_at->isPast())
+                ? ($message->update(['meet_status' => 'ended']) ? 'ended' : 'ended')
+                : $message->meet_status,
             'meetEventId' => $message->meet_event_id,
             'meetUrl' => $message->meet_url,
             'meetStartAt' => $message->meet_start_at?->toIso8601String(),

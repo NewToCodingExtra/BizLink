@@ -39,6 +39,8 @@ Route::middleware('auth')->group(function () {
         ->name('conversations.meet.store');
     Route::delete('/conversations/{conversation}/meet/{eventId}', [MeetController::class, 'cancel'])
         ->name('conversations.meet.destroy');
+    Route::post('/conversations/{conversation}/meet/{eventId}/end', [MeetController::class, 'end'])
+        ->name('conversations.meet.end');
     Route::patch('/conversations/{conversation}/meet/{eventId}', [MeetController::class, 'updateLink'])
         ->name('conversations.meet.update');
 

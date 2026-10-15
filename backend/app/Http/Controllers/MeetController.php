@@ -228,5 +228,16 @@ class MeetController extends Controller
             'data' => app(ConversationController::class)->serializeForBroadcast($message),
         ]);
     }
+
+    public function end(Request $request, Conversation $conversation, string $eventId, MeetService $meetService)
+    {
+        $this->authorizeParticipant($request, $conversation);
+
+        $message = $meetService->end($request->user(), $conversation, $eventId);
+
+        return response()->json([
+            'data' => app(ConversationController::class)->serializeForBroadcast($message),
+        ]);
+    }
 }
 

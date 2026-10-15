@@ -97,5 +97,6 @@ export const httpApi = {
   post: (path, body = {}) => http(path, { method: 'POST', body }),
   put: (path, body = {}) => http(path, { method: 'PUT', body }),
   patch: (path, body = {}) => http(path, { method: 'PATCH', body }),
-  del: (path) => http(path, { method: 'DELETE' }),
+  delete: (path, body) => http(path, { method: 'DELETE', body }),
+  del: (path, body) => http(path, { method: 'DELETE', body }),
 };

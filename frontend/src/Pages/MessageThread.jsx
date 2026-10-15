@@ -633,7 +633,13 @@ export default function MessageThread({ conv: initialConv, conversations = [], q
         duration: Number(meetDuration),
       };
       if (customMeetUrl.trim()) {
-        payload.custom_meet_url = customMeetUrl.trim();
+        const cleanCustom = customMeetUrl.trim();
+        if (cleanCustom.toLowerCase().includes("meet.google.com/new")) {
+          toast.error("Please open meet.google.com/new, start the call, and copy the room URL (e.g. https://meet.google.com/xxx-yyyy-zzz) from your address bar.");
+          setSchedulingMeet(false);
+          return;
+        }
+        payload.custom_meet_url = cleanCustom;
       }
       const res = await httpApi.post(`/conversations/${conv.id}/meet`, payload);
       const msg = res.data ?? res;
@@ -1585,7 +1591,7 @@ export default function MessageThread({ conv: initialConv, conversations = [], q
                   className="w-full px-3 py-2 rounded-lg border border-border bg-bg text-sm text-text-primary focus:border-action focus:ring-2 focus:ring-action/20 outline-none"
                 />
                 <p className="text-[11px] text-text-secondary mt-1">
-                  Leave empty to auto-mint via Google Calendar, or paste an active Google Meet / Zoom link.
+                  Leave empty to auto-mint via Google Calendar. If using meet.google.com/new, open it in a tab, start the call, and copy the room code URL (meet.google.com/xxx-yyyy-zzz) from your address bar.
                 </p>
               </div>
               <div className="flex items-center justify-end gap-2 pt-2">

@@ -12,6 +12,7 @@ export default function MeetingCard({
 }) {
   const toast = useToast();
   const [cancelling, setCancelling] = useState(false);
+  const [ending, setEnding] = useState(false);
   const [editingLink, setEditingLink] = useState(false);
   const [newUrl, setNewUrl] = useState(message.meetUrl || "");
   const [savingLink, setSavingLink] = useState(false);
@@ -22,6 +23,14 @@ export default function MeetingCard({
   const eventId = message.meetEventId;
   const startAt = message.meetStartAt ? new Date(message.meetStartAt) : null;
   const endAt = message.meetEndAt ? new Date(message.meetEndAt) : null;
+
+  // Automatically treat as ended if the scheduled meeting duration has passed
+  const isTimePassed = endAt
+    ? new Date() > endAt
+    : startAt
+    ? new Date() > new Date(startAt.getTime() + 60 * 60000)
+    : false;
+  const effectiveStatus = status === "scheduled" && isTimePassed ? "ended" : status;
 
   const formatMeetingTime = () => {
     if (!startAt) return "Time not set";
@@ -56,11 +65,29 @@ export default function MeetingCard({
     }
   };
 
+  const handleEndMeeting = async () => {
+    if (!confirm("Are you sure you want to end this meeting for everyone?")) return;
+    setEnding(true);
+    try {
+      const res = await httpApi.post(`/conversations/${conversationId}/meet/${eventId}/end`);
+      toast.success("Meeting ended");
+      if (onUpdated) onUpdated(res.data ?? res);
+    } catch (err) {
+      toast.error(err.message || "Failed to end meeting");
+    } finally {
+      setEnding(false);
+    }
+  };
+
   const handleSaveLink = async (e) => {
     e.preventDefault();
     const clean = newUrl.trim();
     if (!clean) {
       toast.error("Please enter a meeting URL");
+      return;
+    }
+    if (clean.toLowerCase().includes("meet.google.com/new")) {
+      toast.error("Please open meet.google.com/new, start the call, and copy the room URL (e.g. https://meet.google.com/xxx-yyyy-zzz) from your browser address bar.");
       return;
     }
     setSavingLink(true);
@@ -79,9 +106,9 @@ export default function MeetingCard({
     }
   };
 
-  const isScheduled = status === "scheduled";
-  const isEnded = status === "ended";
-  const isCancelled = status === "cancelled";
+  const isScheduled = effectiveStatus === "scheduled";
+  const isEnded = effectiveStatus === "ended";
+  const isCancelled = effectiveStatus === "cancelled";
 
   return (
     <div
@@ -163,6 +190,9 @@ export default function MeetingCard({
                 : "bg-bg border-border text-text-primary focus:border-action"
             }`}
           />
+          <p className={`text-[10px] -mt-1 ${isMe ? "text-white/75" : "text-text-secondary"}`}>
+            Open meet.google.com/new, start the call, and copy the room URL (meet.google.com/xxx-yyyy-zzz) from your browser address bar.
+          </p>
           <div className="flex items-center justify-end gap-1.5">
             <button
               type="button"
@@ -233,6 +263,19 @@ export default function MeetingCard({
                 title="Edit meeting URL"
               >
                 Edit Link
+              </button>
+              <button
+                type="button"
+                onClick={handleEndMeeting}
+                disabled={ending}
+                className={`py-1.5 px-2.5 rounded-lg text-xs font-medium transition-colors ${
+                  isMe
+                    ? "bg-amber-500/20 hover:bg-amber-500/30 text-amber-200 border border-amber-400/30"
+                    : "border border-border text-text-secondary hover:text-amber-500 hover:border-amber-500/40"
+                }`}
+                title="End meeting for all participants"
+              >
+                {ending ? "..." : "End"}
               </button>
               <button
                 type="button"

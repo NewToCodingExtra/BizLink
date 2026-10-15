@@ -28,6 +28,11 @@ class MeetService
         $customUrl = trim($data['custom_meet_url'] ?? '');
 
         if ($customUrl !== '') {
+            if (str_contains(strtolower($customUrl), 'meet.google.com/new')) {
+                throw ValidationException::withMessages([
+                    'custom_meet_url' => ["'meet.google.com/new' creates a new room on every click. Please open it in your browser, start the meeting, and paste the actual room code URL (e.g. https://meet.google.com/xxx-yyyy-zzz)."],
+                ]);
+            }
             if (!filter_var($customUrl, FILTER_VALIDATE_URL) || (!str_contains($customUrl, 'meet.google.com') && !str_contains($customUrl, 'zoom.us') && !str_contains($customUrl, 'teams.microsoft.com') && !str_contains($customUrl, 'http'))) {
                 throw ValidationException::withMessages([
                     'custom_meet_url' => ['Please enter a valid video meeting URL (e.g. https://meet.google.com/xxx-yyyy-zzz).'],
@@ -202,6 +207,12 @@ class MeetService
     public function updateLink(User $user, Conversation $conversation, string $eventId, string $newUrl): Message
     {
         $newUrl = trim($newUrl);
+        if (str_contains(strtolower($newUrl), 'meet.google.com/new')) {
+            throw ValidationException::withMessages([
+                'meet_url' => ["'meet.google.com/new' creates a new room on every click. Please open it in your browser, start the meeting, and paste the actual room code URL (e.g. https://meet.google.com/xxx-yyyy-zzz)."],
+            ]);
+        }
+
         if (!filter_var($newUrl, FILTER_VALIDATE_URL) || (!str_contains($newUrl, 'meet.google.com') && !str_contains($newUrl, 'zoom.us') && !str_contains($newUrl, 'teams.microsoft.com') && !str_contains($newUrl, 'http'))) {
             throw ValidationException::withMessages([
                 'meet_url' => ['Please enter a valid meeting URL (e.g. https://meet.google.com/xxx-yyyy-zzz).'],
@@ -220,6 +231,39 @@ class MeetService
         broadcast(new MessageSent($message));
 
         return $message;
+    }
+
+    public function end(User $user, Conversation $conversation, string $eventId): Message
+    {
+        $message = Message::where('conversation_id', $conversation->id)
+            ->where('meet_event_id', $eventId)
+            ->firstOrFail();
+
+        if ((int) $message->sender_id !== (int) $user->id) {
+            abort(403, 'Only the meeting organizer can end this meeting.');
+        }
+
+        if ($message->meet_status === 'ended') {
+            return $message;
+        }
+
+        return DB::transaction(function () use ($user, $conversation, $message) {
+            $message->update(['meet_status' => 'ended']);
+
+            $endMsg = Message::create([
+                'conversation_id' => $conversation->id,
+                'sender_id' => $user->id,
+                'from_side' => 'me',
+                'text' => "Meeting ended: {$message->meet_title}",
+            ]);
+
+            $conversation->update(['last_message' => 'Meeting ended']);
+
+            broadcast(new MeetEnded($message, 'ended'));
+            broadcast(new MessageSent($endMsg));
+
+            return $message;
+        });
     }
 
     public function getOtherParticipantId(Conversation $conversation, ?int $userId): ?int
