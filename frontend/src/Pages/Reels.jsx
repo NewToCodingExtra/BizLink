@@ -142,7 +142,7 @@ export default function Reels({ opportunities, slug = "" }) {
           </div>
         ))}
         {hasMore && (
-          <div ref={sentinelRef} className="snap-start h-[100dvh] w-full bg-black grid place-items-center">
+          <div ref={sentinelRef} className="snap-start h-[calc(100dvh-130px)] md:h-[calc(100dvh-64px)] w-full bg-black grid place-items-center">
             <div className="text-center px-6 max-w-md">
               <div className="w-8 h-8 border-4 border-slate-500 border-t-white rounded-full animate-spin mx-auto" />
               <p className="text-[var(--color-text-primary)] font-semibold mt-4">Loading more...</p>
@@ -151,7 +151,7 @@ export default function Reels({ opportunities, slug = "" }) {
           </div>
         )}
         {!hasMore && reels.length > 0 && (
-          <div className="snap-start h-[100dvh] w-full bg-black grid place-items-center">
+          <div className="snap-start h-[calc(100dvh-130px)] md:h-[calc(100dvh-64px)] w-full bg-black grid place-items-center">
             <div className="text-center px-6 max-w-md">
               <span className="mx-auto w-12 h-12 rounded-full bg-surface/10 grid place-items-center text-accent"><CheckIcon className="w-6 h-6" /></span>
               <p className="text-[var(--color-text-primary)] font-semibold mt-4">You're all caught up</p>

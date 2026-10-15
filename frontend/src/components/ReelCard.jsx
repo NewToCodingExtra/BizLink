@@ -1,6 +1,6 @@
 import { useRef, useState } from "react";
 import { Link, usePage } from "@inertiajs/react";
-import { HeartIcon, CommentIcon, VolumeOnIcon, VolumeOffIcon } from "./icons";
+import { HeartIcon, CommentIcon, VolumeOffIcon } from "./icons";
 import { profilePath } from "../utils/profilePath";
 import { displayCapital, displayRoi } from "../utils/money";
 import { useToast } from "../context/ToastContext";
@@ -11,6 +11,17 @@ import AuthorRoleBadge from "./AuthorRoleBadge";
 export default function ReelCard({ opp, onToggleLike, onInquire, onOpenComments }) {
   const ref = useRef(null);
   const [muted, setMuted] = useState(true);
+  // Toggle via the DOM property (React's muted prop doesn't propagate after
+  // mount in some browsers) and resume playback when unmuting.
+  const toggleMute = () => {
+    const next = !muted;
+    setMuted(next);
+    const v = ref.current;
+    if (v) {
+      v.muted = next;
+      if (!next) v.play().catch(() => {});
+    }
+  };
   const toast = useToast();
   const { auth } = usePage().props;
   void auth; void toast;
@@ -22,21 +33,21 @@ export default function ReelCard({ opp, onToggleLike, onInquire, onOpenComments 
   // otherwise the just-watched video is hidden under POSTS.
   const authorProfile = `${profilePath({ username: opp.user?.username || opp.authorUsername, authorId: opp.authorId, brandId: opp.brandId })}?tab=reels`;
   return (
-    <div className="snap-start relative h-[100dvh] w-full bg-black flex items-center justify-center overflow-hidden">
+    <div className="snap-start relative h-[calc(100dvh-130px)] md:h-[calc(100dvh-64px)] w-full bg-black flex items-center justify-center overflow-hidden">
       {opp.videoUrl ? (
         <video
           ref={ref}
           src={opp.videoUrl}
           poster={opp.image || undefined}
-          autoPlay muted={muted} loop playsInline
-          onClick={()=>setMuted(!muted)}
+          autoPlay muted loop playsInline
+          onClick={toggleMute}
           className="h-full w-full object-cover max-w-md mx-auto"
         />
       ) : (
         <img src={opp.image || opp.brandAvatar} alt={opp.headline} className="h-full w-full object-cover max-w-md mx-auto" />
       )}
       <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-black/20 pointer-events-none" />
-      <div className="absolute bottom-0 left-0 right-0 p-4 flex items-end justify-between gap-4 max-w-md mx-auto w-full">
+      <div className="absolute bottom-0 left-0 right-0 p-4 pb-20 flex items-end justify-between gap-4 max-w-md mx-auto w-full">
         <div className="flex-1 min-w-0">
           <p className="text-white font-semibold text-sm flex items-center gap-2">
             <Link href={authorProfile}><img src={opp.brandAvatar} alt={opp.brandName} className="w-7 h-7 rounded-full border border-white/30 object-cover shrink-0 aspect-square" /></Link>
@@ -51,7 +62,9 @@ export default function ReelCard({ opp, onToggleLike, onInquire, onOpenComments 
           <button onClick={()=>onToggleLike(opp.id)} aria-label="Like" className={`w-10 h-10 rounded-full grid place-items-center ${opp.liked ? "bg-error text-white" : "bg-white/20 text-white"}`}><HeartIcon filled={!!opp.liked} className="w-5 h-5" /></button>
           <button onClick={()=>onOpenComments && onOpenComments(opp)} aria-label="Comments" className="w-10 h-10 rounded-full grid place-items-center bg-white/20 text-white text-sm font-semibold"><CommentIcon className="w-5 h-5" />{commentCount > 0 ? <span className="text-[10px] ml-0.5">{commentCount}</span> : null}</button>
           <button onClick={()=>onInquire(opp)} className="px-3 py-1.5 rounded-full bg-action text-white text-xs font-semibold">Inquire</button>
-          <button onClick={()=>setMuted(!muted)} aria-label={muted ? "Unmute" : "Mute"} className="w-8 h-8 rounded-full bg-white/20 text-white grid place-items-center">{muted ? <VolumeOffIcon className="w-4 h-4" /> : <VolumeOnIcon className="w-4 h-4" />}</button>
+          {muted && (
+            <button onClick={toggleMute} aria-label="Unmute" className="w-8 h-8 rounded-full bg-white/20 text-white grid place-items-center"><VolumeOffIcon className="w-4 h-4" /></button>
+          )}
           <div>
             <button
               ref={menuBtnRef}
@@ -88,7 +101,9 @@ export default function ReelCard({ opp, onToggleLike, onInquire, onOpenComments 
           </div>
         </div>
       </div>
-      <span className="absolute top-3 left-1/2 -translate-x-1/2 text-[11px] tracking-widest text-white/70 bg-white/10 px-2 py-1 rounded-full">TAP TO {muted?"UNMUTE":"MUTE"}</span>
+      {muted && (
+        <span className="absolute top-3 left-1/2 -translate-x-1/2 text-[11px] tracking-widest text-white/70 bg-white/10 px-2 py-1 rounded-full pointer-events-none">TAP TO UNMUTE</span>
+      )}
       <ReportModal isOpen={reportOpen} onClose={() => setReportOpen(false)} endpoint={`/opportunities/${opp.id}/report`} title="Report this reel" />
     </div>
   );

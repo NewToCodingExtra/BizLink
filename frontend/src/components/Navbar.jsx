@@ -14,32 +14,52 @@ import { XIcon, MenuIcon, ArrowRightIcon } from "./icons";
 
 export default function Navbar() {
   const page = usePage();
-  const { auth, flash } = page.props;
+  const { auth } = page.props;
   const user = auth?.user ?? null;
+  const userId = user?.id;
   const [mobileOpen, setMobileOpen] = useState(false);
   const [showBell, setShowBell] = useState(false);
   const [notifications, setNotifications] = useState([]);
-  const url = usePage().url;
+  const url = page.url;
   const pathname = url.split("?")[0];
   const { isDark, setIsDark } = useTheme();
 
+  // Reset notifications during render when logged out (avoids set-state-in-effect).
+  if (!user && notifications.length > 0) {
+    setNotifications([]);
+  }
+
+  // Fetch + 30s poll + focus refetch: Reverb push may be offline (dev Tab 2),
+  // so the bell must converge by polling too. Deps are stable (user, url).
   useEffect(() => {
-    if (!user) {
-      setNotifications([]);
-      return;
-    }
-    httpApi
-      .get("/notifications")
-      .then((res) => setNotifications(res.data || []))
-      .catch(() => setNotifications([]));
+    if (!user) return;
+    let cancelled = false;
+    const load = () => {
+      httpApi
+        .get("/notifications")
+        .then((res) => {
+          if (!cancelled) setNotifications(res.data || []);
+        })
+        .catch(() => {
+          if (!cancelled) setNotifications([]);
+        });
+    };
+    load();
+    const id = setInterval(load, 30000);
+    window.addEventListener("focus", load);
+    return () => {
+      cancelled = true;
+      clearInterval(id);
+      window.removeEventListener("focus", load);
+    };
   }, [user, url]);
 
   // Live bell bump on new notifications.
   useEffect(() => {
-    if (!user) return;
+    if (!userId) return;
     const client = getEcho();
     if (!client) return;
-    const channel = client.private(`user.${user.id}`);
+    const channel = client.private(`user.${userId}`);
     channel.listen(".notification.created", (e) => {
       const n = e?.notification;
       if (!n || n.read) return;
@@ -49,8 +69,8 @@ export default function Navbar() {
           : [{ ...n, read: false }, ...prev].slice(0, 20)
       ));
     });
-    return () => client.leave(`user.${user.id}`);
-  }, [user?.id]);
+    return () => client.leave(`user.${userId}`);
+  }, [userId]);
 
   const unread = notifications.filter((n) => !n.read).length;
 
@@ -165,9 +185,13 @@ export default function Navbar() {
         </div>
       </div>
 
+      {/* Sticky mobile search — always visible, no menu digging. */}
+      <div className="md:hidden px-4 pb-3">
+        <SearchBar onSearch={(q) => router.visit(`/search?q=${encodeURIComponent(q)}`)} />
+      </div>
+
       {mobileOpen && (
         <div id="mobile-nav" className="md:hidden border-t border-white/10 bg-primary px-4 py-4 pb-[max(1rem,env(safe-area-inset-bottom))] space-y-3 max-h-[calc(100dvh-64px)] overflow-y-auto">
-          <SearchBar onSearch={(q) => { setMobileOpen(false); router.visit(`/search?q=${encodeURIComponent(q)}`); }} />
           {user && (
             <div className="flex items-center gap-3 rounded-xl bg-surface/5 border border-white/10 px-3 py-2.5">
               <img src={user.avatar || "https://i.pravatar.cc/100?img=12"} alt="" className="w-9 h-9 rounded-full object-cover shrink-0 aspect-square" />
@@ -175,16 +199,14 @@ export default function Navbar() {
                 <p className="text-sm font-semibold text-white truncate">{user.name}</p>
                 <p className="text-xs text-text-secondary truncate">{user.email}</p>
               </div>
-              <Link href="/profile/edit" onClick={() => setMobileOpen(false)} className="text-xs font-medium text-accent hover:text-white shrink-0">Edit</Link>
             </div>
           )}
+          {/* Primary tabs live in BottomNav on mobile — menu keeps secondary links only. */}
           <div className="flex flex-wrap gap-2 pt-1">
             {!user && <Link href="/" onClick={() => setMobileOpen(false)} className="inline-flex items-center min-h-[44px] px-4 py-2 rounded-full bg-surface text-primary text-sm font-medium active:scale-[0.98]">Home</Link>}
-            <Link href="/feed" onClick={() => setMobileOpen(false)} className="inline-flex items-center min-h-[44px] px-4 py-2 rounded-full border border-white/20 text-white text-sm active:bg-white/10">Feed</Link>
             <Link href="/about" onClick={() => setMobileOpen(false)} className="inline-flex items-center min-h-[44px] px-4 py-2 rounded-full border border-white/20 text-white text-sm active:bg-white/10">About</Link>
-            <Link href="/reels" onClick={() => setMobileOpen(false)} className="inline-flex items-center min-h-[44px] px-4 py-2 rounded-full border border-white/20 text-white text-sm active:bg-white/10">Reels</Link>
-            {user && <Link href="/messages" onClick={() => setMobileOpen(false)} className="inline-flex items-center min-h-[44px] px-4 py-2 rounded-full border border-white/20 text-white text-sm active:bg-white/10">Messages</Link>}
             <Link href="/contact" onClick={() => setMobileOpen(false)} className="inline-flex items-center min-h-[44px] px-4 py-2 rounded-full border border-white/20 text-white text-sm active:bg-white/10">Contact</Link>
+            {user && hasRole(page, "Admin") && <Link href="/admin" onClick={() => setMobileOpen(false)} className="inline-flex items-center min-h-[44px] px-4 py-2 rounded-full border border-white/20 text-white text-sm active:bg-white/10">Admin</Link>}
             {!user && <Link href="/login" onClick={() => setMobileOpen(false)} className="inline-flex items-center min-h-[44px] px-4 py-2 rounded-full border border-white/20 text-white text-sm active:bg-white/10">Log in</Link>}
             {!user && <Link href="/register" onClick={() => setMobileOpen(false)} className="inline-flex items-center min-h-[44px] px-4 py-2 rounded-full bg-action text-white text-sm active:scale-[0.98]">Sign up</Link>}
           </div>

@@ -119,7 +119,16 @@ export default function Profile({
       <Head title={`${profileUser.name} (@${profileUser.username || username || "user"})`} />
       <div className="max-w-2xl mx-auto px-4 sm:px-6 py-6">
         <div className="bg-surface rounded-xl border border-border shadow-sm overflow-hidden">
-          <div className="h-24 bg-gradient-to-r from-[#0B1F3A] via-[#1E3A5F] to-[#2563EB]" />
+          {(() => {
+            const seed = String(profileUser.username || profileUser.name || "?");
+            const hue = [...seed].reduce((a, c) => a + c.charCodeAt(0), 0) % 360;
+            return (
+              <div
+                className="h-24"
+                style={{ background: `linear-gradient(135deg, hsl(${hue} 45% 26%), hsl(${(hue + 45) % 360} 62% 46%))` }}
+              />
+            );
+          })()}
           <div className="p-6 pt-0">
             <img src={profileUser.avatar} alt={profileUser.name} className="w-20 h-20 rounded-full object-cover border-4 border-white -mt-10 bg-bg aspect-square shrink-0" />
             <div className="mt-3 flex flex-wrap items-center gap-2">

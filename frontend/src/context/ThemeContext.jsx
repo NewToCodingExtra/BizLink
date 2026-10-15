@@ -1,3 +1,4 @@
+/* eslint-disable react/only-export-components -- colocated context + hook; fast-refresh warning only, no behavior change */
 import React, { createContext, useContext, useState, useEffect } from 'react';
 
 export const ThemeContext = createContext({ isDark: false, setIsDark: () => {} });
@@ -12,8 +13,10 @@ export function ThemeProvider({ children }) {
     const root = window.document.documentElement;
     if (isDark) {
       root.classList.add('dark');
+      root.classList.remove('light');
       localStorage.setItem('theme', 'dark');
     } else {
+      root.classList.add('light');
       root.classList.remove('dark');
       localStorage.setItem('theme', 'light');
     }

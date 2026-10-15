@@ -1,5 +1,10 @@
 @import "tailwindcss";
 
+/* Class-driven dark mode: follows the `.dark` class toggled by ThemeContext
+   (system default on first load via matchMedia, persisted in localStorage).
+   Without this, Tailwind v4 answers `dark:` from the OS query and the toggle button is dead. */
+@custom-variant dark (&:where(.dark, .dark *));
+
 @theme {
   --color-primary: var(--color-primary);
   --color-primary-light: var(--color-primary-light);
@@ -37,8 +42,8 @@
   --color-primary: #040814;
   --color-primary-light: #0B1121;
   --color-accent: #D4AF37;
-  --color-action: #3B82F6;
-  --color-action-hover: #60A5FA;
+  --color-action: #1D4ED8;
+  --color-action-hover: #1E40AF;
   --color-bg: #0B1121;
   --color-surface: #161F33;
   --color-border: #2D3748;
