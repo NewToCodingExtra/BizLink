@@ -6,7 +6,7 @@
     "keywords": ["laravel", "framework"],
     "license": "MIT",
     "require": {
-        "php": "^8.2",
+        "php": "^8.2 || ^8.3 || ^8.4",
         "google/apiclient": "^2.20",
         "google/cloud-storage": "^2.5",
         "http-interop/http-factory-guzzle": "^1.2",

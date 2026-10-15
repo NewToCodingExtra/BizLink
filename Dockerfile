@@ -1,6 +1,6 @@
 # BizLink on Railway — single service (web + queue + reverb + scheduler).
 # Build context: repo root. Expects a Railway MySQL plugin + persistent volume.
-FROM php:8.2-apache-bookworm
+FROM php:8.4-apache-bookworm
 
 ENV DEBIAN_FRONTEND=noninteractive \
     APACHE_DOCUMENT_ROOT=/var/www/html/backend/public \
@@ -26,7 +26,7 @@ WORKDIR /var/www/html
 
 # PHP deps first (better layer caching).
 COPY backend/composer.json backend/composer.lock ./backend/
-RUN cd backend && composer install --no-dev --no-scripts --no-autoloader --prefer-dist
+RUN cd backend && composer install --no-dev --no-scripts --no-autoloader --prefer-dist --ignore-platform-req=php+
 
 # Full source, then frontend build (outputs to backend/public/build).
 COPY backend ./backend
