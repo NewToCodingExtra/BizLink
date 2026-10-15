@@ -24,9 +24,6 @@ export default function AdminHeader({
   const resolvedBadges = {
     reports: badges.reports ?? sharedBadges?.reports ?? 0,
     verifications: badges.verifications ?? sharedBadges?.verifications ?? 0,
-    ...(badges.users !== undefined || sharedBadges?.users !== undefined
-      ? { users: badges.users ?? sharedBadges?.users }
-      : {}),
   };
 
   const tabs = [
@@ -36,8 +33,6 @@ export default function AdminHeader({
       label: "Users",
       href: "/admin/users",
       icon: UsersIcon,
-      badge: resolvedBadges.users,
-      badgeColor: "bg-amber-500/15 text-amber-600 dark:text-amber-400 border-amber-500/30",
     },
     {
       id: "reports",

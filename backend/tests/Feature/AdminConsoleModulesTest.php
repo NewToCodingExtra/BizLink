@@ -130,6 +130,34 @@ class AdminConsoleModulesTest extends TestCase
         $response->assertStatus(422);
     }
 
+    public function test_admin_cannot_warn_themselves(): void
+    {
+        $response = $this->actingAs($this->admin)->post("/admin/users/{$this->admin->id}/warn", [
+            'reason' => 'Self-warning attempt',
+        ]);
+
+        $response->assertStatus(422);
+    }
+
+    public function test_admin_cannot_suspend_themselves(): void
+    {
+        $response = $this->actingAs($this->admin)->post("/admin/users/{$this->admin->id}/suspend", [
+            'days' => 7,
+            'reason' => 'Self-suspend attempt',
+        ]);
+
+        $response->assertStatus(422);
+    }
+
+    public function test_admin_cannot_change_own_role(): void
+    {
+        $response = $this->actingAs($this->admin)->post("/admin/users/{$this->admin->id}/role", [
+            'role' => 'User',
+        ]);
+
+        $response->assertStatus(422);
+    }
+
     public function test_admin_can_change_user_role(): void
     {
         $response = $this->actingAs($this->admin)->post("/admin/users/{$this->entrepreneur->id}/role", [

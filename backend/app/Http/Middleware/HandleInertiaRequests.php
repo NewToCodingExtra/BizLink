@@ -50,7 +50,6 @@ class HandleInertiaRequests extends Middleware
             'adminBadges' => fn() => ($request->user() && ($request->user()->hasRole('Admin') || strtolower($request->user()->role ?? '') === 'admin' || $request->user()->can('users.manage'))) ? [
                 'reports' => \App\Models\Report::where('status', 'pending')->count(),
                 'verifications' => \App\Models\VerificationRequest::where('status', 'pending')->count(),
-                'users' => \App\Models\User::where('status', 'suspended')->count(),
             ] : null,
             'flash' => [
                 'success' => fn() => $request->session()->get('success'),

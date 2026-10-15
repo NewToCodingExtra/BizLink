@@ -31,6 +31,7 @@ export default function AdminUsers({
   const page = usePage();
   const toast = useToast();
   const isAdmin = hasRole(page, "Admin");
+  const currentUser = page.props.auth?.user;
 
   const [localFilters, setLocalFilters] = useState({
     search: filters.search ?? "",
@@ -531,34 +532,42 @@ export default function AdminUsers({
                           <EyeIcon className="w-3.5 h-3.5" />
                         </button>
 
-                        <button
-                          onClick={() => {
-                            setSelectedUser(u);
-                            setWarnModalOpen(true);
-                          }}
-                          title="Issue Warning"
-                          className="px-2 py-1 rounded-lg text-xs font-semibold bg-amber-500/10 text-amber-700 dark:text-amber-400 border border-amber-500/20 hover:bg-amber-500/20 active:scale-95 transition-all cursor-pointer"
-                        >
-                          Warn
-                        </button>
-
-                        {u.status === "suspended" ? (
-                          <button
-                            onClick={() => handleUnsuspend(u)}
-                            className="px-2 py-1 rounded-lg text-xs font-semibold bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border border-emerald-500/20 hover:bg-emerald-500/20 active:scale-95 transition-all cursor-pointer"
-                          >
-                            Unsuspend
-                          </button>
+                        {currentUser && (Number(currentUser.id) === Number(u.id) || currentUser.email === u.email) ? (
+                          <span className="px-2 py-0.5 rounded-lg text-[11px] font-bold bg-action/10 text-action border border-action/25">
+                            You
+                          </span>
                         ) : (
-                          <button
-                            onClick={() => {
-                              setSelectedUser(u);
-                              setSuspendModalOpen(true);
-                            }}
-                            className="px-2 py-1 rounded-lg text-xs font-semibold bg-rose-500/10 text-rose-700 dark:text-rose-400 border border-rose-500/20 hover:bg-rose-500/20 active:scale-95 transition-all cursor-pointer"
-                          >
-                            Suspend
-                          </button>
+                          <>
+                            <button
+                              onClick={() => {
+                                setSelectedUser(u);
+                                setWarnModalOpen(true);
+                              }}
+                              title="Issue Warning"
+                              className="px-2 py-1 rounded-lg text-xs font-semibold bg-amber-500/10 text-amber-700 dark:text-amber-400 border border-amber-500/20 hover:bg-amber-500/20 active:scale-95 transition-all cursor-pointer"
+                            >
+                              Warn
+                            </button>
+
+                            {u.status === "suspended" ? (
+                              <button
+                                onClick={() => handleUnsuspend(u)}
+                                className="px-2 py-1 rounded-lg text-xs font-semibold bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border border-emerald-500/20 hover:bg-emerald-500/20 active:scale-95 transition-all cursor-pointer"
+                              >
+                                Unsuspend
+                              </button>
+                            ) : (
+                              <button
+                                onClick={() => {
+                                  setSelectedUser(u);
+                                  setSuspendModalOpen(true);
+                                }}
+                                className="px-2 py-1 rounded-lg text-xs font-semibold bg-rose-500/10 text-rose-700 dark:text-rose-400 border border-rose-500/20 hover:bg-rose-500/20 active:scale-95 transition-all cursor-pointer"
+                              >
+                                Suspend
+                              </button>
+                            )}
+                          </>
                         )}
 
                         {u.isLocked && (
@@ -740,63 +749,76 @@ export default function AdminUsers({
                 </div>
 
                 {/* Quick Management Actions Button Bar */}
-                <div className="pt-2 flex flex-wrap gap-2">
-                  <button
-                    onClick={() => setWarnModalOpen(true)}
-                    className="px-3 py-2 rounded-xl text-xs font-semibold bg-amber-500/10 text-amber-700 dark:text-amber-400 border border-amber-500/30 hover:bg-amber-500/20 active:scale-95 transition-all cursor-pointer"
-                  >
-                    Issue Warning
-                  </button>
-
-                  {selectedUser.status === "suspended" ? (
+                {currentUser && (Number(currentUser.id) === Number(selectedUser.id) || currentUser.email === selectedUser.email) ? (
+                  <div className="pt-2">
+                    <div className="p-3.5 rounded-xl bg-blue-500/10 border border-blue-500/25 text-blue-900 dark:text-blue-300 text-xs flex items-center gap-2.5">
+                      <span className="p-1.5 rounded-lg bg-blue-500/20 text-action shrink-0">
+                        <ShieldIcon className="w-4 h-4" />
+                      </span>
+                      <p className="leading-relaxed">
+                        <strong className="font-semibold">Your Administrator Account:</strong> Self-moderation actions (warning, suspension, banning, and role modification) are disabled on your own account.
+                      </p>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="pt-2 flex flex-wrap gap-2">
                     <button
-                      onClick={() => handleUnsuspend(selectedUser)}
-                      className="px-3 py-2 rounded-xl text-xs font-semibold bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border border-emerald-500/30 hover:bg-emerald-500/20 active:scale-95 transition-all cursor-pointer"
+                      onClick={() => setWarnModalOpen(true)}
+                      className="px-3 py-2 rounded-xl text-xs font-semibold bg-amber-500/10 text-amber-700 dark:text-amber-400 border border-amber-500/30 hover:bg-amber-500/20 active:scale-95 transition-all cursor-pointer"
                     >
-                      Lift Suspension
+                      Issue Warning
                     </button>
-                  ) : (
-                    <button
-                      onClick={() => setSuspendModalOpen(true)}
-                      className="px-3 py-2 rounded-xl text-xs font-semibold bg-rose-500/10 text-rose-700 dark:text-rose-400 border border-rose-500/30 hover:bg-rose-500/20 active:scale-95 transition-all cursor-pointer"
-                    >
-                      Suspend User
-                    </button>
-                  )}
 
-                  {selectedUser.status === "banned" ? (
-                    <button
-                      onClick={() => handleUnban(selectedUser)}
-                      className="px-3 py-2 rounded-xl text-xs font-semibold bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border border-emerald-500/30 hover:bg-emerald-500/20 active:scale-95 transition-all cursor-pointer"
-                    >
-                      Lift Ban
-                    </button>
-                  ) : (
-                    <button
-                      onClick={() => setBanModalOpen(true)}
-                      className="px-3 py-2 rounded-xl text-xs font-semibold bg-rose-600 text-white hover:bg-rose-700 active:scale-95 transition-all cursor-pointer"
-                    >
-                      Ban Account
-                    </button>
-                  )}
+                    {selectedUser.status === "suspended" ? (
+                      <button
+                        onClick={() => handleUnsuspend(selectedUser)}
+                        className="px-3 py-2 rounded-xl text-xs font-semibold bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border border-emerald-500/30 hover:bg-emerald-500/20 active:scale-95 transition-all cursor-pointer"
+                      >
+                        Lift Suspension
+                      </button>
+                    ) : (
+                      <button
+                        onClick={() => setSuspendModalOpen(true)}
+                        className="px-3 py-2 rounded-xl text-xs font-semibold bg-rose-500/10 text-rose-700 dark:text-rose-400 border border-rose-500/30 hover:bg-rose-500/20 active:scale-95 transition-all cursor-pointer"
+                      >
+                        Suspend User
+                      </button>
+                    )}
 
-                  <button
-                    onClick={() => {
-                      setSelectedRole(selectedUser.role);
-                      setRoleModalOpen(true);
-                    }}
-                    className="px-3 py-2 rounded-xl text-xs font-semibold bg-surface border border-border text-text-primary hover:bg-bg active:scale-95 transition-all cursor-pointer"
-                  >
-                    Change Role
-                  </button>
+                    {selectedUser.status === "banned" ? (
+                      <button
+                        onClick={() => handleUnban(selectedUser)}
+                        className="px-3 py-2 rounded-xl text-xs font-semibold bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border border-emerald-500/30 hover:bg-emerald-500/20 active:scale-95 transition-all cursor-pointer"
+                      >
+                        Lift Ban
+                      </button>
+                    ) : (
+                      <button
+                        onClick={() => setBanModalOpen(true)}
+                        className="px-3 py-2 rounded-xl text-xs font-semibold bg-rose-600 text-white hover:bg-rose-700 active:scale-95 transition-all cursor-pointer"
+                      >
+                        Ban Account
+                      </button>
+                    )}
 
-                  <button
-                    onClick={() => handleResetPassword(selectedUser)}
-                    className="px-3 py-2 rounded-xl text-xs font-semibold bg-surface border border-border text-text-primary hover:bg-bg active:scale-95 transition-all cursor-pointer"
-                  >
-                    Reset Password
-                  </button>
-                </div>
+                    <button
+                      onClick={() => {
+                        setSelectedRole(selectedUser.role);
+                        setRoleModalOpen(true);
+                      }}
+                      className="px-3 py-2 rounded-xl text-xs font-semibold bg-surface border border-border text-text-primary hover:bg-bg active:scale-95 transition-all cursor-pointer"
+                    >
+                      Change Role
+                    </button>
+
+                    <button
+                      onClick={() => handleResetPassword(selectedUser)}
+                      className="px-3 py-2 rounded-xl text-xs font-semibold bg-surface border border-border text-text-primary hover:bg-bg active:scale-95 transition-all cursor-pointer"
+                    >
+                      Reset Password
+                    </button>
+                  </div>
+                )}
               </>
             ) : null}
           </div>

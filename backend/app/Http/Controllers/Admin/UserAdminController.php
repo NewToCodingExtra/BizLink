@@ -306,6 +306,7 @@ class UserAdminController extends Controller
     public function warn(Request $request, User $user)
     {
         abort_unless($request->user()?->can('users.manage'), 403, 'Admin access only.');
+        abort_if($user->id === $request->user()->id, 422, 'You cannot warn your own account.');
         $data = $request->validate(['reason' => 'required|string|min:5|max:1000']);
 
         $this->enforcement->warn($user->id, $data['reason']);
@@ -331,6 +332,7 @@ class UserAdminController extends Controller
     public function suspend(Request $request, User $user)
     {
         abort_unless($request->user()?->can('users.manage'), 403, 'Admin access only.');
+        abort_if($user->id === $request->user()->id, 422, 'You cannot suspend your own account.');
         $data = $request->validate([
             'days' => 'required|integer|in:1,3,7,14,30,90',
             'reason' => 'required|string|min:5|max:1000',
@@ -433,11 +435,9 @@ class UserAdminController extends Controller
             'role' => 'required|string|in:Admin,Manager,User',
         ]);
 
-        $newRole = $data['role'];
+        abort_if($user->id === $request->user()->id, 422, 'You cannot change the role of your own account.');
 
-        if ($user->id === $request->user()->id && $newRole !== 'Admin') {
-            abort(422, 'You cannot demote yourself from Admin.');
-        }
+        $newRole = $data['role'];
 
         $user->syncRoles([$newRole]);
         $user->forceFill([
