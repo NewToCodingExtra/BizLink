@@ -190,6 +190,7 @@ npm run lint     # oxlint
 | **Notifications** | Bell + `/notifications` | Unread badge with live bump, mark-read + mark-all-read, deep links for replies/reactions/inquiries |
 | **Saved / Profile / Preferences** | `/saved`, `/profile/:id`, `/settings/preferences` | Bookmarks, `?tab=reels` grids, follows, category/budget auto-sort + onboarding modal |
 | **Uploads** | `POST /uploads` | Photos ≤20MB, video ≤100MB, docs ≤25MB — server-sniffed MIME whitelist, extension derived from MIME, GCS when configured else local |
+| **Help Center** | `/help` | In-app guides (User, Admin, Deployment, Development) rendered from `docs/*.md` — ships with every deploy |
 | **Auth** | `/login`, `/register`, `/welcome/role` | Email + Google/Facebook, first-run role picker for new social accounts, password reset, show/hide passwords |
 
 ---
@@ -282,7 +283,7 @@ BizLink/
 │   │   │                          profilePath, videoThumb.js
 │   │   └── css/app.css            Design tokens + Tailwind
 │   └── vite.config.js             laravel-vite-plugin → ../backend/public
-├── docs/                          SPECIFICATION / IMPLEMENTATION / TASKS + CONTINUATION
+├── docs/                          User, Admin, Deployment, Development guides — also served in-app at /help
 └── start-bizlink.ps1              MySQL:3307 + Laravel:8000 + Reverb:8080 + Vite + Meilisearch:7700
 ```
 
