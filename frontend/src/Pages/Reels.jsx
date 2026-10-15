@@ -1,9 +1,9 @@
 import { useEffect, useRef, useState } from "react";
 import { Head, Link, router, usePage } from "@inertiajs/react";
-import ReelCard from "../Components/ReelCard";
-import CommentThread from "../Components/CommentThread";
-import Modal from "../Components/Modal";
-import { CheckIcon, XIcon } from "../Components/icons";
+import ReelCard from "../components/ReelCard";
+import CommentThread from "../components/CommentThread";
+import Modal from "../components/Modal";
+import { CheckIcon, XIcon } from "../components/icons";
 import { httpApi } from "../utils/http";
 import { goInquire } from "../utils/inquire";
 import { useToast } from "../context/ToastContext";

@@ -1,8 +1,8 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Head, router, usePage } from "@inertiajs/react";
-import OpportunityCard from "../Components/OpportunityCard";
-import { OpportunityCardSkeleton } from "../Components/Skeleton";
-import ProgressBar from "../Components/ProgressBar";
+import OpportunityCard from "../components/OpportunityCard";
+import { OpportunityCardSkeleton } from "../components/Skeleton";
+import ProgressBar from "../components/ProgressBar";
 import { httpApi } from "../utils/http";
 import { goInquire } from "../utils/inquire";
 import { useToast } from "../context/ToastContext";

@@ -1,9 +1,9 @@
 import { useState, useEffect } from "react";
 import { Head, Link, usePage } from "@inertiajs/react";
-import { ArrowRightIcon } from "../Components/icons";
+import { ArrowRightIcon } from "../components/icons";
 import { httpApi } from "../utils/http";
 import { useToast } from "../context/ToastContext";
-import VerificationRevokedModal from "../Components/VerificationRevokedModal";
+import VerificationRevokedModal from "../components/VerificationRevokedModal";
 
 export default function Notifications({ notifications: initial = [], unread: initialUnread = 0 }) {
   const { auth } = usePage().props;

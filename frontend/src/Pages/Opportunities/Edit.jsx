@@ -1,8 +1,8 @@
 import { useRef, useState } from 'react';
 import { useForm, Head, Link } from '@inertiajs/react';
 import { useToast } from '../../context/ToastContext';
-import Modal from '../../Components/Modal';
-import Button from '../../Components/Button';
+import Modal from '../../components/Modal';
+import Button from '../../components/Button';
 
 const CATEGORIES = ['Food & Beverage', 'Beauty & Wellness', 'Health & Fitness', 'Services & Logistics', 'Education', 'Fashion & Apparel', 'Home & Living'];
 function csrfToken() {

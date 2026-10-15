@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Head, usePage } from "@inertiajs/react";
-import OpportunityCard from "../Components/OpportunityCard";
-import { BookmarkIcon } from "../Components/icons";
+import OpportunityCard from "../components/OpportunityCard";
+import { BookmarkIcon } from "../components/icons";
 import { goInquire } from "../utils/inquire";
 import { httpApi } from "../utils/http";
 import { useToast } from "../context/ToastContext";

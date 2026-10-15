@@ -4,10 +4,10 @@ import { hasRole } from "../../utils/can";
 import { httpApi } from "../../utils/http";
 import { profilePath } from "../../utils/profilePath";
 import { useToast } from "../../context/ToastContext";
-import AdminHeader from "../../Components/Admin/AdminHeader";
-import ExportDropdown from "../../Components/Admin/ExportDropdown";
-import Modal from "../../Components/Modal";
-import Button from "../../Components/Button";
+import AdminHeader from "../../components/Admin/AdminHeader";
+import ExportDropdown from "../../components/Admin/ExportDropdown";
+import Modal from "../../components/Modal";
+import Button from "../../components/Button";
 import {
   UsersIcon,
   ShieldIcon,
@@ -22,7 +22,7 @@ import {
   XIcon,
   SpinnerIcon,
   ExternalLinkIcon,
-} from "../../Components/icons";
+} from "../../components/icons";
 
 export default function AdminUsers({
   users = { data: [], links: [], meta: {} },

@@ -1,7 +1,7 @@
 import { Head } from "@inertiajs/react";
-import MissionVision from "../Components/MissionVision";
-import BusinessObjectives from "../Components/BusinessObjectives";
-import BusinessFeatures from "../Components/BusinessFeatures";
+import MissionVision from "../components/MissionVision";
+import BusinessObjectives from "../components/BusinessObjectives";
+import BusinessFeatures from "../components/BusinessFeatures";
 
 export default function About() {
   return (

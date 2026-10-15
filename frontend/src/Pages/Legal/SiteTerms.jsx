@@ -1,5 +1,5 @@
 import { Head } from "@inertiajs/react";
-import LegalLayout from "../../Components/LegalLayout";
+import LegalLayout from "../../components/LegalLayout";
 
 export default function SiteTerms() {
   return (

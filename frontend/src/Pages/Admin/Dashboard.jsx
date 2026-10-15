@@ -2,9 +2,9 @@ import { useState, useRef } from "react";
 import { Head, Link, router, usePage } from "@inertiajs/react";
 import { hasRole } from "../../utils/can";
 import { profilePath } from "../../utils/profilePath";
-import AdminHeader from "../../Components/Admin/AdminHeader";
-import AdminStatCard from "../../Components/Admin/AdminStatCard";
-import ExportDropdown from "../../Components/Admin/ExportDropdown";
+import AdminHeader from "../../components/Admin/AdminHeader";
+import AdminStatCard from "../../components/Admin/AdminStatCard";
+import ExportDropdown from "../../components/Admin/ExportDropdown";
 import {
   UsersIcon,
   ChartIcon,
@@ -20,7 +20,7 @@ import {
   SearchIcon,
   SpinnerIcon,
   XIcon,
-} from "../../Components/icons";
+} from "../../components/icons";
 
 export default function AdminDashboard({
   stats = {},

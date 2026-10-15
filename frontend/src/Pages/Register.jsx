@@ -1,7 +1,7 @@
 import { Link, useForm, Head } from '@inertiajs/react';
 import { useToast } from '../context/ToastContext';
-import PasswordInput from '../Components/PasswordInput';
-import { FacebookIcon, GoogleIcon } from '../Components/SocialIcons';
+import PasswordInput from '../components/PasswordInput';
+import { FacebookIcon, GoogleIcon } from '../components/SocialIcons';
 
 export default function Register() {
   const toast = useToast();

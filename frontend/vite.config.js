@@ -32,6 +32,17 @@ export default defineConfig(({ mode }) => {
       react(),
       tailwindcss(),
     ],
+    resolve: {
+      alias: {
+        '@': path.resolve(__dirname, './src'),
+        'components': path.resolve(__dirname, './src/components'),
+        'Components': path.resolve(__dirname, './src/components'),
+        'pages': path.resolve(__dirname, './src/Pages'),
+        'Pages': path.resolve(__dirname, './src/Pages'),
+        'layouts': path.resolve(__dirname, './src/Layouts'),
+        'Layouts': path.resolve(__dirname, './src/Layouts'),
+      },
+    },
     build: {
       // outDir is outside frontend/ (backend/public/build); allow emptying it.
       emptyOutDir: true,

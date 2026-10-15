@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Head } from "@inertiajs/react";
-import ContactForm from "../Components/ContactForm";
+import ContactForm from "../components/ContactForm";
 import { httpApi } from "../utils/http";
 
 export default function Contact() {

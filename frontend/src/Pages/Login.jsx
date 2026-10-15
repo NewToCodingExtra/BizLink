@@ -1,8 +1,8 @@
 import { Link, useForm, Head, router } from '@inertiajs/react';
 import { useState } from 'react';
 import { useToast } from '../context/ToastContext';
-import PasswordInput from '../Components/PasswordInput';
-import { FacebookIcon, GoogleIcon } from '../Components/SocialIcons';
+import PasswordInput from '../components/PasswordInput';
+import { FacebookIcon, GoogleIcon } from '../components/SocialIcons';
 
 // One-click demo sign-in for the seeded accounts. Mirrors the "try the demo"
 // pattern real SaaS products ship: the credentials are public seed data.

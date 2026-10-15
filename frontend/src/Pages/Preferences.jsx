@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Head, Link } from '@inertiajs/react';
 import { httpApi } from '../utils/http';
-import { SparkleIcon } from '../Components/icons';
+import { SparkleIcon } from '../components/icons';
 import { useToast } from '../context/ToastContext';
 
 const CATEGORIES = ['Food & Beverage', 'Beauty & Wellness', 'Health & Fitness', 'Services & Logistics', 'Education', 'Fashion & Apparel', 'Home & Living'];

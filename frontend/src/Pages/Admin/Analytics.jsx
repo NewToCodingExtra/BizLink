@@ -1,8 +1,8 @@
 import { useState } from "react";
 import { Head, router, usePage } from "@inertiajs/react";
 import { hasRole } from "../../utils/can";
-import AdminHeader from "../../Components/Admin/AdminHeader";
-import AdminStatCard from "../../Components/Admin/AdminStatCard";
+import AdminHeader from "../../components/Admin/AdminHeader";
+import AdminStatCard from "../../components/Admin/AdminStatCard";
 import {
   ChartIcon,
   UsersIcon,
@@ -15,7 +15,7 @@ import {
   EyeIcon,
   EyeOffIcon,
   XIcon,
-} from "../../Components/icons";
+} from "../../components/icons";
 import {
   ResponsiveContainer,
   AreaChart,

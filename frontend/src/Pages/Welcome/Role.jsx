@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Head, router } from "@inertiajs/react";
-import Button from "../../Components/Button";
+import Button from "../../components/Button";
 import { useToast } from "../../context/ToastContext";
 
 const ROLES = [

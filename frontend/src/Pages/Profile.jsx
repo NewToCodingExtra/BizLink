@@ -1,12 +1,12 @@
 import { useState } from "react";
 import { Head, Link, usePage } from "@inertiajs/react";
-import OpportunityCard from "../Components/OpportunityCard";
-import { CheckIcon } from "../Components/icons";
+import OpportunityCard from "../components/OpportunityCard";
+import { CheckIcon } from "../components/icons";
 import { httpApi } from "../utils/http";
 import { goInquire } from "../utils/inquire";
 import { useToast } from "../context/ToastContext";
-import ReportModal from "../Components/ReportModal";
-import { useVideoPoster } from "../Components/SmartMedia";
+import ReportModal from "../components/ReportModal";
+import { useVideoPoster } from "../components/SmartMedia";
 
 function ReelGridThumb({ opp }) {
   // Grid cells show the captured frame, never a black first-frame.
@@ -46,11 +46,10 @@ export default function Profile({
   const { auth, username } = usePage().props;
   const viewer = auth?.user ?? null;
   const [opps, setOpps] = useState(initialOpps || []);
-  const [stories, setStories] = useState(initialStories || []);
+  const [stories] = useState(initialStories || []);
   const [comments, setComments] = useState(() => (initialOpps || []).flatMap((o) => o.comments || []));
   const [savedIds, setSavedIds] = useState(initialSavedIds || []);
   const [following, setFollowing] = useState(!!initialFollowing);
-  const [error, setError] = useState("");
   // Deep-linkable tabs: /profile/:user?tab=reels opens straight on REELS
   // (used by reel author links so the watched video is actually visible).
   const [activeTab, setActiveTab] = useState(tab === "reels" ? "reels" : "posts");

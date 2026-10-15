@@ -1,9 +1,9 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Head, Link, router, usePage } from "@inertiajs/react";
-import StoriesBar from "../Components/StoriesBar";
-import OpportunityFeed from "../Components/OpportunityFeed";
-import CreateStoryModal from "../Components/CreateStoryModal";
-import { FeedSkeleton, StoriesBarSkeleton } from "../Components/Skeleton";
+import StoriesBar from "../components/StoriesBar";
+import OpportunityFeed from "../components/OpportunityFeed";
+import CreateStoryModal from "../components/CreateStoryModal";
+import { FeedSkeleton, StoriesBarSkeleton } from "../components/Skeleton";
 import { httpApi } from "../utils/http";
 import { goInquire } from "../utils/inquire";
 import { useToast } from "../context/ToastContext";

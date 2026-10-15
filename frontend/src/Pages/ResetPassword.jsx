@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Link, useForm, usePage, Head } from '@inertiajs/react';
 import { useToast } from '../context/ToastContext';
-import PasswordInput from '../Components/PasswordInput';
+import PasswordInput from '../components/PasswordInput';
 
 export default function ResetPassword({ email: initialEmail = '', token: initialToken = '' }) {
   const toast = useToast();

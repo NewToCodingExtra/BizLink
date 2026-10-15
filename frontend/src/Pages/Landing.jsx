@@ -1,9 +1,9 @@
 import { Head, Link, usePage } from "@inertiajs/react";
-import BusinessOverview from "../Components/BusinessOverview";
-import BusinessFeatures from "../Components/BusinessFeatures";
-import BusinessObjectives from "../Components/BusinessObjectives";
-import MissionVision from "../Components/MissionVision";
-import { ArrowRightIcon } from "../Components/icons";
+import BusinessOverview from "../components/BusinessOverview";
+import BusinessFeatures from "../components/BusinessFeatures";
+import BusinessObjectives from "../components/BusinessObjectives";
+import MissionVision from "../components/MissionVision";
+import { ArrowRightIcon } from "../components/icons";
 
 export default function Landing() {
   const { auth } = usePage().props;

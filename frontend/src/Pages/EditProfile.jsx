@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { Head, Link, router } from "@inertiajs/react";
-import { ArrowLeftIcon, GoogleIcon } from "../Components/icons";
+import { ArrowLeftIcon, GoogleIcon } from "../components/icons";
 import { httpApi } from "../utils/http";
 import { useToast } from '../context/ToastContext';
 

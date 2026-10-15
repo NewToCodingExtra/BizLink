@@ -4,7 +4,7 @@ import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { httpApi } from "../utils/http";
 import { useToast } from "../context/ToastContext";
-import { ArrowLeftIcon, ArrowRightIcon } from "../Components/icons";
+import { ArrowLeftIcon, ArrowRightIcon } from "../components/icons";
 
 function cleanHeadingTitle(text) {
   return String(text || "")

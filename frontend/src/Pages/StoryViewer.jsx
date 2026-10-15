@@ -3,9 +3,9 @@ import { Head, Link, router, usePage } from "@inertiajs/react";
 import { profilePath } from "../utils/profilePath";
 import { httpApi } from "../utils/http";
 import { useToast } from "../context/ToastContext";
-import CreativeLoader from "../Components/CreativeLoader";
-import ReportModal from "../Components/ReportModal";
-import { XIcon, TrashIcon } from "../Components/icons";
+import CreativeLoader from "../components/CreativeLoader";
+import ReportModal from "../components/ReportModal";
+import { XIcon, TrashIcon } from "../components/icons";
 
 function timeAgo(dateInput) {
   if (!dateInput) return 'now';

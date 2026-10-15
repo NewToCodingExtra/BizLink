@@ -1,9 +1,9 @@
 import { useEffect, useRef } from "react";
 import { usePage } from "@inertiajs/react";
-import Navbar from "../Components/Navbar";
-import BottomNav from "../Components/BottomNav";
-import Footer from "../Components/Footer";
-import GlobalModals from "../Components/GlobalModals";
+import Navbar from "../components/Navbar";
+import BottomNav from "../components/BottomNav";
+import Footer from "../components/Footer";
+import GlobalModals from "../components/GlobalModals";
 import { useToast } from "../context/ToastContext";
 
 export default function AppLayout({ children }) {
