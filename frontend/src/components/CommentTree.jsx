@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { usePage } from "@inertiajs/react";
 import { httpApi, csrfFetch } from "../utils/http";
 import { useToast } from "../context/ToastContext";
+import DropdownMenu from "./DropdownMenu";
 import {
   DotsIcon, PencilIcon, TrashIcon, FlagIcon, LinkIcon, ReplyIcon,
   ImageIcon, HeartIcon, XIcon,
@@ -85,10 +86,10 @@ function Composer({ autoFocus, onSend, sending }) {
         className="flex-1 bg-bg border border-border rounded-lg px-3 py-2 text-sm text-text-primary outline-none focus:border-action resize-none"
       />
       <input ref={fileRef} type="file" accept="image/*,video/*" className="hidden" onChange={pick} />
-      <button type="button" onClick={() => fileRef.current?.click()} disabled={uploading || sending} title="Attach photo/video" className="p-2 rounded-lg text-text-secondary hover:bg-bg disabled:opacity-50">
+      <button type="button" onClick={() => fileRef.current?.click()} disabled={uploading || sending} title="Attach photo/video" aria-label="Attach photo or video" className="p-2 rounded-lg text-text-secondary hover:bg-bg disabled:opacity-50 shrink-0">
         <ImageIcon />
       </button>
-      <button type="button" onClick={submit} disabled={sending || uploading || (!text.trim() && !media)} className="px-3 py-2 rounded-lg bg-action hover:bg-action-hover disabled:bg-blue-300 text-white text-xs font-semibold">
+      <button type="button" onClick={submit} disabled={sending || uploading || (!text.trim() && !media)} className="px-3.5 py-2 rounded-lg bg-action hover:bg-action-hover disabled:bg-blue-300 text-white text-xs font-semibold shrink-0 transition-colors">
         {sending ? "…" : "Send"}
       </button>
       {media && (
@@ -114,10 +115,11 @@ function Node({ c, depth, ctx }) {
   const shownReplies = (c.replies || []).slice(0, REPLY_PREVIEW);
   const hiddenCount = Math.max(0, (c.repliesCount ?? (c.replies || []).length) - shownReplies.length);
   const draftBox = replyFor === c.id;
+  const dotsBtnRef = useRef(null);
 
   return (
-    <div id={`comment-${c.id}`} className={`flex gap-2.5 ${depth > 0 ? "ml-8 mt-2.5" : "mt-3.5"} ${highlight === c.id ? "outline outline-2 outline-action rounded-lg" : ""}`}>
-      <img src={c.avatar} alt={c.author} className="w-8 h-8 rounded-full object-cover shrink-0 bg-bg" />
+    <div id={`comment-${c.id}`} className={`flex items-start gap-2.5 ${depth > 0 ? "ml-8 mt-2.5" : "mt-3.5"} ${highlight === c.id ? "outline outline-2 outline-action rounded-lg" : ""}`}>
+      <img src={c.avatar} alt={c.author} className="w-8 h-8 rounded-full object-cover shrink-0 aspect-square bg-bg" />
       <div className="flex-1 min-w-0">
         <div className="bg-bg rounded-xl px-3 py-2">
           <p className="text-xs font-semibold text-text-primary">
@@ -151,25 +153,26 @@ function Node({ c, depth, ctx }) {
             })}
             <button onClick={() => onReact(c.id, "❤️")} title="React" className="p-1 rounded-full text-text-secondary hover:bg-bg"><HeartIcon className="w-3.5 h-3.5" /></button>
             {depth === 0 && viewer && <button onClick={() => setReplyFor(draftBox ? null : c.id)} className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full text-xs text-text-secondary hover:bg-bg"><ReplyIcon className="w-3.5 h-3.5" /> Reply</button>}
-            <div className="relative">
+            <div>
               <button
+                ref={dotsBtnRef}
                 onClick={() => setMenu(menu === c.id ? null : c.id)}
                 onContextMenu={(e) => { e.preventDefault(); setMenu(c.id); }}
                 aria-label="Comment actions"
-                className="p-1 rounded-full text-text-secondary hover:bg-bg"
+                aria-haspopup="menu"
+                aria-expanded={menu === c.id}
+                className="flex items-center justify-center w-11 h-11 -m-2 rounded-full text-text-secondary hover:bg-bg active:bg-bg transition-colors"
               >
                 <DotsIcon className="w-4 h-4" />
               </button>
-              {menu === c.id && (
-                <div className="absolute left-0 top-full mt-1 w-44 bg-surface rounded-lg shadow-xl border border-border z-20 py-1 text-sm">
-                  {depth === 0 && viewer && <button onClick={() => { setMenu(null); setReplyFor(c.id); }} className="w-full text-left px-3 py-1.5 hover:bg-bg flex items-center gap-2 text-text-primary"><ReplyIcon className="w-3.5 h-3.5" /> Reply</button>}
-                  <button onClick={() => { setMenu(null); onCopy(c, false); }} className="w-full text-left px-3 py-1.5 hover:bg-bg flex items-center gap-2 text-text-primary"><ReplyIcon className="w-3.5 h-3.5 rotate-180" /> Copy text</button>
-                  <button onClick={() => { setMenu(null); onCopy(c, true); }} className="w-full text-left px-3 py-1.5 hover:bg-bg flex items-center gap-2 text-text-primary"><LinkIcon className="w-3.5 h-3.5" /> Copy link</button>
-                  {canEdit && <button onClick={() => { setMenu(null); setEditing(true); setDraft(c.text || ""); }} className="w-full text-left px-3 py-1.5 hover:bg-bg flex items-center gap-2 text-text-primary"><PencilIcon className="w-3.5 h-3.5" /> Edit</button>}
-                  {canDelete && <button onClick={() => { setMenu(null); onRemove(c.id); }} className="w-full text-left px-3 py-1.5 hover:bg-bg flex items-center gap-2 text-error"><TrashIcon className="w-3.5 h-3.5" /> Delete</button>}
-                  {viewer && !mine && <button onClick={() => { setMenu(null); setReporting(true); }} className="w-full text-left px-3 py-1.5 hover:bg-bg flex items-center gap-2 text-text-primary"><FlagIcon className="w-3.5 h-3.5" /> Report</button>}
-                </div>
-              )}
+              <DropdownMenu open={menu === c.id} onClose={() => setMenu(null)} triggerRef={dotsBtnRef} align="left" width={176}>
+                {depth === 0 && viewer && <button onClick={() => { setMenu(null); setReplyFor(c.id); }} className="w-full text-left px-3 py-1.5 min-h-[44px] flex items-center hover:bg-bg gap-2 text-text-primary"><ReplyIcon className="w-3.5 h-3.5" /> Reply</button>}
+                <button onClick={() => { setMenu(null); onCopy(c, false); }} className="w-full text-left px-3 py-1.5 min-h-[44px] flex items-center hover:bg-bg gap-2 text-text-primary"><ReplyIcon className="w-3.5 h-3.5 rotate-180" /> Copy text</button>
+                <button onClick={() => { setMenu(null); onCopy(c, true); }} className="w-full text-left px-3 py-1.5 min-h-[44px] flex items-center hover:bg-bg gap-2 text-text-primary"><LinkIcon className="w-3.5 h-3.5" /> Copy link</button>
+                {canEdit && <button onClick={() => { setMenu(null); setEditing(true); setDraft(c.text || ""); }} className="w-full text-left px-3 py-1.5 min-h-[44px] flex items-center hover:bg-bg gap-2 text-text-primary"><PencilIcon className="w-3.5 h-3.5" /> Edit</button>}
+                {canDelete && <button onClick={() => { setMenu(null); onRemove(c.id); }} className="w-full text-left px-3 py-1.5 min-h-[44px] flex items-center hover:bg-bg gap-2 text-error"><TrashIcon className="w-3.5 h-3.5" /> Delete</button>}
+                {viewer && !mine && <button onClick={() => { setMenu(null); setReporting(true); }} className="w-full text-left px-3 py-1.5 min-h-[44px] flex items-center hover:bg-bg gap-2 text-text-primary"><FlagIcon className="w-3.5 h-3.5" /> Report</button>}
+              </DropdownMenu>
             </div>
           </div>
         )}
@@ -361,7 +364,7 @@ export default function CommentTree({ postId, postSlug, authorId, initialComment
   }
 
   return (
-    <div onClick={(e) => { if (!e.target.closest(".relative")) setMenu(null); }}>
+    <div>
       {viewer ? <Composer onSend={sendTop} sending={sending} /> : <p className="text-sm text-text-secondary">Log in to comment.</p>}
       {(tree || []).length === 0 && loaded && <p className="text-sm text-text-secondary mt-3">No comments yet. Start the discussion.</p>}
       {(tree || []).map((c) => <Node key={c.id} c={c} depth={0} ctx={ctx} />)}

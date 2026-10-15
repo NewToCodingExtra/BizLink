@@ -90,10 +90,15 @@ select option { background-color: var(--color-surface); color: var(--color-text-
 html { scroll-behavior: smooth; }
 body { background: var(--color-bg); color: var(--color-text-primary); -webkit-font-smoothing: antialiased; text-size-adjust: 100%; }
 
-/* ——— Responsive foundation (impeccable adapt + stitch + mobile skills) ——— */
-html, body { overflow-x: clip; }
-img, video, svg { max-width: 100%; }
-img { height: auto; }
+/* Circular avatars and rounded media must always be 1:1 square and object-cover */
+img[class*="rounded-full"],
+.rounded-full img,
+.rounded-full > img {
+  aspect-ratio: 1 / 1;
+  object-fit: cover;
+  flex-shrink: 0;
+}
+
 
 /* Safe-area for notched phones: viewport-fit=cover is set in app.blade.php */
 body {

@@ -89,7 +89,7 @@ export default function ProfileMenu({ onAction }) {
           title={user.name}
           className={`flex items-center gap-1 rounded-full border p-0.5 pr-1 min-w-[44px] min-h-[44px] justify-center transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-300 ${open ? "border-accent" : "border-white/20 hover:border-white/50 active:border-white/50"}`}
         >
-          <img src={user.avatar || "https://i.pravatar.cc/100?img=12"} alt="profile" className="w-7 h-7 rounded-full object-cover" />
+          <img src={user.avatar || "https://i.pravatar.cc/100?img=12"} alt="profile" className="w-7 h-7 rounded-full object-cover shrink-0 aspect-square" />
           <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#CBD5E1" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" className={`mr-0.5 transition-transform duration-150 ${open ? "rotate-180" : ""}`}>
             <polyline points="6 9 12 15 18 9" />
           </svg>
@@ -100,7 +100,7 @@ export default function ProfileMenu({ onAction }) {
             <div className="fixed inset-0 z-40 cursor-default" onClick={() => setOpen(false)} aria-hidden="true" />
             <div role="menu" className="fixed left-4 right-4 top-[72px] sm:absolute sm:left-auto sm:right-0 sm:top-auto sm:mt-2 sm:w-64 w-auto bg-[var(--color-surface)] rounded-2xl ring-1 ring-slate-900/5 shadow-xl overflow-hidden z-50 origin-top-right border border-[var(--color-border)]">
               <div className="px-4 py-3.5 bg-[var(--color-bg-secondary)] border-b border-[var(--color-border)] flex items-center gap-3">
-                <img src={user.avatar || "https://i.pravatar.cc/100?img=12"} alt="" className="w-10 h-10 rounded-full object-cover shrink-0" />
+                <img src={user.avatar || "https://i.pravatar.cc/100?img=12"} alt="" className="w-10 h-10 rounded-full object-cover shrink-0 aspect-square" />
                 <div className="flex-1 min-w-0">
                   <p className="text-sm font-semibold text-[var(--color-text-primary)] truncate">{user.name}</p>
                   <p className="text-xs text-[var(--color-text-secondary)] truncate">{user.email}</p>
@@ -194,7 +194,7 @@ export default function ProfileMenu({ onAction }) {
       >
         <div className="flex flex-col items-center text-center pb-2">
           {user?.avatar ? (
-            <img src={user.avatar} alt={user.name} className="w-20 h-20 rounded-full object-cover mb-4 border-2 border-[var(--color-border)]" />
+            <img src={user.avatar} alt={user.name} className="w-20 h-20 rounded-full object-cover mb-4 border-2 border-[var(--color-border)] aspect-square shrink-0" />
           ) : (
             <svg className="w-20 h-20 text-[var(--color-text-secondary)] mb-4 opacity-80" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
               <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 3c1.66 0 3 1.34 3 3s-1.34 3-3 3-3-1.34-3-3 1.34-3 3-3zm0 14.2c-2.5 0-4.71-1.28-6-3.22.03-1.99 4-3.08 6-3.08 1.99 0 5.97 1.09 6 3.08-1.29 1.94-3.5 3.22-6 3.22z" />

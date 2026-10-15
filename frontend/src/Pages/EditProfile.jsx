@@ -124,7 +124,7 @@ export default function EditProfile({ user }) {
 
       <form onSubmit={submit} className="mt-6 bg-surface rounded-xl border border-border shadow-sm p-6 space-y-5">
         <div className="flex items-center gap-4">
-          <img src={avatar || "https://i.pravatar.cc/100?img=12"} alt="preview" className="w-16 h-16 rounded-full object-cover border border-border bg-bg" />
+          <img src={avatar || "https://i.pravatar.cc/100?img=12"} alt="preview" className="w-16 h-16 rounded-full object-cover border border-border bg-bg shrink-0 aspect-square" />
           <div className="flex-1">
             <input ref={fileRef} type="file" accept="image/*" onChange={onPickFile} className="hidden" />
             <button type="button" onClick={() => fileRef.current?.click()} disabled={uploading} className="px-4 py-2 rounded-lg bg-surface border border-border text-text-primary text-sm font-medium hover:bg-bg disabled:opacity-60 transition-colors">

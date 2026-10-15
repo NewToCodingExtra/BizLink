@@ -5,6 +5,7 @@ import { CheckIcon } from "../Components/icons";
 import { httpApi } from "../utils/http";
 import { goInquire } from "../utils/inquire";
 import { useToast } from "../context/ToastContext";
+import ReportModal from "../Components/ReportModal";
 
 export default function Profile({
   profileUser,
@@ -27,6 +28,7 @@ export default function Profile({
   // Deep-linkable tabs: /profile/:user?tab=reels opens straight on REELS
   // (used by reel author links so the watched video is actually visible).
   const [activeTab, setActiveTab] = useState(tab === "reels" ? "reels" : "posts");
+  const [reportOpen, setReportOpen] = useState(false);
 
   // POSTS = the author's full feed (images AND videos).
   // REELS = the same list filtered to video posts only (tab = filter).
@@ -119,7 +121,7 @@ export default function Profile({
         <div className="bg-surface rounded-xl border border-border shadow-sm overflow-hidden">
           <div className="h-24 bg-gradient-to-r from-[#0B1F3A] via-[#1E3A5F] to-[#2563EB]" />
           <div className="p-6 pt-0">
-            <img src={profileUser.avatar} alt={profileUser.name} className="w-20 h-20 rounded-full object-cover border-4 border-white -mt-10 bg-bg" />
+            <img src={profileUser.avatar} alt={profileUser.name} className="w-20 h-20 rounded-full object-cover border-4 border-white -mt-10 bg-bg aspect-square shrink-0" />
             <div className="mt-3 flex flex-wrap items-center gap-2">
               <h1 className="text-xl font-semibold text-text-primary">{profileUser.name}</h1>
               {profileUser.username && <span className="text-sm text-text-secondary">@{profileUser.username}</span>}
@@ -136,9 +138,14 @@ export default function Profile({
               <Link href="/profile/edit" className="inline-block mt-4 px-5 py-1.5 rounded-full text-sm font-medium border bg-transparent text-text-primary border-text-secondary hover:bg-text-secondary/10 transition-colors">Edit profile</Link>
             )}
             {!isOwn && viewer && (
-              <button onClick={toggleFollow} className={`mt-4 px-5 py-1.5 rounded-full text-sm font-medium border transition-colors ${following ? "bg-transparent text-text-primary border-text-secondary hover:bg-text-secondary/10" : "bg-action text-white border-action hover:bg-action-hover"}`}>
-                {following ? "Following" : "Follow"}
-              </button>
+              <>
+                <button onClick={toggleFollow} className={`mt-4 px-5 py-1.5 rounded-full text-sm font-medium border transition-colors ${following ? "bg-transparent text-text-primary border-text-secondary hover:bg-text-secondary/10" : "bg-action text-white border-action hover:bg-action-hover"}`}>
+                  {following ? "Following" : "Follow"}
+                </button>
+                <button onClick={() => setReportOpen(true)} className="mt-4 ml-2 px-5 py-1.5 rounded-full text-sm font-medium border border-border text-text-secondary hover:text-error hover:border-error/30 transition-colors">
+                  Report
+                </button>
+              </>
             )}
           </div>
         </div>
@@ -240,6 +247,7 @@ export default function Profile({
         </div>
 
       </div>
+      {profileUser && <ReportModal isOpen={reportOpen} onClose={() => setReportOpen(false)} endpoint={`/users/${profileUser.id}/report`} title={`Report ${profileUser.name}`} />}
     </>
   );
 }

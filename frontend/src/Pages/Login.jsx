@@ -107,7 +107,7 @@ export default function Login() {
               className="flex flex-col items-center gap-1 px-2 py-3 rounded-xl border border-border bg-surface hover:bg-bg transition-colors disabled:opacity-60"
             >
               {avatar ? (
-                <img src={avatar} alt="" className="w-8 h-8 rounded-full object-cover" />
+                <img src={avatar} alt="" className="w-8 h-8 rounded-full object-cover shrink-0 aspect-square" />
               ) : (
                 <span className="w-8 h-8 rounded-full bg-action/10 text-action grid place-items-center text-xs font-bold">A</span>
               )}

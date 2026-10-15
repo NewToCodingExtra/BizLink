@@ -170,7 +170,7 @@ export default function Navbar() {
           <SearchBar onSearch={(q) => { setMobileOpen(false); router.visit(`/search?q=${encodeURIComponent(q)}`); }} />
           {user && (
             <div className="flex items-center gap-3 rounded-xl bg-surface/5 border border-white/10 px-3 py-2.5">
-              <img src={user.avatar || "https://i.pravatar.cc/100?img=12"} alt="" className="w-9 h-9 rounded-full object-cover shrink-0" />
+              <img src={user.avatar || "https://i.pravatar.cc/100?img=12"} alt="" className="w-9 h-9 rounded-full object-cover shrink-0 aspect-square" />
               <div className="flex-1 min-w-0">
                 <p className="text-sm font-semibold text-white truncate">{user.name}</p>
                 <p className="text-xs text-text-secondary truncate">{user.email}</p>
@@ -209,7 +209,7 @@ export default function Navbar() {
       >
         <div className="flex flex-col items-center text-center pb-2">
           {user?.avatar ? (
-            <img src={user.avatar} alt={user.name} className="w-20 h-20 rounded-full object-cover mb-4 border-2 border-white/10" />
+            <img src={user.avatar} alt={user.name} className="w-20 h-20 rounded-full object-cover mb-4 border-2 border-white/10 aspect-square shrink-0" />
           ) : (
             <svg className="w-20 h-20 text-slate-400 mb-4 opacity-80" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
               <circle cx="12" cy="12" r="10"></circle>

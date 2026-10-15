@@ -4,6 +4,7 @@ import { profilePath } from "../utils/profilePath";
 import { httpApi } from "../utils/http";
 import { useToast } from "../context/ToastContext";
 import CreativeLoader from "../Components/CreativeLoader";
+import ReportModal from "../Components/ReportModal";
 import { XIcon, TrashIcon } from "../Components/icons";
 
 function timeAgo(dateInput) {
@@ -39,6 +40,7 @@ export default function StoryViewer({ stories: serverStories, id: idProp, storyI
   const toast = useToast();
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [deleting, setDeleting] = useState(false);
+  const [reportOpen, setReportOpen] = useState(false);
 
   const routeId = idProp ?? storyId ?? currentIdFromPath();
   const authorFilter = authorProp ?? authorQueryFromUrl();
@@ -301,7 +303,7 @@ export default function StoryViewer({ stories: serverStories, id: idProp, storyI
             href={profilePath({ username: story.authorUsername, authorId: story.authorId || story.brandId, brandId: story.brandId })}
             className="flex items-center gap-2 drop-shadow-md z-20 cursor-pointer hover:opacity-80 transition-opacity"
           >
-            <img src={story.avatar} alt={story.brandName} className="w-8 h-8 rounded-full border border-white/50" />
+            <img src={story.avatar} alt={story.brandName} className="w-8 h-8 rounded-full border border-white/50 object-cover shrink-0 aspect-square" />
             <span className="text-sm font-semibold hover:underline">{story.brandName}</span>
             <span className="text-xs text-white/80">· {timeAgo(story.createdAt)}</span>
           </Link>
@@ -314,6 +316,16 @@ export default function StoryViewer({ stories: serverStories, id: idProp, storyI
                 title="Delete story"
               >
                 <TrashIcon className="w-4 h-4" />
+              </button>
+            )}
+            {!canDelete && !!user && (
+              <button
+                onClick={(e) => { e.stopPropagation(); setIsPaused(true); setReportOpen(true); }}
+                className="h-8 px-3 grid place-items-center rounded-full bg-black/40 text-white text-xs font-semibold hover:bg-black/60 transition-colors cursor-pointer"
+                aria-label="Report story"
+                title="Report story"
+              >
+                Report
               </button>
             )}
             <button onClick={(e) => { e.stopPropagation(); closeViewer(); }} className="w-8 h-8 grid place-items-center rounded-full bg-black/40 text-white hover:bg-black/60 transition-colors cursor-pointer" aria-label="Close"><XIcon /></button>
@@ -443,6 +455,14 @@ export default function StoryViewer({ stories: serverStories, id: idProp, storyI
             </div>
           </div>
         </div>
+      )}
+      {story && (
+        <ReportModal
+          isOpen={reportOpen}
+          onClose={() => { setReportOpen(false); setIsPaused(false); }}
+          endpoint={`/stories/${story.id}/report`}
+          title="Report this story"
+        />
       )}
     </div>
   );
