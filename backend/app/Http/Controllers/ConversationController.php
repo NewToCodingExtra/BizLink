@@ -493,23 +493,26 @@ class ConversationController extends Controller
         }
 
         $q = trim((string) $request->query('q', ''));
-        if (strlen($q) < 2) {
+        if (strlen($q) < 1) {
             return response()->json(['data' => []]);
         }
 
         $results = Message::where('conversation_id', $conversation->id)
             ->where('is_hidden', false)
-            ->where('text', 'like', "%{$q}%")
+            ->where(function ($query) use ($q) {
+                $query->where('text', 'like', "%{$q}%")
+                      ->orWhere('media_name', 'like', "%{$q}%");
+            })
             ->with('sender:id,name')
             ->latest()
-            ->limit(30)
+            ->limit(50)
             ->get();
 
         return response()->json([
             'data' => $results->map(function ($m) {
                 return [
                     'id' => $m->id,
-                    'text' => $m->text,
+                    'text' => $m->text ?: ($m->media_name ? "[File: {$m->media_name}]" : "[Attachment]"),
                     'senderName' => $m->sender?->name ?? 'User',
                     'time' => $m->created_at?->diffForHumans(),
                     'rawTime' => $m->created_at?->toIso8601String(),
@@ -528,14 +531,30 @@ class ConversationController extends Controller
             return response()->json(['message' => 'Forbidden'], 403);
         }
 
-        $type = $request->query('type', 'all'); // photo, video, file, link, all
+        $type = $request->query('type', 'all'); // photo, video, media, file, link, all
 
         $query = Message::where('conversation_id', $conversation->id)->where('is_hidden', false);
 
-        if ($type === 'photo') {
-            $query->where('media_type', 'image');
+        if ($type === 'photo' || $type === 'image') {
+            $query->where(function ($q) {
+                $q->where('media_type', 'image')
+                  ->orWhere(function ($sub) {
+                      $sub->whereNull('media_type')
+                          ->whereNotNull('media_url')
+                          ->where('media_url', 'not like', '%.mp4%')
+                          ->where('media_url', 'not like', '%.mov%');
+                  });
+            });
         } elseif ($type === 'video') {
             $query->where('media_type', 'video');
+        } elseif ($type === 'media') {
+            $query->where(function ($q) {
+                $q->whereIn('media_type', ['image', 'video'])
+                  ->orWhere(function ($sub) {
+                      $sub->whereNull('media_type')
+                          ->whereNotNull('media_url');
+                  });
+            });
         } elseif ($type === 'file') {
             $query->where('media_type', 'file');
         } elseif ($type === 'link') {
@@ -544,7 +563,7 @@ class ConversationController extends Controller
                   ->orWhere('text', 'like', '%https://%');
             });
         } else {
-            // Default: any media, file or link
+            // Default: all
             $query->where(function ($q) {
                 $q->whereNotNull('media_url')
                   ->orWhere('text', 'like', '%http://%')
@@ -557,18 +576,39 @@ class ConversationController extends Controller
 
         $items = [];
         foreach ($messages as $m) {
+            $mediaType = $m->media_type;
+            if (!$mediaType && $m->media_url) {
+                $ext = strtolower(pathinfo(parse_url($m->media_url, PHP_URL_PATH) ?? '', PATHINFO_EXTENSION));
+                if (in_array($ext, ['jpg', 'jpeg', 'png', 'webp', 'gif'])) {
+                    $mediaType = 'image';
+                } elseif (in_array($ext, ['mp4', 'mov', 'webm'])) {
+                    $mediaType = 'video';
+                } else {
+                    $mediaType = 'file';
+                }
+            }
+
             $base = [
                 'id' => $m->id,
                 'mediaUrl' => $m->media_url,
-                'mediaType' => $m->media_type,
+                'mediaType' => $mediaType ?: 'image',
                 'mediaName' => $m->media_name,
                 'mediaSize' => $m->media_size,
                 'time' => $m->created_at?->diffForHumans(),
                 'rawTime' => $m->created_at?->toIso8601String(),
             ];
 
-            if ($m->media_url && ($type === 'all' || $type === 'photo' || $type === 'video' || $type === 'file')) {
-                if ($type === 'all' || ($type === 'photo' && $m->media_type === 'image') || ($type === 'video' && $m->media_type === 'video') || ($type === 'file' && $m->media_type === 'file')) {
+            if ($m->media_url) {
+                $isImage = ($mediaType === 'image' || !$mediaType);
+                $isVideo = ($mediaType === 'video');
+                $isFile  = ($mediaType === 'file');
+
+                if ($type === 'all'
+                    || ($type === 'media' && ($isImage || $isVideo))
+                    || (($type === 'photo' || $type === 'image') && $isImage)
+                    || ($type === 'video' && $isVideo)
+                    || ($type === 'file' && $isFile)
+                ) {
                     $items[] = $base;
                 }
             }

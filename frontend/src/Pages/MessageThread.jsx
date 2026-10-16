@@ -28,6 +28,7 @@ import ConversationList from "../components/ConversationList";
 import DropdownMenu from "../components/DropdownMenu";
 import ReportModal from "../components/ReportModal";
 import ChatInfoPanel from "../components/ChatInfoPanel";
+import MediaLightbox from "../components/MediaLightbox";
 import LinkPreviewCard, { renderWithLinks, extractUrl } from "../components/LinkPreviewCard";
 import { httpApi, csrfFetch } from "../utils/http";
 import { getEcho, watchEchoHealth } from "../utils/echo";
@@ -122,6 +123,9 @@ export default function MessageThread({ conv: initialConv, conversations = [], q
   const typingTimer = useRef(null);
   const whisperAt = useRef(0);
   const fileInputRef = useRef(null);
+  const imageInputRef = useRef(null);
+  const videoInputRef = useRef(null);
+  const [activeLightboxMedia, setActiveLightboxMedia] = useState(null);
 
   // Sync when navigating between threads via the left sidebar
   useEffect(() => {
@@ -744,13 +748,57 @@ export default function MessageThread({ conv: initialConv, conversations = [], q
     }
   };
 
-  const handleFileUpload = async (e) => {
+  const handleFileUpload = async (e, category = null) => {
     const file = e.target.files?.[0];
     if (!file) return;
     if (conv?.isBlocked) {
       toast.error("You cannot send messages in this conversation.");
+      if (e.target) e.target.value = "";
       return;
     }
+
+    const mime = file.type || "";
+    const name = file.name.toLowerCase();
+
+    // Strict client-side file type enforcement
+    if (category === "image") {
+      const isImg = mime.startsWith("image/") || /\.(jpe?g|png|webp|gif)$/i.test(name);
+      if (!isImg) {
+        toast.error("Please select a photo (JPG, PNG, WebP, GIF).");
+        if (e.target) e.target.value = "";
+        return;
+      }
+      if (file.size > 20 * 1024 * 1024) {
+        toast.error("Photos must be under 20MB.");
+        if (e.target) e.target.value = "";
+        return;
+      }
+    } else if (category === "video") {
+      const isVid = mime.startsWith("video/") || /\.(mp4|mov|webm)$/i.test(name);
+      if (!isVid) {
+        toast.error("Please select a video file (MP4, MOV, WebM).");
+        if (e.target) e.target.value = "";
+        return;
+      }
+      if (file.size > 100 * 1024 * 1024) {
+        toast.error("Videos must be under 100MB.");
+        if (e.target) e.target.value = "";
+        return;
+      }
+    } else if (category === "file") {
+      const isMedia = mime.startsWith("image/") || mime.startsWith("video/") || /\.(jpe?g|png|webp|gif|mp4|mov|webm)$/i.test(name);
+      if (isMedia) {
+        toast.error("Please select a document or archive file (.pdf, .doc, .xls, .txt, .zip). Use Photos or Videos to send media.");
+        if (e.target) e.target.value = "";
+        return;
+      }
+      if (file.size > 25 * 1024 * 1024) {
+        toast.error("Files must be under 25MB.");
+        if (e.target) e.target.value = "";
+        return;
+      }
+    }
+
     setUploading(true);
     setShowAttachMenu(false);
     try {
@@ -779,7 +827,10 @@ export default function MessageThread({ conv: initialConv, conversations = [], q
       toast.error(err.message || "Upload failed");
     } finally {
       setUploading(false);
+      if (e.target) e.target.value = "";
       if (fileInputRef.current) fileInputRef.current.value = "";
+      if (imageInputRef.current) imageInputRef.current.value = "";
+      if (videoInputRef.current) videoInputRef.current.value = "";
     }
   };
 
@@ -1213,18 +1264,51 @@ export default function MessageThread({ conv: initialConv, conversations = [], q
                       {m.mediaUrl && (
                         <div className="mb-2">
                           {m.mediaType === "image" && (
-                            <img
-                              src={m.mediaUrl}
-                              alt="attachment"
-                              className="rounded-xl max-h-72 w-full object-cover border border-black/10"
-                            />
+                            <button
+                              type="button"
+                              onClick={() =>
+                                setActiveLightboxMedia({
+                                  mediaUrl: m.mediaUrl,
+                                  mediaType: "image",
+                                  mediaName: m.mediaName || "Photo",
+                                  time: m.time,
+                                })
+                              }
+                              className="block w-full text-left rounded-xl overflow-hidden border border-black/10 group cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-action"
+                            >
+                              <img
+                                src={m.mediaUrl}
+                                alt="attachment"
+                                className="rounded-xl max-h-72 w-full object-cover group-hover:scale-[1.02] transition-transform duration-200"
+                              />
+                            </button>
                           )}
                           {m.mediaType === "video" && (
-                            <video
-                              src={m.mediaUrl}
-                              controls
-                              className="rounded-xl max-h-72 w-full bg-black border border-black/10"
-                            />
+                            <div className="relative rounded-xl overflow-hidden border border-black/10 group">
+                              <video
+                                src={m.mediaUrl}
+                                controls
+                                className="rounded-xl max-h-72 w-full bg-black"
+                              />
+                              <button
+                                type="button"
+                                onClick={() =>
+                                  setActiveLightboxMedia({
+                                    mediaUrl: m.mediaUrl,
+                                    mediaType: "video",
+                                    mediaName: m.mediaName || "Video",
+                                    time: m.time,
+                                  })
+                                }
+                                className="absolute top-2 right-2 p-1.5 rounded-full bg-black/60 hover:bg-black/80 text-white text-xs transition-colors backdrop-blur-xs flex items-center gap-1 shadow-md"
+                                title="Expand video"
+                              >
+                                <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4" />
+                                </svg>
+                                <span className="text-[10px] font-medium">Zoom</span>
+                              </button>
+                            </div>
                           )}
                           {m.mediaType === "file" && (
                             <a
@@ -1429,16 +1513,32 @@ export default function MessageThread({ conv: initialConv, conversations = [], q
           {/* Attach Menu Dropdown Sheet */}
           {showAttachMenu && (
             <div className="p-3 bg-surface border-t border-border flex items-center gap-2 overflow-x-auto animate-in fade-in slide-in-from-bottom-2 shrink-0">
+              {/* Separate hidden inputs for strict file-type enforcement */}
+              <input
+                type="file"
+                ref={imageInputRef}
+                onChange={(e) => handleFileUpload(e, "image")}
+                className="hidden"
+                accept="image/jpeg,image/png,image/webp,image/gif"
+              />
+              <input
+                type="file"
+                ref={videoInputRef}
+                onChange={(e) => handleFileUpload(e, "video")}
+                className="hidden"
+                accept="video/mp4,video/quicktime,video/webm"
+              />
               <input
                 type="file"
                 ref={fileInputRef}
-                onChange={handleFileUpload}
+                onChange={(e) => handleFileUpload(e, "file")}
                 className="hidden"
-                accept="image/*,video/*,.pdf,.doc,.docx,.xls,.xlsx,.txt,.zip"
+                accept=".pdf,.doc,.docx,.xls,.xlsx,.txt,.zip"
               />
+
               <button
                 type="button"
-                onClick={() => fileInputRef.current?.click()}
+                onClick={() => imageInputRef.current?.click()}
                 className="flex flex-col items-center gap-1 p-2 rounded-xl border border-border bg-bg hover:bg-surface text-text-primary text-xs font-medium min-w-[76px] flex-1 transition-colors group"
               >
                 <ImageIcon className="w-5 h-5 text-action group-hover:scale-110 transition-transform" />
@@ -1447,7 +1547,7 @@ export default function MessageThread({ conv: initialConv, conversations = [], q
               </button>
               <button
                 type="button"
-                onClick={() => fileInputRef.current?.click()}
+                onClick={() => videoInputRef.current?.click()}
                 className="flex flex-col items-center gap-1 p-2 rounded-xl border border-border bg-bg hover:bg-surface text-text-primary text-xs font-medium min-w-[76px] flex-1 transition-colors group"
               >
                 <VideoIcon className="w-5 h-5 text-indigo-500 group-hover:scale-110 transition-transform" />
@@ -1638,6 +1738,7 @@ export default function MessageThread({ conv: initialConv, conversations = [], q
             <aside className="hidden lg:flex lg:w-[320px] shrink-0 border-l border-border flex-col min-h-0 bg-surface">
               <ChatInfoPanel
                 conv={conv}
+                messages={messages}
                 onClose={() => setShowInfoPanel(false)}
                 onSearchJump={jumpToMessage}
                 onMuteToggled={(muted) => setConv((c) => (c ? { ...c, isMuted: muted } : c))}
@@ -1654,6 +1755,7 @@ export default function MessageThread({ conv: initialConv, conversations = [], q
               >
                 <ChatInfoPanel
                   conv={conv}
+                  messages={messages}
                   onClose={() => setShowInfoPanel(false)}
                   onSearchJump={(msgId) => {
                     setShowInfoPanel(false);
@@ -1911,6 +2013,13 @@ export default function MessageThread({ conv: initialConv, conversations = [], q
           title={reportTarget.title}
         />
       )}
+
+      {/* Fullscreen Interactive Media Lightbox */}
+      <MediaLightbox
+        isOpen={Boolean(activeLightboxMedia)}
+        onClose={() => setActiveLightboxMedia(null)}
+        media={activeLightboxMedia}
+      />
     </div>
   );
 }

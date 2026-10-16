@@ -12,8 +12,10 @@ import Modal from "./Modal";
 import Button from "./Button";
 import { XIcon, MenuIcon, ArrowRightIcon } from "./icons";
 import VerificationRevokedModal from "./VerificationRevokedModal";
+import { useScrollDirection } from "../utils/useScrollDirection";
 
 export default function Navbar() {
+  const isHidden = useScrollDirection();
   const page = usePage();
   const { auth } = page.props;
   const user = auth?.user ?? null;
@@ -99,7 +101,11 @@ export default function Navbar() {
     `inline-flex items-center min-h-[44px] px-1 py-2 text-sm font-medium transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-300 focus-visible:rounded ${pathname === path ? "text-white" : "text-slate-300 hover:text-white active:text-white"}`;
 
   return (
-    <header className="sticky top-0 z-40 bg-primary border-b border-white/10 pt-[env(safe-area-inset-top)]">
+    <header
+      className={`sticky top-0 z-40 bg-primary border-b border-white/10 pt-[env(safe-area-inset-top)] transition-transform duration-300 ease-in-out ${
+        isHidden && !mobileOpen ? "-translate-y-full md:translate-y-0" : "translate-y-0"
+      }`}
+    >
       <div className="max-w-6xl mx-auto px-4 sm:px-6 min-h-[64px] py-2 flex items-center gap-3 sm:gap-4">
         <Link href={user ? "/feed" : "/"} className="flex items-center gap-2 shrink-0">
           <img src={markUrl} alt="BizLink" className="w-8 h-8 rounded-lg" />

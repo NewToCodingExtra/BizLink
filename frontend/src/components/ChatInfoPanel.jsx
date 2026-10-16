@@ -6,6 +6,7 @@ import { useToast } from "../context/ToastContext";
 import Modal from "./Modal";
 import Button from "./Button";
 import ReportModal from "./ReportModal";
+import MediaLightbox from "./MediaLightbox";
 
 function formatBytes(bytes) {
   if (!bytes || bytes === 0) return "0 B";
@@ -17,6 +18,7 @@ function formatBytes(bytes) {
 
 export default function ChatInfoPanel({
   conv,
+  messages = [],
   isOpen = false,
   onClose,
   isMuted: isMutedProp,
@@ -87,13 +89,14 @@ export default function ChatInfoPanel({
     setLoadingMedia(true);
 
     const typeParam = activeTab === "media"
-      ? (mediaSubTab === "photo" ? "photo" : (mediaSubTab === "video" ? "video" : "all"))
+      ? (mediaSubTab === "photo" ? "photo" : (mediaSubTab === "video" ? "video" : "media"))
       : (activeTab === "files" ? "file" : "link");
 
     httpApi.get(`/conversations/${conv.id}/media?type=${typeParam}`)
       .then((res) => {
         if (!cancelled) {
-          setMediaItems(res.data?.data || []);
+          const list = Array.isArray(res?.data) ? res.data : (Array.isArray(res) ? res : []);
+          setMediaItems(list);
         }
       })
       .catch(() => {
@@ -106,13 +109,13 @@ export default function ChatInfoPanel({
     return () => {
       cancelled = true;
     };
-  }, [conv?.id, activeTab, mediaSubTab]);
+  }, [conv?.id, activeTab, mediaSubTab, messages?.length]);
 
   // Handle in-conversation search debounce
   useEffect(() => {
     if (!searchOpen || !conv?.id) return;
     const q = searchQuery.trim();
-    if (q.length < 2) {
+    if (q.length < 1) {
       setSearchResults([]);
       return;
     }
@@ -121,7 +124,8 @@ export default function ChatInfoPanel({
       setSearching(true);
       httpApi.get(`/conversations/${conv.id}/messages/search?q=${encodeURIComponent(q)}`)
         .then((res) => {
-          setSearchResults(res.data?.data || []);
+          const list = Array.isArray(res?.data) ? res.data : (Array.isArray(res) ? res : []);
+          setSearchResults(list);
         })
         .catch(() => {
           setSearchResults([]);
@@ -606,44 +610,12 @@ export default function ChatInfoPanel({
         </div>
       </div>
 
-      {/* Lightbox Modal */}
-      {lightboxItem && (
-        <Modal
-          isOpen={!!lightboxItem}
-          onClose={() => setLightboxItem(null)}
-          maxWidth="max-w-3xl"
-          title={lightboxItem.mediaType === "video" ? "Video Preview" : "Photo Preview"}
-        >
-          <div className="flex flex-col items-center justify-center p-2 bg-black/90 rounded-xl overflow-hidden min-h-[300px]">
-            {lightboxItem.mediaType === "video" ? (
-              <video
-                src={lightboxItem.mediaUrl}
-                controls
-                autoPlay
-                className="max-h-[75vh] w-auto max-w-full rounded"
-              />
-            ) : (
-              <img
-                src={lightboxItem.mediaUrl}
-                alt=""
-                className="max-h-[75vh] w-auto max-w-full object-contain rounded"
-              />
-            )}
-            <div className="w-full flex items-center justify-between pt-3 px-2 text-white/80 text-xs">
-              <span>{lightboxItem.time}</span>
-              <a
-                href={lightboxItem.mediaUrl}
-                target="_blank"
-                rel="noreferrer"
-                download
-                className="hover:text-white underline font-medium"
-              >
-                Download original
-              </a>
-            </div>
-          </div>
-        </Modal>
-      )}
+      {/* Fullscreen Interactive Media Lightbox */}
+      <MediaLightbox
+        isOpen={Boolean(lightboxItem)}
+        onClose={() => setLightboxItem(null)}
+        media={lightboxItem}
+      />
 
       {/* Block Confirmation Modal */}
       <Modal

@@ -4,6 +4,7 @@ import { can } from "../utils/can";
 import { profilePath } from "../utils/profilePath";
 import { httpApi } from "../utils/http";
 import { useToast } from "../context/ToastContext";
+import { useScrollDirection } from "../utils/useScrollDirection";
 
 function FeedIcon({ className = "w-6 h-6" }) {
   return (
@@ -42,6 +43,7 @@ function ProfileIcon({ className = "w-6 h-6" }) {
 }
 
 export default function BottomNav() {
+  const isHidden = useScrollDirection();
   const page = usePage();
   const { auth } = page.props;
   const user = auth?.user ?? null;
@@ -94,7 +96,9 @@ export default function BottomNav() {
   return (
     <nav
       aria-label="Primary"
-      className="md:hidden fixed bottom-0 inset-x-0 z-40 bg-primary border-t border-white/10"
+      className={`md:hidden fixed bottom-0 inset-x-0 z-40 bg-primary border-t border-white/10 transition-transform duration-300 ease-in-out ${
+        isHidden ? "translate-y-full" : "translate-y-0"
+      }`}
       style={{ paddingBottom: "env(safe-area-inset-bottom)" }}
     >
       <div className={`grid ${canCreate ? "grid-cols-5" : "grid-cols-4"} px-2`}>
