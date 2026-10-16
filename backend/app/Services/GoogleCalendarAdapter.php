@@ -133,11 +133,11 @@ class GoogleCalendarAdapter implements CalendarAdapter
                 Log::warning("Google Calendar createMeet attempt {$attempt} failed", ['error' => $e->getMessage()]);
                 if ($attempt >= $maxAttempts) {
                     $msg = $e->getMessage();
-                    Log::warning('Google Calendar API unavailable, disabled, or failed; falling back to direct Meet link', ['error' => $msg]);
-                    $randomCode = strtolower(Str::random(3)) . '-' . strtolower(Str::random(4)) . '-' . strtolower(Str::random(3));
+                    Log::warning('Google Calendar API unavailable, disabled, or failed; falling back to direct video room', ['error' => $msg]);
+                    $roomSlug = 'BizLink-Meet-' . strtolower(Str::random(10));
                     return [
                         'eventId' => 'meet_' . Str::random(16),
-                        'link' => "https://meet.google.com/{$randomCode}",
+                        'link' => "https://meet.jit.si/{$roomSlug}",
                     ];
                 }
                 usleep(200000 * $attempt);
@@ -156,8 +156,8 @@ class GoogleCalendarAdapter implements CalendarAdapter
         }
 
         if (! $link || $link === 'https://meet.google.com') {
-            $randomCode = strtolower(Str::random(3)) . '-' . strtolower(Str::random(4)) . '-' . strtolower(Str::random(3));
-            $link = "https://meet.google.com/{$randomCode}";
+            $roomSlug = 'BizLink-Meet-' . strtolower(Str::random(10));
+            $link = "https://meet.jit.si/{$roomSlug}";
         }
 
         return [

@@ -65,7 +65,8 @@ class Conversation extends Model
 
         if ($this->with_name) {
             $owner = Opportunity::where('brand_name', $this->with_name)->value('user_id')
-                ?? Story::where('brand_name', $this->with_name)->value('user_id');
+                ?? Story::where('brand_name', $this->with_name)->value('user_id')
+                ?? \App\Models\User::where('name', $this->with_name)->value('id');
             if ($owner) return (int) $owner;
         }
 
@@ -73,6 +74,13 @@ class Conversation extends Model
             $owner = Opportunity::where('brand_id', $this->brand_id)->value('user_id')
                 ?? Story::where('brand_id', $this->brand_id)->value('user_id');
             if ($owner) return (int) $owner;
+
+            if (preg_match('/^brand-(\d+)$/', $this->brand_id, $matches)) {
+                $uid = (int) $matches[1];
+                if (\App\Models\User::where('id', $uid)->exists()) {
+                    return $uid;
+                }
+            }
         }
 
         return null;
@@ -109,6 +117,8 @@ class Conversation extends Model
     {
         if (!$userId) return false;
         if ($this->isBuyer($userId) || $this->isSeller($userId)) return true;
+        $ownerId = $this->getOwnerId();
+        if ($ownerId && (int) $ownerId === (int) $userId) return true;
         return $this->messages()->where('sender_id', $userId)->exists();
     }
 

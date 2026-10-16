@@ -13,20 +13,20 @@ export default function AuthorRoleBadge({ opp, role, dark = false, className = "
   const kind = role ?? resolveAuthorRole(opp);
   if (kind === "brand") {
     return (
-      <span className={`inline-flex items-center gap-1 text-[10px] font-bold tracking-widest bg-accent text-[#0B1F3A] px-2 py-0.5 rounded-full shrink-0 whitespace-nowrap ${className}`}>
+      <span className={`inline-flex items-center gap-1 text-[9px] sm:text-[10px] font-bold tracking-wider bg-accent text-[#0B1F3A] px-1.5 sm:px-2 py-0.5 rounded-full shrink-0 whitespace-nowrap leading-none ${className}`}>
         BRAND
       </span>
     );
   }
   if (dark) {
     return (
-      <span className={`inline-flex items-center gap-1 text-[10px] font-bold tracking-widest bg-white/20 text-white px-2 py-0.5 rounded-full shrink-0 whitespace-nowrap ${className}`}>
+      <span className={`inline-flex items-center gap-1 text-[9px] sm:text-[10px] font-bold tracking-wider bg-white/20 text-white px-1.5 sm:px-2 py-0.5 rounded-full shrink-0 whitespace-nowrap leading-none ${className}`}>
         ENTREPRENEUR
       </span>
     );
   }
   return (
-    <span className={`inline-flex items-center gap-1 text-[10px] font-bold tracking-widest bg-action/10 text-action border border-action/20 px-2 py-0.5 rounded-full shrink-0 whitespace-nowrap ${className}`}>
+    <span className={`inline-flex items-center gap-1 text-[9px] sm:text-[10px] font-bold tracking-wider bg-action/10 text-action border border-action/20 px-1.5 sm:px-2 py-0.5 rounded-full shrink-0 whitespace-nowrap leading-none ${className}`}>
         ENTREPRENEUR
       </span>
   );

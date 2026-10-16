@@ -54,26 +54,31 @@ export default function OpportunityCard({ opp, comments, onToggleLike, onToggleS
 
   return (
     <article className="bg-surface rounded-xl border border-border shadow-sm hover:shadow-md transition-shadow duration-150 overflow-hidden">
-      <div className="p-3.5 sm:p-4 flex items-center gap-2.5 sm:gap-3">
-        <Link href={profilePath({ username: opp.user?.username || opp.authorUsername, authorId: opp.authorId, brandId: opp.brandId })} className="shrink-0 self-center">
-          <img src={opp.brandAvatar} alt={opp.brandName} className="w-8 h-8 sm:w-10 sm:h-10 rounded-full object-cover shrink-0 aspect-square border border-border/40" />
+      <div className="p-3.5 sm:p-4 flex items-start gap-2.5 sm:gap-3">
+        <Link href={profilePath({ username: opp.user?.username || opp.authorUsername, authorId: opp.authorId, brandId: opp.brandId })} className="shrink-0 pt-0.5">
+          <img src={opp.brandAvatar} alt={opp.brandName} className="w-9 h-9 sm:w-10 sm:h-10 rounded-full object-cover shrink-0 aspect-square border border-border/40" />
         </Link>
         <div className="flex-1 min-w-0">
           <AuthorIdentity opp={opp} />
-          <div className="mt-0.5 flex items-center gap-x-1.5 gap-y-1 flex-wrap">
-            <AuthorBadges opp={opp} className="inline-flex sm:hidden" />
-            <p className="text-xs text-text-secondary truncate min-w-0 max-w-full">{opp.category} · {formatDate(opp.createdAt)}</p>
-            {fresh && <span className="text-[9px] font-bold tracking-wider bg-primary text-white px-1.5 py-0.5 rounded-full shrink-0 whitespace-nowrap leading-none">NEW</span>}
-            {opp.featured && <span className="text-[9px] font-bold tracking-wider bg-accent text-[#0B1F3A] px-1.5 py-0.5 rounded-full shrink-0 whitespace-nowrap leading-none">FEATURED</span>}
-            {opp.preferred && (
-              <span title={(opp.reasons || []).join(" · ") || "Matches your preferences"} className="inline-flex items-center gap-0.5 text-[9px] font-bold tracking-wider bg-action/10 text-action border border-action/20 px-1.5 py-0.5 rounded-full shrink-0 whitespace-nowrap leading-none">
-                <SparkleIcon className="w-2.5 h-2.5" /> FOR YOU
-              </span>
-            )}
+          <div className="mt-0.5 flex items-center gap-1 text-xs text-text-secondary truncate">
+            <span>{opp.category}</span>
+            <span>·</span>
+            <span>{formatDate(opp.createdAt)}</span>
           </div>
+          {(fresh || opp.featured || opp.preferred) && (
+            <div className="mt-1 flex items-center gap-1 flex-wrap">
+              {fresh && <span className="text-[9px] font-bold tracking-wider bg-primary text-white px-1.5 py-0.5 rounded-full shrink-0 whitespace-nowrap leading-none">NEW</span>}
+              {opp.featured && <span className="text-[9px] font-bold tracking-wider bg-accent text-[#0B1F3A] px-1.5 py-0.5 rounded-full shrink-0 whitespace-nowrap leading-none">FEATURED</span>}
+              {opp.preferred && (
+                <span title={(opp.reasons || []).join(" · ") || "Matches your preferences"} className="inline-flex items-center gap-0.5 text-[9px] font-bold tracking-wider bg-action/10 text-action border border-action/20 px-1.5 py-0.5 rounded-full shrink-0 whitespace-nowrap leading-none">
+                  <SparkleIcon className="w-2.5 h-2.5" /> FOR YOU
+                </span>
+              )}
+            </div>
+          )}
         </div>
-        <div className="flex items-center gap-1.5 shrink-0">
-          <span className={`text-[11px] sm:text-xs font-medium border rounded-full px-2 sm:px-2.5 py-0.5 sm:py-1 shrink-0 whitespace-nowrap ${badgeClasses(opp.type)}`}>
+        <div className="flex items-center gap-1 shrink-0 self-start pt-0.5">
+          <span className={`text-[10px] sm:text-xs font-semibold border rounded-full px-2 sm:px-2.5 py-0.5 shrink-0 whitespace-nowrap ${badgeClasses(opp.type)}`}>
             {opp.type}
           </span>
 
@@ -84,7 +89,7 @@ export default function OpportunityCard({ opp, comments, onToggleLike, onToggleS
               aria-haspopup="menu"
               aria-expanded={menuOpen}
               aria-label="More actions"
-              className="flex items-center justify-center w-11 h-11 rounded-full p-1 text-text-secondary hover:text-text-primary hover:bg-bg active:bg-bg transition-colors"
+              className="flex items-center justify-center w-8 h-8 rounded-full text-text-secondary hover:text-text-primary hover:bg-bg active:bg-bg transition-colors"
             >
               <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
                 <path d="M12 8c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zm0 2c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm0 6c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2z" />

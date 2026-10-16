@@ -173,6 +173,25 @@ export default function MessageThread({ conv: initialConv, conversations = [], q
       );
     });
 
+    channel.listen(".poll.closed", (e) => {
+      const closedPoll = e?.poll;
+      if (!closedPoll) return;
+      setMessages((prev) =>
+        prev.map((m) => {
+          if (m.poll && Number(m.poll.id) === Number(closedPoll.id)) {
+            return { ...m, poll: { ...closedPoll, myVote: m.poll.myVote } };
+          }
+          return m;
+        })
+      );
+    });
+
+    channel.listen(".conversation.read", (e) => {
+      if (e?.readAt && Number(e?.userId) !== Number(me?.id)) {
+        setConv((prev) => (prev ? { ...prev, peerReadAt: e.readAt } : prev));
+      }
+    });
+
     channel.listen(".meet.scheduled", (e) => {
       const msg = e?.message;
       if (!msg || Number(msg.senderId) === Number(me?.id)) return;
@@ -239,27 +258,72 @@ export default function MessageThread({ conv: initialConv, conversations = [], q
         const freshConv = res.data ?? res;
         if (freshConv?.messages) {
           setMessages((prev) => {
-            const seen = new Set(prev.map((m) => String(m.id)));
-            const newOnes = freshConv.messages.filter((m) => !seen.has(String(m.id)));
-            if (newOnes.length === 0) return prev;
-            return [...prev, ...newOnes];
+            const freshMap = new Map(freshConv.messages.map((m) => [String(m.id), m]));
+            let changed = false;
+
+            // 1. Update existing messages in-place with fresh polls, reactions, edits, meeting status
+            const updated = prev.map((m) => {
+              const fresh = freshMap.get(String(m.id));
+              if (!fresh) return m;
+
+              const pollChanged = JSON.stringify(m.poll) !== JSON.stringify(fresh.poll);
+              const reactionsChanged = JSON.stringify(m.reactions) !== JSON.stringify(fresh.reactions);
+              const meetChanged = m.meetStatus !== fresh.meetStatus || m.meetUrl !== fresh.meetUrl;
+              const textChanged = m.text !== fresh.text || m.isEdited !== fresh.isEdited;
+
+              if (pollChanged || reactionsChanged || meetChanged || textChanged) {
+                changed = true;
+                return {
+                  ...m,
+                  ...fresh,
+                  from: m.from,
+                  poll: fresh.poll ? { ...fresh.poll, myVote: m.poll?.myVote ?? fresh.poll.myVote } : null,
+                };
+              }
+              return m;
+            });
+
+            // 2. Append newly incoming messages
+            const existingIds = new Set(prev.map((m) => String(m.id)));
+            const newOnes = freshConv.messages.filter((m) => !existingIds.has(String(m.id)));
+            if (newOnes.length > 0) {
+              changed = true;
+              return [...updated, ...newOnes];
+            }
+            return changed ? updated : prev;
           });
         }
-        if (typeof freshConv?.isOnline !== "undefined") {
-          setConv((prev) => (prev ? { ...prev, isOnline: freshConv.isOnline, lastActiveText: freshConv.lastActiveText } : prev));
+
+        if (freshConv) {
+          setConv((prev) => {
+            if (!prev) return freshConv;
+            if (
+              prev.peerReadAt !== freshConv.peerReadAt ||
+              prev.isOnline !== freshConv.isOnline ||
+              prev.lastActiveText !== freshConv.lastActiveText ||
+              prev.unread !== freshConv.unread
+            ) {
+              return { ...prev, ...freshConv };
+            }
+            return prev;
+          });
         }
       } catch {
         // Silent catch on background network blips
       }
     };
 
-    const intervalMs = liveDown ? 2500 : 8000;
+    const intervalMs = 2500;
     const iv = setInterval(syncMessages, intervalMs);
+
+    // Explicitly mark conversation as read on open
+    httpApi.post(`/conversations/${conv.id}/read`).catch(() => {});
+
     return () => {
       cancelled = true;
       clearInterval(iv);
     };
-  }, [liveDown, conv?.id]);
+  }, [conv?.id]);
 
   const jumpToMessage = (msgId) => {
     const el = document.getElementById(`msg-${msgId}`);

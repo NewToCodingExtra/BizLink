@@ -62,6 +62,18 @@ class User extends Authenticatable
         });
     }
 
+    public function sendPasswordResetNotification($token): void
+    {
+        try {
+            $this->notify(new \Illuminate\Auth\Notifications\ResetPassword($token));
+        } catch (\Throwable $e) {
+            \Illuminate\Support\Facades\Log::warning('Password reset notification failed to send: ' . $e->getMessage(), [
+                'user_id' => $this->id,
+                'email' => $this->email,
+            ]);
+        }
+    }
+
     public static function makeUsername(string $name, ?int $ignoreId = null): string
     {
         $reserved = ['me', 'edit', 'login', 'register', 'feed', 'admin', 'api'];

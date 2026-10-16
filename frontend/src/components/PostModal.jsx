@@ -28,16 +28,17 @@ export default function PostModal({
   return (
     <Modal isOpen={isOpen} onClose={onClose} maxWidth="max-w-2xl" title={`${opp.brandName ?? "Post"}`}>
       <div className="-m-0">
-        <div className="flex items-center gap-3">
-          <img src={opp.brandAvatar} alt={opp.brandName} className="w-9 h-9 sm:w-10 sm:h-10 rounded-full object-cover shrink-0" />
+        <div className="flex items-start gap-2.5 sm:gap-3">
+          <img src={opp.brandAvatar} alt={opp.brandName} className="w-9 h-9 sm:w-10 sm:h-10 rounded-full object-cover shrink-0 pt-0.5" />
           <div className="min-w-0 flex-1">
             <AuthorIdentity opp={opp} />
-            <div className="mt-0.5 flex items-center gap-x-1.5 gap-y-1 flex-wrap text-xs text-text-secondary">
-              <AuthorBadges opp={opp} className="inline-flex sm:hidden" />
-              <span className="truncate min-w-0">{opp.category} · {opp.type}</span>
+            <div className="mt-0.5 flex items-center gap-1 text-xs text-text-secondary truncate">
+              <span>{opp.category}</span>
+              <span>·</span>
+              <span>{opp.type}</span>
             </div>
           </div>
-          <Link href={`/post/${opp.slug || opp.id}`} className="text-xs font-medium text-action hover:underline shrink-0">
+          <Link href={`/post/${opp.slug || opp.id}`} className="text-xs font-medium text-action hover:underline shrink-0 self-start pt-1">
             Open page
           </Link>
         </div>

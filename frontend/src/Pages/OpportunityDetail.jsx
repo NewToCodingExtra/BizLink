@@ -179,22 +179,19 @@ export default function OpportunityDetail({ opp: initialOpp }) {
           videoProps={{ controls: true, loop: false, preload: "metadata" }}
         />
         <div className="p-4 sm:p-6">
-          <div className="flex items-center gap-3">
-            <div className="flex items-center gap-2.5 min-w-0 flex-1">
-              <Link href={profilePath({ username: opp.user?.username || opp.authorUsername, authorId: opp.authorId, brandId: opp.brandId })} className="shrink-0">
-                <img src={opp.brandAvatar || "https://i.pravatar.cc/100?img=12"} alt={opp.brandName} className="w-9 h-9 sm:w-11 sm:h-11 rounded-full object-cover aspect-square border border-border/40" />
+          <div className="flex items-start justify-between gap-3">
+            <div className="flex items-start gap-2.5 sm:gap-3 min-w-0 flex-1">
+              <Link href={profilePath({ username: opp.user?.username || opp.authorUsername, authorId: opp.authorId, brandId: opp.brandId })} className="shrink-0 pt-0.5">
+                <img src={opp.brandAvatar || "https://i.pravatar.cc/100?img=12"} alt={opp.brandName} className="w-10 h-10 sm:w-12 sm:h-12 rounded-full object-cover aspect-square border border-border/40" />
               </Link>
               <div className="min-w-0 flex-1">
                 <AuthorIdentity opp={opp} nameClassName="text-sm sm:text-base font-semibold" />
                 {opp.category && (
-                  <div className="mt-0.5 flex items-center gap-x-1.5 gap-y-1 flex-wrap text-xs text-text-secondary">
-                    <AuthorBadges opp={opp} className="inline-flex sm:hidden" />
-                    <span className="truncate min-w-0">{opp.category}</span>
-                  </div>
+                  <p className="mt-0.5 text-xs text-text-secondary truncate">{opp.category}</p>
                 )}
               </div>
             </div>
-            <span className={`text-xs font-medium border rounded-full px-3 py-1 shrink-0 whitespace-nowrap ${badgeClasses(opp.type)}`}>
+            <span className={`text-[10px] sm:text-xs font-semibold border rounded-full px-2.5 sm:px-3 py-0.5 sm:py-1 shrink-0 whitespace-nowrap self-start ${badgeClasses(opp.type)}`}>
               {opp.type}
             </span>
           </div>

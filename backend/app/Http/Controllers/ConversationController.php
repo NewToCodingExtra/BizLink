@@ -639,6 +639,7 @@ class ConversationController extends Controller
             return response()->json(['message' => 'Forbidden'], 403);
         }
 
+        $readAt = now()->toIso8601String();
         \Illuminate\Support\Facades\DB::table('conversation_reads')->updateOrInsert(
             ['conversation_id' => $conversation->id, 'user_id' => $user->id],
             ['read_at' => now(), 'updated_at' => now()]
@@ -646,7 +647,9 @@ class ConversationController extends Controller
 
         $conversation->update(['unread' => 0]);
 
-        return response()->json(['readAt' => now()->toIso8601String()]);
+        $this->safeBroadcast(new \App\Events\ConversationRead($conversation->id, $user->id, $readAt));
+
+        return response()->json(['readAt' => $readAt]);
     }
 
     /**

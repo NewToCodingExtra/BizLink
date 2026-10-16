@@ -240,26 +240,26 @@ export default function MeetingCard({
           </div>
         </form>
       ) : (
-        <div className="flex items-center gap-2">
+        <div className="space-y-2">
           {isScheduled && meetUrl ? (
             <a
               href={meetUrl}
               target="_blank"
               rel="noopener noreferrer"
-              className={`flex-1 py-1.5 px-3 rounded-lg text-xs font-semibold text-center transition-colors shadow-sm flex items-center justify-center gap-1.5 ${
+              className={`w-full py-2 px-3 rounded-lg text-xs font-bold text-center transition-colors shadow-sm flex items-center justify-center gap-1.5 min-h-[38px] ${
                 isMe
                   ? "bg-white text-action hover:bg-slate-100"
                   : "bg-action text-white hover:bg-action-hover"
               }`}
             >
-              <VideoIcon className="w-3.5 h-3.5" />
+              <VideoIcon className="w-4 h-4" />
               <span>Join Meeting</span>
             </a>
           ) : (
             <button
               type="button"
               disabled
-              className={`flex-1 py-1.5 px-3 rounded-lg text-xs font-medium text-center cursor-not-allowed ${
+              className={`w-full py-2 px-3 rounded-lg text-xs font-medium text-center cursor-not-allowed ${
                 isMe
                   ? "bg-white/10 text-white/40"
                   : "bg-slate-100 text-slate-400 dark:bg-slate-800 dark:text-slate-500"
@@ -270,14 +270,14 @@ export default function MeetingCard({
           )}
 
           {isMe && isScheduled && eventId && (
-            <>
+            <div className="grid grid-cols-3 gap-1.5">
               <button
                 type="button"
                 onClick={() => {
                   setNewUrl(meetUrl || "");
                   setEditingLink(true);
                 }}
-                className={`py-1.5 px-2.5 rounded-lg text-xs font-medium transition-colors ${
+                className={`py-1.5 px-2 rounded-md text-[11px] font-medium text-center truncate transition-colors ${
                   isMe
                     ? "border border-white/30 hover:bg-white/10 text-white/90"
                     : "border border-border text-text-secondary hover:text-text-primary"
@@ -290,7 +290,7 @@ export default function MeetingCard({
                 type="button"
                 onClick={handleEndMeeting}
                 disabled={ending}
-                className={`py-1.5 px-2.5 rounded-lg text-xs font-medium transition-colors ${
+                className={`py-1.5 px-2 rounded-md text-[11px] font-medium text-center truncate transition-colors ${
                   isMe
                     ? "bg-amber-500/20 hover:bg-amber-500/30 text-amber-200 border border-amber-400/30"
                     : "border border-border text-text-secondary hover:text-amber-500 hover:border-amber-500/40"
@@ -303,7 +303,7 @@ export default function MeetingCard({
                 type="button"
                 onClick={handleCancel}
                 disabled={cancelling}
-                className={`py-1.5 px-2.5 rounded-lg text-xs font-medium transition-colors ${
+                className={`py-1.5 px-2 rounded-md text-[11px] font-medium text-center truncate transition-colors ${
                   isMe
                     ? "bg-rose-500/20 hover:bg-rose-500/30 text-rose-200 border border-rose-400/30"
                     : "border border-border text-text-secondary hover:text-error hover:border-error/40"
@@ -311,7 +311,7 @@ export default function MeetingCard({
               >
                 {cancelling ? "..." : "Cancel"}
               </button>
-            </>
+            </div>
           )}
         </div>
       )}

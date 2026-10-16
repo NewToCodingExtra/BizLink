@@ -15,6 +15,10 @@ if [ -z "$APP_KEY" ]; then
   export APP_KEY="base64:$(head -c 32 /dev/urandom | base64)"
 fi
 
+if [ -n "$REVERB_APP_KEY" ]; then
+  export BROADCAST_CONNECTION="${BROADCAST_CONNECTION:-reverb}"
+fi
+
 # Writable paths (Railway volume should mount at .../backend/storage).
 mkdir -p storage/framework/cache storage/framework/sessions storage/framework/views storage/logs storage/app/public bootstrap/cache
 chown -R www-data:www-data storage bootstrap/cache

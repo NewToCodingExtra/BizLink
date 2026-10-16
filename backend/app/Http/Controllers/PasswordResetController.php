@@ -40,12 +40,16 @@ class PasswordResetController extends Controller
             . '/reset-password?email=' . urlencode($user->email)
             . '&token=' . urlencode($token);
 
-        Mail::raw(
-            "Hi {$user->name},\n\nReset your BizLink password here (valid 60 minutes):\n{$link}\n\nIgnore this if you did not request it.",
-            function ($message) use ($user) {
-                $message->to($user->email)->subject('Reset your BizLink password');
-            }
-        );
+        try {
+            Mail::raw(
+                "Hi {$user->name},\n\nReset your BizLink password here (valid 60 minutes):\n{$link}\n\nIgnore this if you did not request it.",
+                function ($message) use ($user) {
+                    $message->to($user->email)->subject('Reset your BizLink password');
+                }
+            );
+        } catch (\Throwable $e) {
+            \Illuminate\Support\Facades\Log::warning('PasswordResetController mail delivery failed: ' . $e->getMessage());
+        }
 
         $payload = ['message' => 'If an account exists for this email, a reset link was sent.'];
         if (config('app.debug')) {
