@@ -1,0 +1,1664 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>BizLink · Code Walkthrough</title>
+<style>
+:root{--navy:#0B1F3A;--deep:#07142a;--code:#091a31;--line:#1c3558;--gold:#C9A24B;--blue:#5b8def;--tx:#e6edf7;--mu:#8fa3bf;--fs:14px}
+*{box-sizing:border-box}html{scroll-behavior:smooth;scroll-padding-top:84px}
+body{margin:0;background:var(--deep);color:var(--tx);font:15px/1.55 "Segoe UI",system-ui,sans-serif}
+header{position:sticky;top:0;z-index:9;background:var(--navy);border-bottom:2px solid var(--gold);display:flex;align-items:center;gap:18px;padding:10px 22px;flex-wrap:wrap}
+.brand{font-weight:800;letter-spacing:.04em}.brand b{color:var(--gold)}
+.tabs{display:flex;gap:6px;flex:1}
+.tab{background:none;border:1px solid var(--line);color:var(--mu);padding:7px 16px;border-radius:8px;cursor:pointer;font:600 14px inherit}
+.tab.on{background:var(--gold);color:var(--navy);border-color:var(--gold)}
+.sz button{background:none;border:1px solid var(--line);color:var(--tx);width:32px;height:32px;border-radius:8px;cursor:pointer}
+.wrap{display:grid;grid-template-columns:230px 1fr;max-width:1300px;margin:auto}
+nav{position:sticky;top:62px;align-self:start;height:calc(100vh - 62px);overflow:auto;padding:22px 12px 22px 22px}
+nav a{display:block;padding:7px 12px;color:var(--mu);text-decoration:none;border-left:2px solid var(--line);font-size:13.5px}
+nav a.on{color:var(--gold);border-color:var(--gold);background:#0d2342}
+main{padding:26px 26px 140px;min-width:0}
+h1{margin:0;font-size:28px}.lead{color:var(--mu);margin:4px 0 6px}
+h2{margin:46px 0 4px;font-size:20px;color:var(--gold)}h2 small{color:var(--mu);font-weight:400;font-size:13px;margin-left:8px}
+.say{color:var(--mu);margin:2px 0 10px;font-size:14px}.say:before{content:"SAY  ";color:var(--blue);font-weight:700;font-size:11px;letter-spacing:.1em}
+figure{margin:0 0 20px;border:1px solid var(--line);border-radius:10px;overflow:hidden;background:var(--code)}
+.bar{display:flex;justify-content:space-between;align-items:center;padding:7px 14px;background:#0d2342;font:12.5px ui-monospace,Consolas,monospace;color:var(--mu)}
+.bar button{background:none;border:1px solid var(--line);color:var(--mu);border-radius:6px;padding:2px 10px;cursor:pointer}
+.bar a{color:inherit;text-decoration:none}.bar a:hover{color:var(--blue);text-decoration:underline}
+pre{margin:0;padding:12px 0;overflow:auto;font:var(--fs)/1.6 ui-monospace,"Cascadia Code",Consolas,monospace}
+.l{display:block;padding:0 16px 0 0;white-space:pre}
+.l:before{counter-increment:n;content:counter(n);display:inline-block;width:42px;padding-right:14px;text-align:right;color:#3e5b82;user-select:none}
+pre{counter-reset:n}.l.hi{background:rgba(201,162,75,.16);box-shadow:inset 3px 0 var(--gold)}
+.c{color:#6b84a6;font-style:italic}.s{color:#9fd88f}.v{color:#f2b872}.k{color:#c792ea}.f{color:#7fb3ff}.t{color:#ff8fa3}.u{color:#e6c07b}
+@media(max-width:820px){.wrap{display:block}nav{display:none}}
+</style></head><body>
+<header><div class="brand">BIZ<b>LINK</b> · Code Walkthrough</div>
+<div class="tabs" id="tabs"></div>
+<div class="sz"><button onclick="fs(-1)">A−</button> <button onclick="fs(1)">A+</button></div></header>
+<div class="wrap"><nav id="side"></nav><main id="main"></main></div>
+
+<div hidden id="src">
+<!-- ============ PART 1 · FORTIFY ============ -->
+<script type="text/plain" data-p="1" data-s="Install & Register" data-file="backend/composer.json" data-say="Fortify, Spatie and Inertia are all Composer packages on the Laravel 12 backend.">
+"require": {
+    "laravel/fortify": "^1.40", @@
+    "inertiajs/inertia-laravel": "^2.0",
+    "spatie/laravel-permission": "^8.3"
+}
+</script>
+<script type="text/plain" data-p="1" data-s="Install & Register" data-file="backend/bootstrap/providers.php" data-say="The provider is registered here so Laravel boots our Fortify customisation.">
+<?php
+
+use App\Providers\AppServiceProvider;
+
+return [
+    AppServiceProvider::class,
+    App\Providers\FortifyServiceProvider::class, @@
+];
+</script>
+<script type="text/plain" data-p="1" data-s="Config" data-file="backend/config/fortify.php (comments removed)" data-say="Session guard, email as username, /feed as home, a named login limiter, and only the features we need.">
+return [
+    'guard' => 'web',
+    'passwords' => 'users',
+    'username' => 'email', @@
+    'email' => 'email',
+    'lowercase_usernames' => true,
+    'home' => '/feed', @@
+    'prefix' => '',
+    'middleware' => ['web'],
+    'limiters' => [
+        'login' => 'login', @@
+    ],
+    'views' => true,
+    'features' => [
+        Features::registration(), @@
+        Features::resetPasswords(),
+    ],
+];
+</script>
+<script type="text/plain" data-p="1" data-s="Service Provider" data-file="backend/app/Providers/FortifyServiceProvider.php (trimmed)" data-say="Fortify is headless: we point every auth view at a React page, plug in our actions, and bind custom responses.">
+class FortifyServiceProvider extends ServiceProvider
+{
+    public function register(): void
+    {
+        // Custom redirects after login / register / logout / reset
+        $this->app->singleton(LoginResponseContract::class, FortifyLoginResponse::class); @@
+        $this->app->singleton(RegisterResponseContract::class, FortifyRegisterResponse::class);
+        $this->app->singleton(LogoutResponseContract::class, FortifyLogoutResponse::class);
+        // ... password reset responses
+    }
+
+    public function boot(): void
+    {
+        // Auth views are React pages rendered through Inertia
+        Fortify::loginView(fn () => Inertia::render('Login')); @@
+        Fortify::registerView(fn () => Inertia::render('Register')); @@
+        Fortify::requestPasswordResetLinkView(fn () => Inertia::render('ForgotPassword'));
+        Fortify::resetPasswordView(fn ($request) => Inertia::render('ResetPassword', [
+            'email' => $request->email,
+            'token' => $request->route('token'),
+        ]));
+
+        Fortify::createUsersUsing(CreateNewUser::class); @@
+        Fortify::resetUserPasswordsUsing(ResetUserPassword::class);
+
+        // Brute-force defence: 5 attempts / minute per email + IP
+        RateLimiter::for('login', function (Request $request) {
+            $throttleKey = Str::transliterate(Str::lower($request->input(Fortify::username())).'|'.$request->ip());
+
+            return Limit::perMinute(5)->by($throttleKey); @@
+        });
+
+        Event::listen(Login::class, function (Login $event): void {
+            request()->session()->put('last_activity_at', now());
+            Preference::firstOrCreate(['user_id' => $event->user->id], ['categories' => []]);
+        });
+    }
+}
+</script>
+<script type="text/plain" data-p="1" data-s="Actions" data-file="backend/app/Actions/Fortify/CreateNewUser.php (trimmed)" data-say="Registration: validate, hash the password, then hand the user their Spatie role.">
+class CreateNewUser implements CreatesNewUsers
+{
+    use PasswordValidationRules;
+
+    public function create(array $input): User
+    {
+        Validator::make($input, [
+            'name' => ['required', 'string', 'max:255'],
+            'email' => ['required', 'string', 'email', 'max:255', Rule::unique(User::class)],
+            'password' => $this->passwordRules(), @@
+            'role' => ['sometimes', 'string', 'in:entrepreneur,brand'],
+        ])->validate();
+
+        $user = User::create([
+            'name' => $input['name'],
+            'email' => $input['email'],
+            'password' => Hash::make($input['password']), @@
+            'role' => $input['role'] ?? 'entrepreneur',
+        ]);
+
+        $user->assignRole(($input['role'] ?? 'entrepreneur') === 'brand' ? 'Manager' : 'User'); @@
+
+        return $user;
+    }
+}
+</script>
+<script type="text/plain" data-p="1" data-s="Responses & Routes" data-file="backend/app/Http/Responses/FortifyLoginResponse.php (trimmed)" data-say="Fortify owns POST /login, so this response class decides where each role lands.">
+class FortifyLoginResponse implements LoginResponseContract
+{
+    public function toResponse($request)
+    {
+        $user = $request->user();
+
+        return redirect()->intended($this->homeFor($user))
+            ->with('success', 'Welcome back!');
+    }
+
+    private function homeFor($user): string
+    {
+        if ($user instanceof User && $user->hasRole('Admin')) { @@
+            return '/admin';
+        }
+
+        return '/feed';
+    }
+}
+</script>
+<script type="text/plain" data-p="1" data-s="Responses & Routes" data-file="backend/routes/web.php (excerpt)" data-say="Fortify owns session auth routes (/login, /register, /forgot, /reset, /logout). web.php registers guest pages, OAuth, CSRF refresh, demo login, and authenticated routes guarded by role.setup + role:Admin|Manager|User.">
+// Guest pages
+Route::get('/', [PageController::class, 'home'])->name('home');
+Route::get('/feed', [PageController::class, 'feed'])->name('feed'); @@
+Route::get('/reels', [PageController::class, 'reels'])->name('reels');
+Route::get('/post/{slug}', [PageController::class, 'post'])->name('opportunities.show');
+
+// Session auth is owned by Laravel Fortify (login/register/forgot/reset/logout).
+
+// OAuth (stateful session flow for the Inertia app)
+Route::get('/auth/{provider}/redirect', [SocialAuthController::class, 'webRedirect'])
+    ->where('provider', 'google|facebook')
+    ->name('social.redirect');
+Route::get('/auth/{provider}/callback', [SocialAuthController::class, 'webCallback'])
+    ->where('provider', 'google|facebook')
+    ->name('social.callback');
+
+// Fresh CSRF token for long-lived SPA pages (retry-once target for 419s).
+Route::get('/csrf-token', function () { @@
+    return response()->json(['token' => csrf_token()]);
+})->name('csrf.token');
+
+// One-click demo sign-in (public seeded accounts).
+Route::post('/demo-login', [SessionAuthController::class, 'demoLogin'])
+    ->middleware('throttle:20,1') @@
+    ->name('demo.login');
+
+// Authenticated pages — all gated by role.setup so new OAuth users
+// land on the role picker before touching the app.
+Route::middleware(['auth', 'role.setup'])->group(function () { @@
+    Route::middleware(['auth', 'role:Admin|Manager|User'])->get('/create', [OpportunityController::class, 'create'])->name('opportunities.create'); @@
+
+    Route::post('/uploads', [UploadController::class, 'store'])->name('uploads.store');
+    Route::post('/follows/toggle', [FollowController::class, 'toggle'])->name('follows.toggle');
+});
+
+// First-run role picker (outside role.setup guard so it's reachable while pending).
+Route::middleware('auth')->prefix('welcome')->name('welcome.')->group(function () {
+    Route::get('/role', [RoleSetupController::class, 'show'])->name('role');
+    Route::post('/role', [RoleSetupController::class, 'store'])->name('role.store');
+});
+
+require __DIR__.'/opportunities.php';
+require __DIR__.'/comments.php';
+require __DIR__.'/conversations.php';
+require __DIR__.'/reports.php';
+require __DIR__.'/admin.php';
+</script>
+
+<!-- Part 1 expansions -->
+
+<script type="text/plain" data-p="1" data-s="Middleware Pipeline" data-file="backend/bootstrap/app.php" data-say="Trust proxies, web-group middleware (session activity guard + no-cache guard), and the four Spatie/Fortify middleware aliases registered globally.">
+<?php
+
+use Illuminate\Foundation\Application;
+use Illuminate\Foundation\Configuration\Exceptions;
+use Illuminate\Foundation\Configuration\Middleware;
+
+return Application::configure(basePath: dirname(__DIR__))
+    ->withRouting( @@
+        web: __DIR__.'/../routes/web.php',
+        api: __DIR__.'/../routes/api.php',
+        commands: __DIR__.'/../routes/console.php',
+        channels: __DIR__.'/../routes/channels.php', @@
+        health: '/up',
+    )
+    ->withMiddleware(function (Middleware $middleware): void {
+        // Railway (and any TLS-terminating proxy) sits in front of the app.
+        $middleware->trustProxies(at: '*'); @@
+        $middleware->web(append: [
+            \App\Http\Middleware\HandleInertiaRequests::class, @@
+            \App\Http\Middleware\CheckSessionActivity::class, @@
+            \App\Http\Middleware\PreventBackHistory::class, @@
+        ]);
+        $middleware->alias([
+            'role' => \Spatie\Permission\Middleware\RoleMiddleware::class, @@
+            'permission' => \Spatie\Permission\Middleware\PermissionMiddleware::class,
+            'role_or_permission' => \Spatie\Permission\Middleware\RoleOrPermissionMiddleware::class,
+            'suspension' => \App\Http\Middleware\CheckSuspension::class, @@
+            'role.setup' => \App\Http\Middleware\EnsureRoleSelected::class, @@
+        ]);
+        $middleware->api(append: [
+            \App\Http\Middleware\CheckSessionActivity::class,
+        ]);
+    })
+    ->withExceptions(function (Exceptions $exceptions): void {
+        //
+    })->create();
+</script>
+
+<script type="text/plain" data-p="1" data-s="Auth Controller" data-file="backend/app/Http/Controllers/SessionAuthController.php" data-say="Login enforces a per-IP rate limiter from the Settings table, regenerates the session on success, and redirects role-aware via Spatie. Demo login maps a role param to seeded emails.">
+<?php
+
+namespace App\Http\Controllers;
+
+use App\Models\Preference;
+use App\Models\User;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\RateLimiter;
+use Illuminate\Support\Str;
+use Illuminate\Validation\ValidationException;
+use Inertia\Inertia;
+
+class SessionAuthController extends Controller
+{
+    public function showLogin()
+    {
+        return Inertia::render('Login'); @@
+    }
+
+    public function login(Request $request)
+    {
+        $data = $request->validate([
+            'email' => 'required|email',
+            'password' => 'required|string',
+        ]);
+
+        $ip = $request->ip();
+        $rateLimitKey = 'login.attempts.' . $ip;
+        $maxAttempts = (int) \App\Models\Setting::get('login_rate_limit', 5); @@
+
+        if (RateLimiter::tooManyAttempts($rateLimitKey, $maxAttempts)) { @@
+            $seconds = RateLimiter::availableIn($rateLimitKey);
+            throw ValidationException::withMessages([
+                'email' => ['Too many login attempts. Please try again in ' . $seconds . ' seconds.'],
+            ]);
+        }
+
+        $userTarget = User::where('email', $data['email'])->first();
+
+        if (!Auth::attempt(['email' => $data['email'], 'password' => $data['password']], true)) {
+            RateLimiter::hit($rateLimitKey, 60); @@
+            \App\Models\LoginAttempt::create([ @@
+                'user_id' => $userTarget?->id,
+                'email' => $data['email'],
+                'ip' => $ip,
+                'successful' => false,
+                'user_agent' => $request->userAgent(),
+                'created_at' => now(),
+            ]);
+            throw ValidationException::withMessages([
+                'email' => ['The provided credentials are incorrect.'],
+            ]);
+        }
+
+        RateLimiter::clear($rateLimitKey);
+
+        \App\Models\LoginAttempt::create([ @@
+            'user_id' => Auth::id(),
+            'email' => $data['email'],
+            'ip' => $ip,
+            'successful' => true,
+            'user_agent' => $request->userAgent(),
+            'created_at' => now(),
+        ]);
+
+        $request->session()->regenerate(); @@
+        $request->session()->put('last_activity_at', now()); @@
+
+        Preference::firstOrCreate(['user_id' => Auth::id()], ['categories' => []]); @@
+
+        // Land each role where its work starts. Admins → /admin, everyone else → /feed
+        $user = Auth::user();
+
+        return redirect()->intended($this->homeFor($user))->with('success', "Welcome back, {$user->name}!");
+    }
+
+    private function homeFor(User $user): string
+    {
+        if ($user->hasRole('Admin')) { @@
+            return '/admin';
+        }
+        return '/feed';
+    }
+
+    public function demoLogin(Request $request)
+    {
+        $data = $request->validate([
+            'role' => 'required|string|in:admin,brand,entrepreneur',
+        ]);
+
+        $map = [ @@
+            'admin' => 'admin@bizlink.ph',
+            'brand' => 'brand@bizlink.ph',
+            'entrepreneur' => 'demo@bizlink.ph',
+        ];
+        $email = $map[$data['role']];
+
+        $user = User::where('email', $email)->first();
+        if (!$user) {
+            throw ValidationException::withMessages([
+                'role' => ['That demo account has not been seeded yet. Run php artisan db:seed.'],
+            ]);
+        }
+
+        Auth::login($user, true); @@
+        $request->session()->regenerate();
+        $request->session()->put('last_activity_at', now());
+        Preference::firstOrCreate(['user_id' => $user->id], ['categories' => []]);
+
+        return redirect($this->homeFor($user))->with('success', "Signed in as {$user->name} ({$data['role']} demo).");
+    }
+
+    public function showRegister()
+    {
+        return Inertia::render('Register');
+    }
+
+    public function register(Request $request)
+    {
+        $data = $request->validate([
+            'name' => 'required|string|max:255',
+            'email' => 'required|string|email|max:255|unique:users',
+            'password' => 'required|string|min:8|confirmed',
+            'role' => 'sometimes|string|in:entrepreneur,brand,admin',
+        ]);
+
+        $user = User::create([
+            'name' => $data['name'],
+            'email' => $data['email'],
+            'password' => Hash::make($data['password']), @@
+            'role' => $data['role'] ?? 'entrepreneur',
+            'avatar' => 'https://i.pravatar.cc/100?u=' . urlencode($data['email']),
+        ]);
+        $user->assignRole(($data['role'] ?? 'entrepreneur') === 'brand' ? 'Manager' : 'User'); @@
+
+        Auth::login($user, true); @@
+        $request->session()->regenerate();
+        $request->session()->put('last_activity_at', now());
+
+        Preference::firstOrCreate(['user_id' => $user->id], ['categories' => []]);
+
+        return redirect('/feed')->with('success', "Welcome to BizLink, {$user->name}!");
+    }
+
+    public function logout(Request $request)
+    {
+        Auth::logout();
+        $request->session()->invalidate();
+        $request->session()->regenerateToken();
+
+        return redirect('/')->with('success', 'Logged out.');
+    }
+
+    public function showForgot()
+    {
+        return Inertia::render('ForgotPassword');
+    }
+
+    public function sendResetLink(Request $request)
+    {
+        $data = $request->validate(['email' => 'required|email|max:255']);
+        $user = User::where('email', $data['email'])->first();
+
+        if ($user && !$user->google_id && !$user->facebook_id) {
+            $token = Str::random(64); @@
+            DB::table('password_reset_tokens')->updateOrInsert( @@
+                ['email' => $user->email],
+                ['token' => hash('sha256', $token), 'created_at' => now()]
+            );
+            Mail::raw( @@
+                "Hi {$user->name},\n\nReset your BizLink password here:\n{$link}",
+                function ($message) use ($user) {
+                    $message->to($user->email)->subject('Reset your BizLink password');
+                }
+            );
+        }
+
+        return back()->with('success', 'If an account exists for this email, a reset link was sent.');
+    }
+
+    public function showReset(Request $request)
+    {
+        return Inertia::render('ResetPassword', [ @@
+            'email' => $request->query('email', ''),
+            'token' => $request->query('token', ''),
+        ]);
+    }
+
+    public function reset(Request $request)
+    {
+        $data = $request->validate([
+            'email' => 'required|email|max:255',
+            'token' => 'required|string',
+            'password' => 'required|string|min:8|confirmed',
+        ]);
+
+        $row = DB::table('password_reset_tokens')->where('email', $data['email'])->first(); @@
+
+        if (!$row || !hash_equals($row->token, hash('sha256', $data['token']))) { @@
+            throw ValidationException::withMessages([
+                'email' => ['Invalid or expired reset token.'],
+            ]);
+        }
+
+        if (now()->diffInMinutes($row->created_at) > 60) { @@
+            DB::table('password_reset_tokens')->where('email', $data['email'])->delete();
+            throw ValidationException::withMessages([
+                'email' => ['Reset token expired. Request a new one.'],
+            ]);
+        }
+
+        $user = User::where('email', $data['email'])->first();
+        $user->forceFill(['password' => Hash::make($data['password'])])->save(); @@
+        DB::table('password_reset_tokens')->where('email', $data['email'])->delete();
+        $user->tokens()->delete();
+
+        return redirect('/login')->with('success', 'Password reset. Log in with your new password.');
+    }
+}
+</script>
+
+<script type="text/plain" data-p="1" data-s="Session Guard" data-file="backend/app/Http/Middleware/CheckSessionActivity.php" data-say="Every 5 min the middleware refreshes online presence; every 7 days of inactivity it logs the user out to prevent stale sessions.">
+<?php
+
+namespace App\Http\Middleware;
+
+use Closure;
+use Illuminate\Http\Request;
+use App\Models\Setting;
+use Carbon\Carbon;
+use Illuminate\Support\Facades\Auth;
+
+class CheckSessionActivity
+{
+    public function handle(Request $request, Closure $next)
+    {
+        $user = $request->user();
+        if ($user) {
+            \Illuminate\Support\Facades\Cache::put("user-is-online-{$user->id}", true, now()->addMinutes(5)); @@
+            \Illuminate\Support\Facades\Cache::put("user-last-seen-{$user->id}", now()->toIso8601String(), now()->addDays(30));
+        }
+        if ($user && $token = $user->currentAccessToken()) {
+            $idleDays = Setting::get('session_idle_timeout_days', 7); @@
+
+            if ($token->last_used_at && Carbon::parse($token->last_used_at)->diffInDays(now()) >= $idleDays) { @@
+                $token->delete();
+                return response()->json(['message' => 'Session expired due to inactivity. Please log in again.'], 401); @@
+            }
+            return $next($request);
+        }
+
+        // Session (browser) users: same inactivity policy, web-friendly logout.
+        if ($user && $request->hasSession()) {
+            $idleDays = Setting::get('session_idle_timeout_days', 7); @@
+            $last = $request->session()->get('last_activity_at');
+
+            if ($last && now()->diffInMinutes($last) > $idleDays * 24 * 60) { @@
+                Auth::logout();
+                $request->session()->invalidate();
+                $request->session()->regenerateToken();
+                return redirect('/login')->with('error', 'Session expired due to inactivity. Please log in again.');
+            }
+
+            $request->session()->put('last_activity_at', now());
+        }
+
+        return $next($request);
+    }
+}
+</script>
+
+<!-- ============ PART 2 · SPATIE ============ -->
+<script type="text/plain" data-p="2" data-s="Model & Config" data-file="backend/app/Models/User.php (excerpt)" data-say="One trait gives the User model roles and permissions.">
+use Spatie\Permission\Traits\HasRoles;
+
+class User extends Authenticatable
+{
+    use HasFactory, Notifiable, HasApiTokens, HasRoles; @@
+}
+</script>
+<script type="text/plain" data-p="2" data-s="Model & Config" data-file="backend/config/permission.php (excerpt)" data-say="Published config plus the create_permission_tables migration (roles, permissions and pivot tables).">
+use Spatie\Permission\Models\Permission;
+use Spatie\Permission\Models\Role;
+
+return [
+    'models' => [
+        'permission' => Permission::class, @@
+        'role' => Role::class, @@
+    ],
+    'table_names' => [
+        'roles' => 'roles',
+        // ...
+    ],
+];
+// migration: database/migrations/2026_09_28_050446_create_permission_tables.php
+</script>
+<script type="text/plain" data-p="2" data-s="Seeder" data-file="backend/database/seeders/RolesAndPermissionsSeeder.php" data-say="Three roles, seven permissions. Admin gets everything; Manager and User get the posting set.">
+public function run(): void
+{
+    $permissions = [
+        'opportunities.create',
+        'opportunities.update',
+        'opportunities.delete',
+        'opportunities.verify',
+        'comments.moderate',
+        'users.manage',
+        'inquiries.respond',
+    ];
+    foreach ($permissions as $p) {
+        Permission::firstOrCreate(['name' => $p]);
+    }
+
+    Role::firstOrCreate(['name' => 'Admin'])->syncPermissions($permissions); @@
+    Role::firstOrCreate(['name' => 'Manager'])->syncPermissions([
+        'opportunities.create', 'opportunities.update', 'opportunities.delete', 'inquiries.respond',
+    ]);
+    Role::firstOrCreate(['name' => 'User'])->syncPermissions([
+        'opportunities.create', 'opportunities.update', 'opportunities.delete', 'inquiries.respond',
+    ]);
+}
+</script>
+<script type="text/plain" data-p="2" data-s="Seeder" data-file="backend/database/seeders/DatabaseSeeder.php (excerpt)" data-say="Demo accounts get their roles assigned here.">
+$entrepreneur->assignRole('User');
+$brandOwner->assignRole('Manager');
+$admin->assignRole('Admin'); @@
+</script>
+<script type="text/plain" data-p="2" data-s="Middleware & Routes" data-file="backend/bootstrap/app.php (excerpt)" data-say="Spatie's middleware is aliased so routes can say role:Admin.">
+$middleware->alias([
+    'role' => \Spatie\Permission\Middleware\RoleMiddleware::class, @@
+    'permission' => \Spatie\Permission\Middleware\PermissionMiddleware::class,
+    'role_or_permission' => \Spatie\Permission\Middleware\RoleOrPermissionMiddleware::class,
+    'suspension' => \App\Http\Middleware\CheckSuspension::class,
+]);
+</script>
+<script type="text/plain" data-p="2" data-s="Middleware & Routes" data-file="backend/routes/admin.php + backend/routes/opportunities.php (excerpts)" data-say="The whole admin console is Admin-only. Posting routes accept any of the three roles.">
+// routes/admin.php: only users with the Admin role get in
+Route::middleware(['auth', 'role:Admin', 'suspension'])->prefix('admin')->name('admin.')->group(function () { @@
+    Route::get('/', [AdminController::class, 'index'])->name('index');
+    Route::get('/users', [UserAdminController::class, 'index'])->name('users.index');
+    Route::post('/users/{user}/role', [UserAdminController::class, 'changeRole'])->name('users.role');
+});
+
+// routes/opportunities.php: CRUD for any signed-in role
+Route::middleware(['auth', 'role:Admin|Manager|User'])->prefix('opportunities')->name('opportunities.')->group(function () { @@
+    Route::post('/', [PageController::class, 'storeOpportunity'])->name('store');
+    Route::get('/{opportunity}/edit', [OpportunityController::class, 'edit'])->name('edit');
+    Route::put('/{opportunity}', [OpportunityController::class, 'update'])->name('update');
+    Route::delete('/{opportunity}', [OpportunityController::class, 'destroy'])->name('destroy');
+});
+</script>
+<script type="text/plain" data-p="2" data-s="Policy" data-file="backend/app/Policies/OpportunityPolicy.php (trimmed)" data-say="Roles say what you can do; the policy says on which records. Owners edit their own, Admin edits any.">
+public function create(User $user): bool
+{
+    return $user->can('opportunities.create'); @@
+}
+
+public function update(User $user, Opportunity $opportunity): bool
+{
+    return $user->hasRole('Admin') || ($user->can('opportunities.update') && $user->id === $opportunity->user_id); @@
+}
+
+public function delete(User $user, Opportunity $opportunity): bool
+{
+    return $user->hasRole('Admin') || ($user->can('opportunities.delete') && $user->id === $opportunity->user_id); @@
+}
+</script>
+<script type="text/plain" data-p="2" data-s="Controllers" data-file="backend/app/Http/Controllers/OpportunityController.php (trimmed)" data-say="Every CRUD action calls authorize(), which runs the policy above.">
+public function store(Request $request)
+{
+    $this->authorize('create', Opportunity::class); @@
+    // validate + Opportunity::create([... 'user_id' => $user->id ...])
+}
+
+public function edit(Request $request, Opportunity $opportunity)
+{
+    $this->authorize('update', $opportunity); @@
+
+    return Inertia::render('Opportunities/Edit', [
+        'opportunity' => (new OpportunityResource($opportunity))->resolve(),
+    ]);
+}
+
+public function update(Request $request, Opportunity $opportunity)
+{
+    $this->authorize('update', $opportunity); @@
+    // validate + $opportunity->update([...])
+
+    return redirect()->route('opportunities.show', $opportunity->slug)->with('success', 'Opportunity updated.');
+}
+
+public function destroy(Request $request, Opportunity $opportunity)
+{
+    $this->authorize('delete', $opportunity); @@
+    $opportunity->delete();
+
+    return redirect()->route('feed')->with('success', 'Opportunity deleted.');
+}
+</script>
+<script type="text/plain" data-p="2" data-s="Controllers" data-file="backend/app/Http/Controllers/Admin/UserAdminController.php (trimmed)" data-say="Admin actions double-check the permission, and role changes use syncRoles.">
+public function changeRole(Request $request, User $user)
+{
+    abort_unless($request->user()?->can('users.manage'), 403, 'Admin access only.'); @@
+
+    $data = $request->validate(['role' => 'required|string|in:Admin,Manager,User']);
+    abort_if($user->id === $request->user()->id, 422, 'You cannot change the role of your own account.');
+
+    $user->syncRoles([$data['role']]); @@
+    // keep the plain `role` column in sync, then log an AdminAction
+}
+</script>
+
+<!-- Part 2 expansions -->
+
+<script type="text/plain" data-p="2" data-s="Suspension Middleware" data-file="backend/app/Http/Middleware/CheckSuspension.php" data-say="Suspended accounts can still browse read-only but cannot POST/PUT/PATCH/DELETE — they see the ban message on their next feed load. Reports stay available even when suspended.">
+<?php
+
+namespace App\Http\Middleware;
+
+use App\Services\EnforcementService;
+use Closure;
+use Illuminate\Http\Request;
+
+/**
+ * Blocks suspended/banned accounts from mutating content.
+ * Read-only browsing stays available so the ban message is visible.
+ */
+class CheckSuspension
+{
+    public function __construct(private EnforcementService $enforcement) {}
+
+    public function handle(Request $request, Closure $next)
+    {
+        $user = $request->user();
+        if ($user && in_array($request->method(), ['POST', 'PUT', 'PATCH', 'DELETE'], true)) { @@
+            // Reporting itself must stay available even while suspended.
+            if (! $request->is('*/report') && ! str_contains((string) $request->path(), 'report')) { @@
+                if ($message = $this->enforcement->isBlocked($user)) { @@
+                    if ($request->wantsJson() || $request->expectsJson()) {
+                        return response()->json(['message' => $message], 403); @@
+                    }
+                    return redirect('/feed')->with('error', $message);
+                }
+            }
+        }
+        return $next($request);
+    }
+}
+</script>
+
+<script type="text/plain" data-p="2" data-s="Role-Setup Gate" data-file="backend/app/Http/Middleware/EnsureRoleSelected.php" data-say="New OAuth users land with pending_role_setup in session and are redirected to /welcome/role until they pick Entrepreneur vs Brand. API/JSON traffic passes through (default role applied).">
+<?php
+
+namespace App\Http\Middleware;
+
+use Closure;
+use Illuminate\Http\Request;
+
+/**
+ * New OAuth accounts land with `pending_role_setup` in the session until
+ * they pick Entrepreneur vs Brand on /welcome/role. Hold them there for
+ * page visits; API/JSON traffic passes through (they hold a safe default
+ * entrepreneur role until they choose).
+ */
+class EnsureRoleSelected
+{
+    public function handle(Request $request, Closure $next)
+    {
+        if ($request->user()
+            && $request->session()->get('pending_role_setup') @@
+            && ! $request->expectsJson() @@
+            && ! $request->routeIs('welcome.*') @@
+        ) {
+            return redirect()->route('welcome.role'); @@
+        }
+
+        return $next($request);
+    }
+}
+</script>
+
+<script type="text/plain" data-p="2" data-s="Feed Scoring" data-file="backend/app/Services/OpportunityService.php (full scoring methods)" data-say="The feed ranker builds a single MySQL expression from weighted signals — followed author (+60), explicit category (+35), budget fit (+25/+10), implicit engagement (+20/+12), recency decay, engagement velocity, and verified trust (+3).">
+private function scoreExpression(array $s): string
+{
+    $parts = [];
+
+    // +60 followed author (relationship wins, like IG)
+    // Author-exact: a follow means "this account", never "this slug",
+    // so mislabeled brand_ids can't leak other authors' posts in.
+    if (!empty($s['followedUserIds']) || !empty($s['followedRawSlugs'])) { @@
+        $conds = [];
+        if (!empty($s['followedUserIds'])) {
+            $conds[] = 'user_id IN (' . implode(',', array_map('intval', $s['followedUserIds'])) . ')';
+        }
+        if (!empty($s['followedRawSlugs'])) {
+            $conds[] = 'brand_id IN (' . implode(',', array_map($this->quote(), $s['followedRawSlugs'])) . ')';
+        }
+        $parts[] = 'IF(' . implode(' OR ', $conds) . ', 60, 0)';
+    }
+
+    // +35 explicit category match (normalized, like IG's interest topics).
+    if (!empty($s['preferredCategoriesNorm'])) { @@
+        $parts[] = 'IF(LOWER(TRIM(category)) IN (' . implode(',', array_map($this->quote(), $s['preferredCategoriesNorm'])) . '), 35, 0)';
+    }
+
+    // +25 budget fit / +10 near-miss (previously stored but never scored).
+    $parts[] = $this->budgetExpression($s['budgetMin'], $s['budgetMax']); @@
+
+    // +20 implicitly engaged brand (unconnected discovery).
+    if (!empty($s['implicitUserIds']) || !empty($s['implicitSlugs'])) { @@
+        $conds = [];
+        if (!empty($s['implicitUserIds'])) {
+            $conds[] = 'user_id IN (' . implode(',', array_map('intval', $s['implicitUserIds'])) . ')';
+        }
+        if (!empty($s['implicitSlugs'])) {
+            $conds[] = 'brand_id IN (' . implode(',', array_map($this->quote(), $s['implicitSlugs'])) . ')';
+        }
+        $parts[] = 'IF(' . implode(' OR ', $conds) . ', 20, 0)';
+    }
+
+    // +12 implicitly engaged category.
+    if (!empty($s['implicitCategoriesNorm'])) {
+        $parts[] = 'IF(LOWER(TRIM(category)) IN (' . implode(',', array_map($this->quote(), $s['implicitCategoriesNorm'])) . '), 12, 0)';
+    }
+
+    // Recency decay: +15 fresh, fading to 0 after ~15 days (IG: fresh wins).
+    $parts[] = 'GREATEST(0, 15 - TIMESTAMPDIFF(DAY, created_at, NOW()))';
+
+    // Engagement velocity: likes/saves/comments so far (IG: how quickly
+    // people engage). Capped so mega-posts can't dominate forever.
+    $parts[] = 'LEAST(15, likes_count * 0.05 + saves_count * 0.1 + (SELECT COUNT(*) FROM comments WHERE comments.opportunity_id = opportunities.id AND comments.deleted_at IS NULL) * 0.5)'; @@
+
+    // Trust: verified brands get a small boost (IG demotes problematic).
+    $parts[] = 'IF(verified, 3, 0)'; @@
+
+    return implode(' + ', $parts);
+}
+
+private function budgetExpression(?float $min, ?float $max): string
+{
+    if ($min === null && $max === null) {
+        return '0';
+    }
+    // Numeric source of truth (backfilled from legacy "₱850K" strings).
+    $cap = 'capital_amount';
+    $hasCap = 'capital_amount IS NOT NULL';
+
+    if ($min !== null && $max !== null) {
+        [$lo, $hi] = $min <= $max ? [$min, $max] : [$max, $min];
+        return "CASE WHEN NOT ({$hasCap}) THEN 0"
+            . " WHEN {$cap} BETWEEN {$lo} AND {$hi} THEN 25"
+            . " WHEN {$cap} BETWEEN " . ($lo * 0.7) . " AND " . ($hi * 1.3) . " THEN 10 ELSE 0 END";
+    }
+    if ($min !== null) {
+        return "CASE WHEN NOT ({$hasCap}) THEN 0"
+            . " WHEN {$cap} >= {$min} THEN 25"
+            . " WHEN {$cap} >= " . ($min * 0.7) . " THEN 10 ELSE 0 END";
+    }
+    return "CASE WHEN NOT ({$hasCap}) THEN 0"
+        . " WHEN {$cap} <= {$max} THEN 25"
+        . " WHEN {$cap} <= " . ($max * 1.3) . " THEN 10 ELSE 0 END";
+}
+</script>
+
+<script type="text/plain" data-p="2" data-s="Resource Shape" data-file="backend/app/Http/Resources/OpportunityResource.php" data-say="The API resource maps snake_case DB columns to camelCase JSON keys consumed by the React components, including computed booleans (liked/saved/preferred) and embedded author comments.">
+<?php
+
+namespace App\Http\Resources;
+
+use Illuminate\Http\Resources\Json\JsonResource;
+
+class OpportunityResource extends JsonResource
+{
+    public function toArray($request)
+    {
+        // NOTE: $this->additional is the resource's own meta bag (always
+        // empty here). Per-item data attached by the controller lives on the
+        // underlying model, so read it from there.
+        $attached = ($this->resource instanceof \App\Models\Opportunity)
+            ? ($this->resource->getAttribute('additional') ?? [])
+            : [];
+        $likedIds = $attached['likedIds'] ?? [];
+        $savedIds = $attached['savedIds'] ?? [];
+        $preferredIds = $attached['preferredIds'] ?? [];
+
+        return [
+            'id' => $this->id,
+            'slug' => $this->slug ?: (string) $this->id,
+            'user_id' => $this->user_id,
+            'authorId' => $this->user_id, @@
+            'authorUsername' => $this->relationLoaded('user') && $this->user ? $this->user->username : null,
+            'user' => $this->relationLoaded('user') && $this->user ? [
+                'id' => $this->user->id,
+                'name' => $this->user->name,
+                'username' => $this->user->username,
+                'avatar' => $this->user->avatar,
+                'role' => $this->user->role ?? null,
+            ] : null,
+            // Author account type for the role badge (brand vs entrepreneur).
+            'authorRole' => $this->relationLoaded('user') && $this->user
+                ? (in_array($this->user->role ?? 'entrepreneur', ['brand', 'admin'], true) ? 'brand' : 'entrepreneur')
+                : null,
+            'brandName' => $this->brand_name,
+            'brandAvatar' => $this->brand_avatar,
+            'brandId' => $this->brand_id,
+            'type' => $this->type,
+            'category' => $this->category,
+            'headline' => $this->headline,
+            'capitalRequired' => $this->capital_required,
+            'capitalAmount' => $this->capital_amount !== null ? (int) $this->capital_amount : null, @@
+            'roi' => $this->roi,
+            'roiPercent' => $this->roi_percent !== null ? (float) $this->roi_percent : null,
+            'description' => $this->description,
+            'image' => $this->image,
+            'mediaType' => $this->media_type,
+            'videoUrl' => $this->video_url,
+            'featured' => (bool) $this->featured,
+            'verified' => (bool) $this->verified,
+            'likes' => (int) $this->likes_count,
+            'saves' => (int) $this->saves_count,
+            'isNew' => (bool) $this->is_new,
+            'liked' => in_array($this->id, $likedIds), @@
+            'saved' => in_array($this->id, $savedIds), @@
+            'preferred' => in_array($this->id, $preferredIds),
+            'reasons' => $attached['reasons'] ?? [],
+            'comments' => $this->relationLoaded('comments') ? $this->comments->map(fn($c) => [
+                'id' => $c->id,
+                'postId' => $c->opportunity_id,
+                'parentId' => $c->parent_id,
+                'userId' => $c->user_id,
+                'username' => $c->relationLoaded('user') && $c->user ? $c->user->username : null,
+                'author' => $c->author,
+                'avatar' => $c->avatar,
+                'text' => $c->text,
+                'mediaUrl' => $c->media_url,
+                'mediaType' => $c->media_type,
+                'timestamp' => $c->created_at?->diffForHumans(),
+                'isSellerReply' => (bool) $c->is_seller_reply,
+                'edited' => $c->edited_at !== null,
+                'deleted' => (bool) $c->trashed(),
+                'reactions' => [],
+                'myReaction' => null,
+                'replies' => [],
+                'repliesCount' => 0,
+            ])->values() : [],
+        ];
+    }
+}
+</script>
+
+<!-- ============ PART 3 · REACT / INERTIA ============ -->
+<script type="text/plain" data-p="3" data-s="Server Setup" data-file="backend/resources/views/app.blade.php" data-say="One Blade root view. Vite loads the React entry and @inertia mounts the page.">
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta name="csrf-token" content="{{ csrf_token() }}">
+    <title inertia>{{ config('app.name', 'BizLink') }}</title>
+    @viteReactRefresh
+    @vite(['src/app.jsx']) @@
+    @inertiaHead
+</head>
+<body>
+@inertia @@
+</body>
+</html>
+</script>
+<script type="text/plain" data-p="3" data-s="Server Setup" data-file="backend/app/Http/Middleware/HandleInertiaRequests.php (trimmed)" data-say="Shared props: the logged-in user, their Spatie roles and permissions, flash messages and CSRF reach every page.">
+class HandleInertiaRequests extends Middleware
+{
+    protected $rootView = 'app';
+
+    public function share(Request $request): array
+    {
+        return [
+            ...parent::share($request),
+            'auth' => [
+                'user' => fn() => $request->user()
+                    ? $request->user()->only(['id', 'name', 'username', 'email', 'avatar', 'bio', 'role'])
+                    : null,
+                'roles' => fn() => $request->user() ? $request->user()->getRoleNames() : [], @@
+                'permissions' => fn() => $request->user() ? $request->user()->getAllPermissions()->pluck('name') : [], @@
+            ],
+            'flash' => [
+                'success' => fn() => $request->session()->get('success'),
+                'error' => fn() => $request->session()->get('error'),
+            ],
+            'csrf_token' => fn() => csrf_token(),
+        ];
+    }
+}
+</script>
+<script type="text/plain" data-p="3" data-s="Server Setup" data-file="backend/app/Http/Controllers/PageController.php (excerpt)" data-say="Controllers return Inertia::render with a page name and props, no JSON endpoint needed.">
+public function feed(Request $request)
+{
+    $viewer = $request->user();
+    $result = $this->feedService($request, $viewer);
+
+    return Inertia::render('HomeFeed', [ @@
+        'opportunities' => $result['page'],
+        'stories' => $this->stories($request),
+        'preferences' => $this->preferences($request),
+    ]);
+}
+</script>
+<script type="text/plain" data-p="3" data-s="Frontend Config" data-file="frontend/package.json + frontend/vite.config.js (excerpts)" data-say="React 19, Inertia's React adapter, Tailwind 4 and Vite 7 live in /frontend and build into the Laravel public folder.">
+// package.json
+"@inertiajs/react": "^2.3.28",
+"react": "^19.2.8",
+"tailwindcss": "^4.3.3",
+"laravel-vite-plugin": "^2.0.0",
+
+// vite.config.js
+plugins: [
+  laravel({
+    input: ['src/app.jsx'], @@
+    publicDirectory: '../backend/public',
+    buildDirectory: 'build',
+    hotFile: '../backend/public/hot',
+  }),
+  react(),
+  tailwindcss(),
+],
+resolve: { alias: { '@': path.resolve(__dirname, './src') } },
+</script>
+<script type="text/plain" data-p="3" data-s="Entry & Layout" data-file="frontend/src/app.jsx (trimmed)" data-say="createInertiaApp resolves a page by name from ./Pages, wraps it in the shared layout and providers.">
+import { createInertiaApp, router } from '@inertiajs/react';
+import { resolvePageComponent } from 'laravel-vite-plugin/inertia-helpers';
+import AppLayout from './Layouts/AppLayout';
+
+createInertiaApp({
+  resolve: (name) =>
+    resolvePageComponent(`./Pages/${name}.jsx`, import.meta.glob('./Pages/**/*.jsx')).then((page) => { @@
+      page.default.layout ??= (pageEl) => <AppLayout>{pageEl}</AppLayout>; @@
+      return page;
+    }),
+  setup({ el, App, props }) {
+    createRoot(el).render(
+      <ThemeProvider>
+        <ToastProvider>
+          <App {...props} /> @@
+        </ToastProvider>
+      </ThemeProvider>
+    );
+  },
+  progress: { color: '#D4AF37', showSpinner: false },
+});
+</script>
+<script type="text/plain" data-p="3" data-s="Entry & Layout" data-file="frontend/src/Layouts/AppLayout.jsx (trimmed)" data-say="usePage reads the shared props. Server flash messages become toasts, and every page sits under Navbar and Footer.">
+export default function AppLayout({ children }) {
+  const page = usePage();
+  const { flash } = page.props; @@
+  const toast = useToast();
+
+  useEffect(() => {
+    if (flash?.success) toast.success(flash.success);
+    if (flash?.error) toast.error(flash.error);
+  }, [toast, flash]);
+
+  return (
+    <div className="min-h-dvh flex flex-col">
+      <Navbar />
+      <main id="main-content" className="flex-1">{children}</main>
+      <BottomNav />
+      <Footer />
+      <GlobalModals />
+    </div>
+  );
+}
+</script>
+<script type="text/plain" data-p="3" data-s="Pages" data-file="frontend/src/Pages/Login.jsx (trimmed)" data-say="Inertia's useForm posts straight to Fortify's /login. Validation errors come back as props.">
+import { Link, useForm, Head } from '@inertiajs/react';
+
+export default function Login() {
+  const toast = useToast();
+  const { data, setData, post, processing, errors } = useForm({ @@
+    email: 'demo@bizlink.ph',
+    password: '',
+  });
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    // Server authenticates and redirects (respects `intended`)
+    post('/login', { @@
+      onError: (errs) => {
+        const first = errs ? Object.values(errs).flat()[0] : null;
+        if (first) toast.error(first);
+      },
+    });
+  };
+
+  return (
+    <form onSubmit={handleSubmit}>
+      <Head title="Login" />
+      <input value={data.email} onChange={(e) => setData('email', e.target.value)} type="email" />
+      <PasswordInput value={data.password} onChange={(e) => setData('password', e.target.value)} />
+      <button type="submit" disabled={processing}>{processing ? 'Logging in...' : 'Log in'}</button>
+      <Link href="/register">Register</Link>
+    </form>
+  );
+}
+</script>
+<script type="text/plain" data-p="3" data-s="Pages" data-file="frontend/src/Pages/Register.jsx (trimmed)" data-say="The role picked here is what CreateNewUser turns into a Spatie role.">
+const { data, setData, post, processing } = useForm({
+  name: '',
+  email: '',
+  password: '',
+  password_confirmation: '',
+  role: 'entrepreneur', @@
+});
+
+// Entrepreneur / Brand toggle
+{[{ label: 'Entrepreneur', value: 'entrepreneur' }, { label: 'Brand', value: 'brand' }].map((r) => (
+  <button key={r.value} type="button" onClick={() => setData('role', r.value)}>{r.label}</button>
+))}
+
+// submit
+post('/register', { onError: (errs) => toast.error(Object.values(errs).flat()[0]) }); @@
+</script>
+<script type="text/plain" data-p="3" data-s="Pages" data-file="frontend/src/Pages/CreateOpportunity.jsx + frontend/src/Pages/Opportunities/Edit.jsx (CRUD, trimmed)" data-say="Create posts, Edit puts and deletes. Redirects and flash messages come back from the controllers shown earlier.">
+// CreateOpportunity.jsx
+const { data, setData, post, processing, errors } = useForm({ type: 'Franchise', headline: '', capital_amount: '', roi_percent: '' });
+post('/opportunities'); @@
+
+// Opportunities/Edit.jsx: form is pre-filled from the `opportunity` prop
+export default function EditOpportunity({ opportunity }) { @@
+  const { data, setData, put, delete: destroy, processing } = useForm({
+    type: opportunity?.type || 'Franchise',
+    headline: opportunity?.headline || '',
+    capital_amount: opportunity?.capitalAmount ?? '',
+    roi_percent: opportunity?.roiPercent ?? '',
+  });
+
+  const submit = (e) => {
+    e.preventDefault();
+    put(`/opportunities/${opportunity.id}`); @@
+  };
+
+  const onDelete = () => {
+    destroy(`/opportunities/${opportunity.id}`, { @@
+      onError: () => toast.error('Could not delete this opportunity.'),
+    });
+  };
+}
+</script>
+<script type="text/plain" data-p="3" data-s="Components & Utils" data-file="frontend/src/utils/can.js" data-say="Two tiny helpers read the roles and permissions that Laravel shared.">
+export function hasRole(page, role) {
+  return page.props.auth?.roles?.includes(role); @@
+}
+export function can(page, permission) {
+  return page.props.auth?.permissions?.includes(permission); @@
+}
+</script>
+<script type="text/plain" data-p="3" data-s="Components & Utils" data-file="frontend/src/components/Navbar.jsx (excerpts)" data-say="The UI mirrors the backend rules: Admin link only for admins, Post button only with the create permission.">
+{user && hasRole(page, "Admin") && <Link href="/admin">Admin</Link>} @@
+
+{user && can(page, "opportunities.create") && ( @@
+  <Link href="/create">+ Post</Link>
+)}
+</script>
+<script type="text/plain" data-p="3" data-s="Components & Utils" data-file="frontend/src/components/OpportunityCard.jsx (excerpts)" data-say="Owners and admins see Edit and Delete. The server still enforces it through the policy.">
+const page = usePage();
+const { auth } = page.props;
+const user = auth?.user ?? null;
+const isOwner = !!user && String(user.id) === String(ownerId);
+const canManage = !!user && (can(page, 'opportunities.update') && isOwner || hasRole(page, 'Admin')); @@
+
+{canManage && (
+  <>
+    <Link href={`/opportunities/${opp.id}/edit`}>Edit</Link>
+    <button onClick={() => setConfirmDelete(true)}>Delete</button>
+  </>
+)}
+
+// Delete confirm modal
+<Button variant="danger" onClick={() => router.delete(`/opportunities/${opp.id}`)}>Delete</Button> @@
+</script>
+<script type="text/plain" data-p="3" data-s="Components & Utils" data-file="frontend/src/components/OpportunityFeed.jsx (trimmed)" data-say="HomeFeed receives props from the controller and passes them to the feed, which renders one card per opportunity.">
+export default function OpportunityFeed({ opportunities = [], savedIds = [], onToggleLike, onToggleSave }) {
+  return (
+    <div className="max-w-2xl mx-auto w-full">
+      <FilterBar active={activeFilter} onChange={handleFilterChange} />
+      {opportunities.map((opp) => ( @@
+        <OpportunityCard key={opp.id} opp={opp} saved={savedIds.map(String).includes(String(opp.id))} /> @@
+      ))}
+    </div>
+  );
+}
+</script>
+
+<!-- Part 3 expansions -->
+
+<script type="text/plain" data-p="3" data-s="HTTP Helpers" data-file="frontend/src/utils/http.js" data-say="Session-cookie JSON fetch helper with automatic 419 CSRF recovery. A stale token on a long-open tab triggers a silent /csrf-token refresh and retries once instead of showing an error.">
+/**
+ * Same-origin JSON fetch helper for lightweight mutations (likes, saves,
+ * follows, comments, reads). Session cookie auth + CSRF header; the app no
+ * longer uses Bearer tokens.
+ */
+export function csrfToken() {
+  return document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || ''; @@
+}
+
+export function setCsrfToken(token) {
+  if (!token) return;
+  let meta = document.querySelector('meta[name="csrf-token"]');
+  if (!meta) {
+    meta = document.createElement('meta');
+    meta.setAttribute('name', 'csrf-token');
+    document.head.appendChild(meta); @@
+  }
+  meta.setAttribute('content', token);
+}
+
+export async function refreshCsrfToken() {
+  try {
+    const res = await fetch('/csrf-token', { @@
+      method: 'GET',
+      credentials: 'same-origin',
+      headers: { Accept: 'application/json', 'X-Requested-With': 'XMLHttpRequest' },
+    });
+    if (!res.ok) return null;
+    const data = await res.json().catch(() => null);
+    if (data?.token) {
+      setCsrfToken(data.token); @@
+      return data.token;
+    }
+  } catch {
+    // Network failure — let the original error surface.
+  }
+  return null;
+}
+
+export async function http(path, { method = 'GET', body, _retried = false } = {}) {
+  const res = await fetch(path, {
+    method,
+    credentials: 'same-origin', @@
+    headers: {
+      'Content-Type': 'application/json',
+      Accept: 'application/json',
+      'X-CSRF-TOKEN': csrfToken(), @@
+      'X-Requested-With': 'XMLHttpRequest',
+    },
+    body: body === undefined ? undefined : JSON.stringify(body),
+  });
+
+  // 419 = the page's CSRF token went stale (tab open across logout/login,
+  // session rotated server-side). Pull a fresh token and retry once instead
+  // of failing the user's comment/post.
+  if (res.status === 419 && !_retried && method !== 'GET') { @@
+    if (await refreshCsrfToken()) {
+      return http(path, { method, body, _retried: true });
+    }
+  }
+
+  const text = await res.text();
+  let data = null;
+  try {
+    data = text ? JSON.parse(text) : null;
+  } catch {
+    data = { message: text };
+  }
+  if (!res.ok) {
+    const error = new Error(data?.message || `Request failed (${res.status})`);
+    error.status = res.status;
+    error.data = data;
+    throw error;
+  }
+  return data;
+}
+
+/**
+ * Same retry-once CSRF recovery for multipart FormData posts (uploads),
+ * which can't go through the JSON helper above.
+ */
+export async function csrfFetch(path, { method = 'POST', formData, _retried = false } = {}) {
+  const token = csrfToken();
+  if (formData instanceof FormData && token && !formData.has('_token')) {
+    formData.append('_token', token);
+  }
+
+  const res = await fetch(path, {
+    method,
+    credentials: 'same-origin',
+    headers: {
+      'X-CSRF-TOKEN': token,
+      'X-Requested-With': 'XMLHttpRequest',
+      Accept: 'application/json',
+    },
+    body: formData,
+  });
+
+  if (res.status === 419 && !_retried) {
+    const freshToken = await refreshCsrfToken();
+    if (freshToken) {
+      if (formData instanceof FormData) {
+        formData.set('_token', freshToken);
+      }
+      return csrfFetch(path, { method, formData, _retried: true });
+    }
+  }
+  return res;
+}
+
+/**
+ * Multipart file upload with real progress tracking via XMLHttpRequest,
+ * supporting automatic 419 CSRF retry.
+ */
+export function uploadWithProgress(file, { onProgress, path = '/uploads', _retried = false } = {}) {
+  return new Promise((resolve, reject) => {
+    const token = csrfToken();
+    const fd = new FormData();
+    fd.append('file', file);
+    if (token) { @@
+      fd.append('_token', token);
+    }
+
+    const xhr = new XMLHttpRequest();
+    xhr.open('POST', path);
+    xhr.setRequestHeader('X-CSRF-TOKEN', token); @@
+    xhr.setRequestHeader('X-Requested-With', 'XMLHttpRequest');
+    xhr.setRequestHeader('Accept', 'application/json');
+    xhr.withCredentials = true;
+
+    xhr.upload.onprogress = (ev) => {
+      if (ev.lengthComputable && onProgress) {
+        onProgress(Math.round((ev.loaded / ev.total) * 100));
+      }
+    };
+
+    xhr.onload = async () => {
+      let json = null;
+      try {
+        json = xhr.responseText ? JSON.parse(xhr.responseText) : null;
+      } catch {
+        json = null;
+      }
+
+      if (xhr.status === 419 && !_retried) {
+        const fresh = await refreshCsrfToken();
+        if (fresh) {
+          try {
+            const retriedRes = await uploadWithProgress(file, { onProgress, path, _retried: true });
+            resolve(retriedRes);
+            return;
+          } catch (err) {
+            reject(err);
+            return;
+          }
+        }
+      }
+
+      if (xhr.status >= 200 && xhr.status < 300) {
+        resolve(json || {});
+      } else {
+        const msg = json?.message || (xhr.status === 419 ? 'Session expired (419). Please try again.' : `Upload failed (${xhr.status})`);
+        const err = new Error(msg);
+        err.status = xhr.status;
+        err.data = json;
+        reject(err);
+      }
+    };
+
+    xhr.onerror = () => reject(new Error('Upload failed. Please check your network connection.'));
+    xhr.send(fd);
+  });
+}
+
+export const httpApi = { @@
+  get: (path) => http(path, { method: 'GET' }),
+  post: (path, body = {}) => http(path, { method: 'POST', body }),
+  put: (path, body = {}) => http(path, { method: 'PUT', body }),
+  patch: (path, body = {}) => http(path, { method: 'PATCH', body }),
+  delete: (path, body) => http(path, { method: 'DELETE', body }),
+  del: (path, body) => http(path, { method: 'DELETE', body }),
+};
+</script>
+
+<script type="text/plain" data-p="3" data-s="Layout Guard" data-file="frontend/src/Layouts/AppLayout.jsx" data-say="bfcache guard: Safari restores the previous DOM without a request, so pageshow with persisted=true forces a reload. Toast-once ref prevents duplicate flash toasts on client-side navigation.">
+import { useEffect, useRef } from "react";
+import { usePage } from "@inertiajs/react"; @@
+import Navbar from "../components/Navbar";
+import BottomNav from "../components/BottomNav";
+import Footer from "../components/Footer";
+import GlobalModals from "../components/GlobalModals";
+import { useToast } from "../context/ToastContext"; @@
+
+export default function AppLayout({ children }) {
+  const page = usePage();
+  const { flash } = page.props;
+  const toast = useToast(); @@
+  // Full-bleed canvases: no footer under the reels snap feed or the admin
+  // console (both read stray footers as whitespace; admin stays desktop-first).
+  const pathname = page.url.split("?")[0];
+  const isDirectMessageThread = pathname.startsWith("/messages/") && pathname !== "/messages";
+  const isReels = pathname.startsWith("/reels");
+  const hideFooter = isReels || pathname.startsWith("/admin") || pathname.startsWith("/messages");
+  const hideBottomNav = isDirectMessageThread || pathname.startsWith("/admin");
+  const mainPadding = (isDirectMessageThread || isReels)
+    ? "pb-0"
+    : "pb-24 md:pb-[max(1rem,env(safe-area-inset-bottom))]";
+  // Toast-once guard: flash props persist across client-side visits and the
+  // toast object is referentially unstable, so neither seen-state nor the
+  // effect deps alone prevent repeats. Ref records the last toasted key.
+  const lastToasted = useRef(null); @@
+  const toastRef = useRef(null);
+
+  // Back/forward cache guard: Safari restores the previous DOM without a
+  // request, showing whoever was logged in before. Reload forces fresh auth.
+  useEffect(() => { @@
+    const onPageShow = (e) => {
+      if (e.persisted) window.location.reload(); @@
+    };
+    window.addEventListener("pageshow", onPageShow);
+    return () => window.removeEventListener("pageshow", onPageShow);
+  }, []);
+
+  // Server flash messages (redirects) surface as toasts, once each.
+  useEffect(() => {
+    toastRef.current = toast;
+    const key = `${flash?.success || ""}|${flash?.error || ""}`;
+    if (!key || key === "|" || lastToasted.current === key) return; @@
+    lastToasted.current = key;
+    if (flash?.success) toastRef.current.success(flash.success);
+    if (flash?.error) toastRef.current.error(flash.error); @@
+  }, [toast, flash]);
+
+  return (
+    <div className="min-h-dvh bg-[var(--color-bg)] text-[var(--color-text-primary)] flex flex-col overflow-x-clip">
+      <a
+        href="#main-content"
+        className="sr-only focus:not-sr-only focus:absolute focus:top-2 focus:left-2 focus:z-[60] focus:bg-surface focus:text-text-primary focus:px-4 focus:py-2 focus:rounded-lg focus:border focus:border-border"
+      >
+        Skip to content
+      </a>
+      <Navbar /> @@
+      <main id="main-content" className={`flex-1 min-w-0 ${mainPadding}`}>{children}</main>
+      {!hideBottomNav && <BottomNav />}
+      {!hideFooter && <Footer />}
+      <GlobalModals />
+    </div>
+  );
+}
+</script>
+
+<script type="text/plain" data-p="3" data-s="Feed Page" data-file="frontend/src/Pages/HomeFeed.jsx" data-say="HomeFeed powers infinite scroll: the IntersectionObserver sentinel fires when the user nears the bottom, loading the next page with Inertia router.get and merging by ID to avoid duplicates.">
+import { useEffect, useMemo, useRef, useState } from "react"; @@
+import { Head, Link, router, usePage } from "@inertiajs/react"; @@
+import StoriesBar from "../components/StoriesBar";
+import OpportunityFeed from "../components/OpportunityFeed";
+import CreateStoryModal from "../components/CreateStoryModal";
+import { FeedSkeleton, StoriesBarSkeleton } from "../components/Skeleton";
+import { httpApi } from "../utils/http";
+import { goInquire } from "../utils/inquire";
+import { useToast } from "../context/ToastContext"; @@
+
+function appendById(prev, incoming) {
+  const seen = new Set(prev.map((o) => String(o.id)));
+  const fresh = (incoming || []).filter((o) => !seen.has(String(o.id)));
+  return [...prev, ...fresh];
+}
+
+export default function HomeFeed({ opportunities, stories, preferences }) {
+  const { auth } = usePage().props;
+  const user = auth?.user ?? null;
+  const toast = useToast();
+
+  const initialData = opportunities?.data ?? [];
+  const meta = opportunities?.meta ?? {};
+  const currentPage = meta.current_page ?? 1;
+  const lastPage = meta.last_page ?? 1;
+  const total = meta.total ?? initialData.length;
+  const hasMore = currentPage < lastPage;
+
+  const [items, setItems] = useState(initialData); @@
+  const [activeFilter, setActiveFilter] = useState("All");
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [isCreateStoryOpen, setIsCreateStoryOpen] = useState(false);
+  const sentinelRef = useRef(null);
+
+  // Sync server props: page 1 replaces, later pages append by id.
+  useEffect(() => {
+    const data = opportunities?.data ?? [];
+    const page = opportunities?.meta?.current_page ?? 1;
+    if (page <= 1) {
+      setItems(data);
+    } else {
+      setItems((prev) => appendById(prev, data));
+    }
+    setLoadingMore(false);
+  }, [opportunities]);
+
+  // Story creation modal opens via window event (StoriesBar "Create" button).
+  useEffect(() => {
+    window.onOpenCreateStory = () => setIsCreateStoryOpen(true);
+    return () => {
+      delete window.onOpenCreateStory;
+    };
+  }, []);
+
+  // Hide (Not Interested) — same window contract as SPA.
+  useEffect(() => {
+    window.onHideOpp = async (id) => {
+      try {
+        await httpApi.post(`/opportunities/${id}/hide`);
+        setItems((prev) => prev.filter((o) => String(o.id) !== String(id)));
+      } catch (err) {
+        toast.error("Failed to hide opportunity.");
+      }
+    };
+    return () => {
+      delete window.onHideOpp;
+    };
+  }, []);
+
+  // NOTE: no auto "Personalized for you" toast here. It is shown only at
+  // the moment preferences are set up / changed (onboarding modal +
+  // Preferences page), never on plain feed visits or reloads.
+
+  const handleFilterChange = (next) => {
+    setActiveFilter(next);
+    router.get("/feed", next === "All" ? {} : { type: next }, { preserveState: true, preserveScroll: true });
+  };
+
+  const handleLoadMore = () => {
+    if (loadingMore || !hasMore) return;
+    setLoadingMore(true);
+    const next = currentPage + 1;
+    const params = { page: next };
+    if (activeFilter !== "All") params.type = activeFilter;
+    router.get("/feed", params, { @@
+      preserveState: true,
+      preserveScroll: true,
+      only: ["opportunities"],
+      onSuccess: (page) => {
+        const incoming = page?.props?.opportunities?.data ?? [];
+        setItems((prev) => appendById(prev, incoming));
+        setLoadingMore(false);
+      },
+      onError: () => setLoadingMore(false),
+      onFinish: () => setLoadingMore(false),
+    });
+  };
+
+  // Infinite scroll sentinel.
+  useEffect(() => {
+    const el = sentinelRef.current;
+    if (!el || !hasMore) return;
+    const obs = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting) handleLoadMore();
+      },
+      { rootMargin: "600px" } @@
+    );
+    obs.observe(el);
+    return () => obs.disconnect();
+  }, [hasMore, currentPage, activeFilter]);
+
+  const comments = useMemo(() => items.flatMap((o) => o.comments || []), [items]);
+  const savedIds = useMemo(() => items.filter((o) => o.saved).map((o) => o.id), [items]);
+
+  const onToggleLike = async (id) => {
+    if (!user) {
+      toast.error("Log in to like opportunities.");
+      return;
+    }
+    setItems((prev) => prev.map((o) => (String(o.id) === String(id) ? { ...o, liked: !o.liked, likes: o.liked ? o.likes - 1 : o.likes + 1 } : o)));
+    try {
+      const res = await httpApi.post(`/opportunities/${id}/like`);
+      setItems((prev) => prev.map((o) => (String(o.id) === String(id) ? { ...o, liked: res.liked ?? !o.liked, likes: res.likes_count ?? o.likes } : o)));
+    } catch {
+      toast.error("Like failed. Try again.");
+    }
+  };
+
+  const onToggleSave = async (id) => {
+    if (!user) {
+      toast.error("Log in to save opportunities.");
+      return;
+    }
+    try {
+      const res = await httpApi.post(`/opportunities/${id}/save`);
+      setItems((prev) => prev.map((o) => (String(o.id) === String(id) ? { ...o, saved: res.saved, saves: res.saves_count ?? o.saves } : o)));
+    } catch (err) {
+      toast.error(err.message || "Save failed");
+    }
+  };
+
+  const onAddComment = async ({ postId, comment }) => {
+    if (!user || !comment) return;
+    setItems((prev) =>
+      prev.map((o) => (String(o.id) === String(postId) ? { ...o, comments: [...(o.comments || []), comment] } : o))
+    );
+  };
+
+  const onInquire = (opp) => {
+    if (!user) {
+      toast.error("Log in to inquire. Your message will open a private consultation thread.");
+      return;
+    }
+    goInquire(toast, "opportunity", opp.id);
+  };
+
+  return (
+    <div>
+      <Head title="Feed" />
+      <div className="max-w-6xl mx-auto px-4 sm:px-6 py-6">
+        {!user && (
+          <div className="mb-4 bg-warning/10 border border-amber-100 rounded-xl px-4 py-3 flex flex-wrap items-center gap-3">
+            <p className="text-sm text-warning flex-1 min-w-[200px]">Browsing as guest — fresh opportunities, updated in real time. Log in to like, save, comment and inquire.</p>
+            <Link href="/login" className="px-4 py-1.5 rounded-lg bg-primary text-white text-sm font-medium">Log in</Link>
+            <Link href="/" className="px-4 py-1.5 rounded-lg bg-surface border border-amber-200 text-warning text-sm font-medium">About BizLink</Link>
+          </div>
+        )}
+        {opportunities === undefined ? (
+          <>
+            <StoriesBarSkeleton />
+            <FeedSkeleton count={3} />
+          </>
+        ) : (
+          <>
+            {stories === undefined ? <StoriesBarSkeleton /> : <StoriesBar stories={stories ?? []} />}
+            <OpportunityFeed
+              opportunities={items} @@
+              savedIds={savedIds}
+              onToggleLike={onToggleLike}
+              onToggleSave={onToggleSave}
+              onAddComment={onAddComment}
+              onInquire={onInquire}
+              serverFiltered
+              loadingMore={loadingMore}
+              refreshing={false}
+              hasMore={hasMore} @@
+              sentinelRef={sentinelRef} @@
+              total={total}
+              onLoadMore={handleLoadMore}
+            />
+          </>
+        )}
+      </div>
+
+      <CreateStoryModal
+        isOpen={isCreateStoryOpen}
+        onClose={() => setIsCreateStoryOpen(false)}
+        onComplete={() => router.reload({ only: ["stories"] })}
+      />
+    </div>
+  );
+}
+</script>
+</div>
+
+<script>
+const PARTS={1:["Part 1 · Laravel Fortify","Headless authentication: Inertia views, actions, responses, rate limiting."],
+2:["Part 2 · Spatie Roles & Permissions","Roles, permissions, route middleware, policies and controller checks."],
+3:["Part 3 · React / Inertia","Setup, shared props, pages and role-aware components."]};
+const KW=new Set("namespace use class function public private protected return new if else fn static implements extends const let var import from export default await async true false null abort_unless abort_if foreach as in".split(" "));
+const esc=s=>s.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
+function fileLinks(file){const parts=file.split(' + ').map(p=>p.replace(/\s*\(.*$/,"").trim());return parts.map(p=>`<a href="${p}" target="_blank" rel="noopener noreferrer">${esc(p)}</a>`).join(' + ');}
+function hl(line){
+  const re=/(\/\/.*$|^\s*#.*$)|('(?:\\.|[^'\\])*'|"(?:\\.|[^"\\])*"|`(?:\\.|[^`\\])*`)|(\$\w+)|(<\/?[A-Z][\w.]*)|([A-Za-z_]\w*)(?=\()|\b([A-Za-z_]\w*)\b/g;
+  let out="",i=0,m;
+  while((m=re.exec(line))){
+    out+=esc(line.slice(i,m.index));i=re.lastIndex;const t=esc(m[0]);
+    if(m[1])out+=`<span class=c>${t}</span>`;
+    else if(m[2])out+=`<span class=s>${t}</span>`;
+    else if(m[3])out+=`<span class=v>${t}</span>`;
+    else if(m[4])out+=`<span class=t>${t}</span>`;
+    else if(m[5])out+=KW.has(m[5])?`<span class=k>${t}</span>`:`<span class=f>${t}</span>`;
+    else if(KW.has(m[6]))out+=`<span class=k>${t}</span>`;
+    else if(/^[A-Z]/.test(m[6]))out+=`<span class=u>${t}</span>`;
+    else out+=t;
+  }
+  return out+esc(line.slice(i));
+}
+function render(code){
+  return code.replace(/^\n|\s+$/g,"").split("\n").map(l=>{
+    const hi=/\s@@$/.test(l);if(hi)l=l.replace(/\s+@@$/,"");
+    return `<span class="l${hi?" hi":""}">${hl(l)||" "}</span>`}).join("");
+}
+const snippets=[...document.querySelectorAll("#src script")];
+const tabs=document.getElementById("tabs"),side=document.getElementById("side"),main=document.getElementById("main");
+let cur=1,io;
+Object.keys(PARTS).forEach(p=>{const b=document.createElement("button");b.className="tab";b.textContent=PARTS[p][0];b.onclick=()=>show(+p);tabs.append(b)});
+function show(p){
+  cur=p;[...tabs.children].forEach((b,i)=>b.classList.toggle("on",i+1===p));
+  const secs=[];snippets.filter(s=>+s.dataset.p===p).forEach(s=>{(secs.find(x=>x.n===s.dataset.s)||secs[secs.push({n:s.dataset.s,items:[]})-1]).items.push(s)});
+  main.innerHTML=`<h1>${PARTS[p][0]}</h1><p class=lead>${PARTS[p][1]}</p>`;
+  side.innerHTML="";
+  secs.forEach((sec,i)=>{
+    const id=`s${p}-${i}`;
+    side.insertAdjacentHTML("beforeend",`<a href="#${id}" data-id="${id}">${i+1}. ${esc(sec.n)}</a>`);
+    main.insertAdjacentHTML("beforeend",`<h2 id="${id}">${i+1}. ${esc(sec.n)}</h2>`);
+    sec.items.forEach(s=>main.insertAdjacentHTML("beforeend",
+      `<p class=say>${esc(s.dataset.say||"")}</p><figure><div class=bar><span class=file>${fileLinks(s.dataset.file)}</span><button onclick="cp(this)">Copy</button></div><pre><code>${render(s.textContent)}</code></pre></figure>`));
+  });
+  window.scrollTo(0,0);
+  io&&io.disconnect();
+  io=new IntersectionObserver(es=>es.forEach(e=>{if(e.isIntersecting)side.querySelectorAll("a").forEach(a=>a.classList.toggle("on",a.dataset.id===e.target.id))}),{rootMargin:"-90px 0px -70% 0px"});
+  main.querySelectorAll("h2").forEach(h=>io.observe(h));
+}
+function cp(b){const t=[...b.closest("figure").querySelectorAll(".l")].map(l=>l.textContent).join("\n");navigator.clipboard?.writeText(t);b.textContent="Copied";setTimeout(()=>b.textContent="Copy",1200)}
+let size=14;function fs(d){size=Math.min(24,Math.max(11,size+d*2));document.documentElement.style.setProperty("--fs",size+"px")}
+addEventListener("keydown",e=>{if(["1","2","3"].includes(e.key))show(+e.key);if(e.key==="+"||e.key==="=")fs(1);if(e.key==="-")fs(-1)});
+show(1);
+</script>
+</body></html>
