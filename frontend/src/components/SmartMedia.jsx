@@ -25,11 +25,23 @@ export function useVideoPoster(videoUrl, fallback = null) {
  */
 export default function SmartMedia({ opp, className = "", videoProps = {} }) {
   const [videoError, setVideoError] = useState(false);
+  const [imgError, setImgError] = useState(false);
   const isVideo = opp?.mediaType === "video" && opp?.videoUrl && !videoError;
   const smart = useVideoPoster(isVideo ? opp.videoUrl : null, opp?.image);
 
+  const fallbackImage = "https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?w=800&q=80&auto=format&fit=crop";
+
   if (!isVideo) {
-    return <img src={opp?.image} alt={opp?.headline} className={className} loading="lazy" />;
+    const src = (!imgError && opp?.image) ? opp.image : (opp?.brandAvatar || fallbackImage);
+    return (
+      <img
+        src={src}
+        alt={opp?.headline || "Opportunity"}
+        className={className}
+        loading="lazy"
+        onError={() => setImgError(true)}
+      />
+    );
   }
   return (
     <video

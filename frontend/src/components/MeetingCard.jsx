@@ -124,6 +124,14 @@ export default function MeetingCard({
   const isEnded = effectiveStatus === "ended";
   const isCancelled = effectiveStatus === "cancelled";
 
+  const serviceLabel = meetUrl?.includes("meet.google.com")
+    ? "Google Meet"
+    : meetUrl?.includes("zoom.us")
+    ? "Zoom"
+    : meetUrl?.includes("meet.jit.si")
+    ? "Video Room"
+    : "Video Consultation";
+
   return (
     <div
       className={`rounded-xl border p-3.5 my-1.5 transition-all text-left ${
@@ -143,7 +151,7 @@ export default function MeetingCard({
           </div>
           <div>
             <div className="text-xs font-medium uppercase tracking-wider opacity-75">
-              Google Meet
+              {serviceLabel}
             </div>
             <div className="text-sm font-semibold leading-tight line-clamp-1">
               {title}

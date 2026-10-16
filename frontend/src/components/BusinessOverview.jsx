@@ -14,13 +14,18 @@ export default function BusinessOverview() {
           <p className="mt-3 text-sm text-text-secondary">Dual-role explained: <span className="font-semibold text-text-primary">Brands publish opportunities</span> — <span className="font-semibold text-text-primary">Entrepreneurs discover, inquire and launch.</span></p>
 
           <form onSubmit={(e) => { e.preventDefault(); router.get('/search', { q }); }} className="mt-6 flex gap-2 max-w-md">
-            <div className="flex-1 relative">
-              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-text-secondary">
+            <div className="flex-1 relative min-w-0">
+              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-text-secondary pointer-events-none">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><circle cx="11" cy="11" r="7"/><path d="M20 20L16.5 16.5"/></svg>
               </span>
-              <input value={q} onChange={e=>setQ(e.target.value)} placeholder="Search coffee, beauty, logistics..." className="w-full border border-border focus:border-[#2563EB] focus:ring-2 focus:ring-blue-100 outline-none rounded-lg pl-9 pr-3 py-3 text-sm bg-surface placeholder:text-text-secondary transition" />
+              <input
+                value={q}
+                onChange={e=>setQ(e.target.value)}
+                placeholder="Search coffee, beauty, logistics..."
+                className="w-full border border-border focus:border-[#2563EB] focus:ring-2 focus:ring-blue-100 outline-none rounded-lg pl-9 pr-3 py-2.5 sm:py-3 text-sm bg-surface placeholder:text-text-secondary transition truncate"
+              />
             </div>
-            <button type="submit" className="shrink-0 bg-action hover:bg-action-hover active:bg-[#1E40AF] text-white text-sm font-medium px-5 rounded-lg transition-colors">Search</button>
+            <button type="submit" className="shrink-0 bg-action hover:bg-action-hover active:bg-[#1E40AF] text-white text-sm font-medium px-4 sm:px-5 py-2.5 sm:py-3 rounded-lg transition-colors min-h-[44px]">Search</button>
           </form>
 
           <div className="mt-4 flex flex-wrap gap-2">

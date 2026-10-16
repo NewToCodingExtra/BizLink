@@ -429,6 +429,33 @@ class ConversationController extends Controller
                 ->exists();
         }
 
+        $isOnline = false;
+        $lastActiveText = 'Offline';
+        if ($otherUserId) {
+            $isOnline = \Illuminate\Support\Facades\Cache::has("user-is-online-{$otherUserId}");
+            if ($isOnline) {
+                $lastActiveText = 'Active now';
+            } else {
+                $lastSeenIso = \Illuminate\Support\Facades\Cache::get("user-last-seen-{$otherUserId}");
+                if ($lastSeenIso) {
+                    try {
+                        $lastSeen = \Carbon\Carbon::parse($lastSeenIso);
+                        $diffMins = (int) now()->diffInMinutes($lastSeen);
+                        if ($diffMins < 60) {
+                            $lastActiveText = $diffMins <= 1 ? 'Active 1m ago' : "Active {$diffMins}m ago";
+                        } elseif ($diffMins < 1440) {
+                            $hours = max(1, (int) round($diffMins / 60));
+                            $lastActiveText = "Active {$hours}h ago";
+                        } else {
+                            $lastActiveText = 'Active ' . $lastSeen->diffForHumans();
+                        }
+                    } catch (\Throwable) {
+                        $lastActiveText = 'Offline';
+                    }
+                }
+            }
+        }
+
         $payload = [
             'id' => $c->id,
             'with' => $isBuyer ? $c->with_name : ($buyer?->name ?? 'User'),
@@ -442,6 +469,8 @@ class ConversationController extends Controller
             'isMuted' => $isMuted,
             'peerReadAt' => $peerReadAt,
             'isBlocked' => $isBlocked,
+            'isOnline' => $isOnline,
+            'lastActiveText' => $lastActiveText,
         ];
         if ($withMessages || $c->relationLoaded('messages')) {
             $c->loadMissing('messages.attachment');

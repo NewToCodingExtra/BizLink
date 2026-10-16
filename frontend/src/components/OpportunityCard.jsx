@@ -171,13 +171,13 @@ export default function OpportunityCard({ opp, comments, onToggleLike, onToggleS
           <span className="text-xs text-text-secondary px-2 py-1">{opp.category}</span>
         </div>
 
-        <div className="mt-4 flex items-center justify-between gap-1.5 sm:gap-2">
-          <div className="flex items-center gap-1.5 sm:gap-2 min-w-0">
+        <div className="mt-4 flex items-center justify-between gap-1 sm:gap-2">
+          <div className="flex items-center gap-1 sm:gap-2 min-w-0">
             <button
               type="button"
               onClick={() => onToggleLike(opp.id)}
               aria-label={opp.liked ? "Unlike" : "Like"}
-              className={`inline-flex items-center gap-1 sm:gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-full border text-xs sm:text-sm font-medium transition-colors ${opp.liked ? "bg-error/10 border-error/20 text-error" : "bg-surface border-border text-text-secondary hover:bg-bg"}`}
+              className={`inline-flex items-center gap-1 sm:gap-1.5 px-2 sm:px-3 py-1.5 rounded-full border text-xs sm:text-sm font-medium transition-colors ${opp.liked ? "bg-error/10 border-error/20 text-error" : "bg-surface border-border text-text-secondary hover:bg-bg"}`}
             >
               <HeartIcon filled={!!opp.liked} />
               <span>{opp.likes}</span>
@@ -186,17 +186,17 @@ export default function OpportunityCard({ opp, comments, onToggleLike, onToggleS
               type="button"
               onClick={() => setPostOpen(true)}
               aria-label="View comments"
-              className="inline-flex items-center gap-1 sm:gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-full border border-border bg-surface text-text-secondary hover:bg-bg text-xs sm:text-sm font-medium transition-colors"
+              className="inline-flex items-center gap-1 sm:gap-1.5 px-2 sm:px-3 py-1.5 rounded-full border border-border bg-surface text-text-secondary hover:bg-bg text-xs sm:text-sm font-medium transition-colors"
             >
               <CommentIcon />
               {commentCount > 0 ? <span>{commentCount}</span> : null}
-              <span className={commentCount > 0 ? "hidden sm:inline" : ""}>Comment</span>
+              <span className="hidden sm:inline">Comment</span>
             </button>
             <button
               type="button"
               onClick={() => onToggleSave(opp.id)}
               aria-label={saved ? "Unsave" : "Save"}
-              className={`inline-flex items-center gap-1 sm:gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-full border text-xs sm:text-sm font-medium transition-colors ${saved ? "bg-primary text-white border-[#0B1F3A]" : "bg-surface text-text-secondary border-border hover:bg-bg"}`}
+              className={`inline-flex items-center gap-1 sm:gap-1.5 px-2 sm:px-3 py-1.5 rounded-full border text-xs sm:text-sm font-medium transition-colors ${saved ? "bg-primary text-white border-[#0B1F3A]" : "bg-surface text-text-secondary border-border hover:bg-bg"}`}
             >
               <BookmarkIcon filled={!!saved} />
               <span className="hidden sm:inline">{saved ? "Saved" : "Save"}</span>
@@ -209,7 +209,7 @@ export default function OpportunityCard({ opp, comments, onToggleLike, onToggleS
                 url: `/post/${opp.slug || opp.id}`,
               })}
               aria-label="Share"
-              className="inline-flex items-center gap-1 sm:gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-full border border-border bg-surface text-text-secondary hover:bg-bg hover:text-text-primary text-xs sm:text-sm font-medium transition-colors"
+              className="inline-flex items-center gap-1 sm:gap-1.5 px-2 sm:px-3 py-1.5 rounded-full border border-border bg-surface text-text-secondary hover:bg-bg hover:text-text-primary text-xs sm:text-sm font-medium transition-colors"
             >
               <svg className="w-3.5 h-3.5 text-action" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" /></svg>
               <span className="hidden sm:inline">Share</span>
@@ -218,7 +218,7 @@ export default function OpportunityCard({ opp, comments, onToggleLike, onToggleS
           <button
             type="button"
             onClick={() => onInquire(opp)}
-            className="shrink-0 px-3.5 sm:px-4 py-1.5 rounded-lg bg-action hover:bg-action-hover active:bg-[#1E40AF] text-white text-xs sm:text-sm font-semibold transition-colors focus-visible:ring-2 focus-visible:ring-blue-300 shadow-sm whitespace-nowrap"
+            className="shrink-0 px-3 sm:px-4 py-1.5 rounded-lg bg-action hover:bg-action-hover active:bg-[#1E40AF] text-white text-xs sm:text-sm font-semibold transition-colors focus-visible:ring-2 focus-visible:ring-blue-300 shadow-sm whitespace-nowrap"
           >
             Inquire
           </button>

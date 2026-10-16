@@ -73,21 +73,21 @@ class GoogleCalendarAdapter implements CalendarAdapter
         if (! $clientId) {
             // Mock fallback when Google credentials are not configured in environment
             $eventId = 'mock_meet_' . Str::random(16);
-            $randomCode = strtolower(Str::random(3)) . '-' . strtolower(Str::random(4)) . '-' . strtolower(Str::random(3));
+            $roomSlug = 'BizLink-Meet-' . strtolower(Str::random(10));
             return [
                 'eventId' => $eventId,
-                'link' => "https://meet.google.com/{$randomCode}",
+                'link' => "https://meet.jit.si/{$roomSlug}",
             ];
         }
 
         try {
             $client = $this->getClient($u);
         } catch (\Throwable $e) {
-            Log::warning('Google Calendar client auth failed, falling back to direct Meet link', ['error' => $e->getMessage()]);
-            $randomCode = strtolower(Str::random(3)) . '-' . strtolower(Str::random(4)) . '-' . strtolower(Str::random(3));
+            Log::warning('Google Calendar client auth failed, falling back to direct video room', ['error' => $e->getMessage()]);
+            $roomSlug = 'BizLink-Meet-' . strtolower(Str::random(10));
             return [
                 'eventId' => 'meet_' . Str::random(16),
-                'link' => "https://meet.google.com/{$randomCode}",
+                'link' => "https://meet.jit.si/{$roomSlug}",
             ];
         }
 

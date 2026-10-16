@@ -195,7 +195,12 @@ export default function ChatInfoPanel({
               className="w-20 h-20 rounded-full object-cover border-2 border-border shadow-sm aspect-square"
             />
           </Link>
-          <span className="absolute bottom-1 right-1 w-4 h-4 rounded-full bg-emerald-500 border-2 border-surface" title="Active" />
+          <span
+            className={`absolute bottom-1 right-1 w-4 h-4 rounded-full border-2 border-surface ${
+              conv.isOnline ? "bg-emerald-500" : "bg-slate-400"
+            }`}
+            title={conv.isOnline ? "Active now" : (conv.lastActiveText || "Offline")}
+          />
         </div>
         <Link href={userProfileLink} className="text-base font-bold text-text-primary hover:underline">
           {conv.with}
@@ -203,9 +208,10 @@ export default function ChatInfoPanel({
         {conv.withUsername && (
           <p className="text-xs text-text-secondary mt-0.5">@{conv.withUsername}</p>
         )}
-        <span className="inline-flex items-center gap-1.5 mt-2 px-2.5 py-0.5 rounded-full text-[11px] font-medium bg-action/10 text-action border border-action/20">
-          Private Consultation
-        </span>
+        <p className="text-xs text-text-secondary mt-1 flex items-center gap-1.5 justify-center">
+          <span className={`w-1.5 h-1.5 rounded-full ${conv.isOnline ? "bg-emerald-500" : "bg-slate-400"}`} />
+          <span>{conv.isOnline ? "Active now" : (conv.lastActiveText || "Offline")}</span>
+        </p>
 
         {/* Quick Action Icons Row */}
         <div className="flex items-center justify-center gap-6 mt-4 pt-2">

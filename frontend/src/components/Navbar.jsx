@@ -197,10 +197,12 @@ export default function Navbar() {
         </div>
       </div>
 
-      {/* Sticky mobile search — always visible, no menu digging. */}
-      <div className="md:hidden px-4 pb-3">
-        <SearchBar onSearch={(q) => router.visit(`/search?q=${encodeURIComponent(q)}`)} />
-      </div>
+      {/* Sticky mobile search — hidden on messages, reels, and admin to save viewport height */}
+      {!pathname.startsWith("/messages") && !pathname.startsWith("/reels") && !pathname.startsWith("/admin") && (
+        <div className="md:hidden px-4 pb-3">
+          <SearchBar onSearch={(q) => router.visit(`/search?q=${encodeURIComponent(q)}`)} />
+        </div>
+      )}
 
       {mobileOpen && (
         <div

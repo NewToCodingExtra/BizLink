@@ -13,7 +13,13 @@ export default function AppLayout({ children }) {
   // Full-bleed canvases: no footer under the reels snap feed or the admin
   // console (both read stray footers as whitespace; admin stays desktop-first).
   const pathname = page.url.split("?")[0];
-  const hideFooter = pathname.startsWith("/reels") || pathname.startsWith("/admin");
+  const isDirectMessageThread = pathname.startsWith("/messages/") && pathname !== "/messages";
+  const isReels = pathname.startsWith("/reels");
+  const hideFooter = isReels || pathname.startsWith("/admin") || pathname.startsWith("/messages");
+  const hideBottomNav = isDirectMessageThread || pathname.startsWith("/admin");
+  const mainPadding = (isDirectMessageThread || isReels)
+    ? "pb-0"
+    : "pb-24 md:pb-[max(1rem,env(safe-area-inset-bottom))]";
   // Toast-once guard: flash props persist across client-side visits and the
   // toast object is referentially unstable, so neither seen-state nor the
   // effect deps alone prevent repeats. Ref records the last toasted key.
@@ -49,8 +55,8 @@ export default function AppLayout({ children }) {
         Skip to content
       </a>
       <Navbar />
-      <main id="main-content" className="flex-1 min-w-0 pb-24 md:pb-[max(1rem,env(safe-area-inset-bottom))]">{children}</main>
-      <BottomNav />
+      <main id="main-content" className={`flex-1 min-w-0 ${mainPadding}`}>{children}</main>
+      {!hideBottomNav && <BottomNav />}
       {!hideFooter && <Footer />}
       <GlobalModals />
     </div>

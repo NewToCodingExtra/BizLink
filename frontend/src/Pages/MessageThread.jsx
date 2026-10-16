@@ -227,23 +227,38 @@ export default function MessageThread({ conv: initialConv, conversations = [], q
   }, []);
 
 
-  // Fallback polling
+  // High-frequency, silent background AJAX message & presence sync (no page reloads)
   useEffect(() => {
-    if (!liveDown || !conv) return;
-    const iv = setInterval(() => {
-      router.reload({
-        only: ["conv"],
-        onSuccess: (page) => {
-          const fresh = page?.props?.conv?.messages ?? [];
+    if (!conv?.id) return;
+    let cancelled = false;
+
+    const syncMessages = async () => {
+      try {
+        const res = await httpApi.get(`/conversations/${conv.id}`);
+        if (cancelled) return;
+        const freshConv = res.data ?? res;
+        if (freshConv?.messages) {
           setMessages((prev) => {
             const seen = new Set(prev.map((m) => String(m.id)));
-            const merged = [...prev, ...fresh.filter((m) => !seen.has(String(m.id)))];
-            return merged;
+            const newOnes = freshConv.messages.filter((m) => !seen.has(String(m.id)));
+            if (newOnes.length === 0) return prev;
+            return [...prev, ...newOnes];
           });
-        },
-      });
-    }, 15000);
-    return () => clearInterval(iv);
+        }
+        if (typeof freshConv?.isOnline !== "undefined") {
+          setConv((prev) => (prev ? { ...prev, isOnline: freshConv.isOnline, lastActiveText: freshConv.lastActiveText } : prev));
+        }
+      } catch {
+        // Silent catch on background network blips
+      }
+    };
+
+    const intervalMs = liveDown ? 2500 : 8000;
+    const iv = setInterval(syncMessages, intervalMs);
+    return () => {
+      cancelled = true;
+      clearInterval(iv);
+    };
   }, [liveDown, conv?.id]);
 
   const jumpToMessage = (msgId) => {
@@ -527,26 +542,54 @@ export default function MessageThread({ conv: initialConv, conversations = [], q
     }
     if (!text.trim() || sending) return;
     setSending(true);
+
+    const sentText = text.trim();
+    const tempId = "temp_" + Date.now();
+    const prevReplyTo = replyTo;
+    const prevPinned = pinned;
+
+    // Optimistic message displayed immediately
+    const optimisticMsg = {
+      id: tempId,
+      text: sentText,
+      from: "me",
+      senderId: me?.id,
+      createdAt: new Date().toISOString(),
+      rawTime: new Date().toISOString(),
+      time: "Just now",
+      replyTo: prevReplyTo,
+      isOptimistic: true,
+    };
+
+    setMessages((prev) => [...prev, optimisticMsg]);
+    setText("");
+    setPinned(null);
+    setReplyTo(null);
+
+    setTimeout(() => {
+      scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: "smooth" });
+    }, 20);
+
     try {
-      const sentText = text.trim();
       const body = { text: sentText };
-      if (replyTo?.id) {
-        body.reply_to_id = replyTo.id;
+      if (prevReplyTo?.id) {
+        body.reply_to_id = prevReplyTo.id;
       }
-      if (pinned && !pinned.expired) {
+      if (prevPinned && !prevPinned.expired) {
         body.attachment = {
-          type: pinned.kind === "story" ? "story" : "opportunity",
-          id: pinned.id,
+          type: prevPinned.kind === "story" ? "story" : "opportunity",
+          id: prevPinned.id,
         };
       }
       const res = await httpApi.post(`/conversations/${conv.id}/messages`, body);
       const msg = res.data ?? res;
-      setMessages((prev) => [...prev, msg]);
+      setMessages((prev) => prev.map((m) => (m.id === tempId ? msg : m)));
       setConv((c) => (c ? { ...c, lastMessage: sentText } : c));
-      setText("");
-      setPinned(null);
-      setReplyTo(null);
     } catch (err) {
+      setMessages((prev) => prev.filter((m) => m.id !== tempId));
+      setText(sentText);
+      setReplyTo(prevReplyTo);
+      setPinned(prevPinned);
       toast.error(err.message || "Send failed");
     } finally {
       setSending(false);
@@ -784,8 +827,10 @@ export default function MessageThread({ conv: initialConv, conversations = [], q
                   />
                 </Link>
                 <span
-                  className="absolute bottom-0 right-0 w-3 h-3 rounded-full bg-emerald-500 border-2 border-surface"
-                  title="Online"
+                  className={`absolute bottom-0 right-0 w-3 h-3 rounded-full border-2 border-surface ${
+                    conv.isOnline ? "bg-emerald-500" : "bg-slate-400"
+                  }`}
+                  title={conv.isOnline ? "Active now" : (conv.lastActiveText || "Offline")}
                 />
               </div>
 
@@ -801,11 +846,17 @@ export default function MessageThread({ conv: initialConv, conversations = [], q
                     <BellSlashIcon className="w-3.5 h-3.5 text-text-secondary" title="Muted" />
                   )}
                 </div>
-                <div className="flex items-center gap-1.5 text-xs text-text-secondary">
-                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 shrink-0" />
-                  <span className="truncate">Active now</span>
-                  <span className="text-text-secondary/50">·</span>
-                  <span className="truncate">Private consultation</span>
+                <div className="flex items-center gap-1.5 text-xs text-text-secondary min-w-0">
+                  <span
+                    className={`w-1.5 h-1.5 rounded-full shrink-0 ${
+                      conv.isOnline ? "bg-emerald-500" : "bg-slate-400"
+                    }`}
+                  />
+                  <span className="truncate">
+                    {conv.isOnline ? "Active now" : (conv.lastActiveText || "Offline")}
+                  </span>
+                  <span className="hidden sm:inline text-text-secondary/50">·</span>
+                  <span className="hidden sm:inline truncate">Private consultation</span>
                 </div>
               </div>
             </div>
@@ -1593,11 +1644,11 @@ export default function MessageThread({ conv: initialConv, conversations = [], q
                   type="url"
                   value={customMeetUrl}
                   onChange={(e) => setCustomMeetUrl(e.target.value)}
-                  placeholder="https://meet.google.com/xxx-yyyy-zzz"
+                  placeholder="https://meet.google.com/xxx-yyyy-zzz or any meeting link"
                   className="w-full px-3 py-2 rounded-lg border border-border bg-bg text-sm text-text-primary focus:border-action focus:ring-2 focus:ring-action/20 outline-none"
                 />
                 <p className="text-[11px] text-text-secondary mt-1">
-                  Leave empty to auto-mint via Google Calendar. If using meet.google.com/new, open it in a tab, start the call, and copy the room code URL (meet.google.com/xxx-yyyy-zzz) from your address bar.
+                  Leave empty to automatically generate an instant video consultation room (or Google Meet if account connected). You can also paste any active Google Meet, Zoom, or Teams URL.
                 </p>
               </div>
               <div className="flex items-center justify-end gap-2 pt-2">

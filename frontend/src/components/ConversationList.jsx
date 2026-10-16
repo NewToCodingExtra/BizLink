@@ -90,10 +90,10 @@ export default function ConversationList({ conversations = [], activeId = null, 
                   />
                 </Link>
                 {/* Active presence dot */}
-                {(c.isOnline || isActive) && (
+                {c.isOnline && (
                   <span
                     className="absolute bottom-0 right-0 w-3.5 h-3.5 rounded-full bg-emerald-500 border-2 border-surface"
-                    title="Online"
+                    title="Active now"
                   />
                 )}
               </div>

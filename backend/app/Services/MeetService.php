@@ -38,18 +38,15 @@ class MeetService
         $customUrl = trim($data['custom_meet_url'] ?? '');
 
         if ($customUrl !== '') {
-            if (str_contains(strtolower($customUrl), 'meet.google.com/new')) {
-                $randomCode = strtolower(Str::random(3)) . '-' . strtolower(Str::random(4)) . '-' . strtolower(Str::random(3));
-                $customUrl = "https://meet.google.com/{$randomCode}";
-            } elseif (preg_match('/^[a-z]{3}-[a-z]{4}-[a-z]{3}$/i', $customUrl)) {
+            if (preg_match('/^[a-z]{3}-[a-z]{4}-[a-z]{3}$/i', $customUrl)) {
                 $customUrl = 'https://meet.google.com/' . strtolower($customUrl);
             } elseif (!str_starts_with(strtolower($customUrl), 'http://') && !str_starts_with(strtolower($customUrl), 'https://')) {
                 $customUrl = 'https://' . $customUrl;
             }
 
-            if (!filter_var($customUrl, FILTER_VALIDATE_URL)) {
-                $randomCode = strtolower(Str::random(3)) . '-' . strtolower(Str::random(4)) . '-' . strtolower(Str::random(3));
-                $customUrl = "https://meet.google.com/{$randomCode}";
+            if (!filter_var($customUrl, FILTER_VALIDATE_URL) || str_contains(strtolower($customUrl), 'meet.google.com/new')) {
+                $roomSlug = 'BizLink-Room-' . $conversation->id . '-' . strtolower(Str::random(8));
+                $customUrl = "https://meet.jit.si/{$roomSlug}";
             }
         }
 
@@ -95,10 +92,10 @@ class MeetService
             }
 
             if (empty($meet) || empty($meet['link'])) {
-                $randomCode = strtolower(Str::random(3)) . '-' . strtolower(Str::random(4)) . '-' . strtolower(Str::random(3));
+                $roomSlug = 'BizLink-Consultation-' . $conversation->id . '-' . strtolower(Str::random(8));
                 $meet = [
                     'eventId' => 'meet_' . Str::random(16),
-                    'link' => "https://meet.google.com/{$randomCode}",
+                    'link' => "https://meet.jit.si/{$roomSlug}",
                 ];
             }
 
@@ -234,18 +231,15 @@ class MeetService
     public function updateLink(User $user, Conversation $conversation, string $eventId, string $newUrl): Message
     {
         $newUrl = trim($newUrl);
-        if (str_contains(strtolower($newUrl), 'meet.google.com/new')) {
-            $randomCode = strtolower(Str::random(3)) . '-' . strtolower(Str::random(4)) . '-' . strtolower(Str::random(3));
-            $newUrl = "https://meet.google.com/{$randomCode}";
-        } elseif (preg_match('/^[a-z]{3}-[a-z]{4}-[a-z]{3}$/i', $newUrl)) {
+        if (preg_match('/^[a-z]{3}-[a-z]{4}-[a-z]{3}$/i', $newUrl)) {
             $newUrl = 'https://meet.google.com/' . strtolower($newUrl);
         } elseif (!str_starts_with(strtolower($newUrl), 'http://') && !str_starts_with(strtolower($newUrl), 'https://')) {
             $newUrl = 'https://' . $newUrl;
         }
 
-        if (!filter_var($newUrl, FILTER_VALIDATE_URL)) {
-            $randomCode = strtolower(Str::random(3)) . '-' . strtolower(Str::random(4)) . '-' . strtolower(Str::random(3));
-            $newUrl = "https://meet.google.com/{$randomCode}";
+        if (!filter_var($newUrl, FILTER_VALIDATE_URL) || str_contains(strtolower($newUrl), 'meet.google.com/new')) {
+            $roomSlug = 'BizLink-Room-' . $conversation->id . '-' . strtolower(Str::random(8));
+            $newUrl = "https://meet.jit.si/{$roomSlug}";
         }
 
         $message = Message::where('conversation_id', $conversation->id)

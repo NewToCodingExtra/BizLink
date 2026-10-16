@@ -130,7 +130,7 @@ export default function Reels({ opportunities, slug = "" }) {
     <div className="relative">
       <Head title="Reels" />
       {targetMissing && <p className="mx-auto max-w-md mt-3 text-sm text-text-secondary bg-surface border border-border rounded-lg px-3 py-2">That reel isn&apos;t available — showing all reels.</p>}
-      <div className="h-[calc(100dvh-64px)] overflow-y-scroll snap-y snap-mandatory bg-black">
+      <div className="h-[calc(100dvh-128px)] md:h-[calc(100dvh-64px)] overflow-y-scroll snap-y snap-mandatory bg-black">
         {reels.map((r) => (
           <div key={r.id} id={`reel-${r.slug}`} className={`snap-start ${highlightSlug === r.slug ? "outline outline-4 outline-action" : ""}`}>
             <ReelCard

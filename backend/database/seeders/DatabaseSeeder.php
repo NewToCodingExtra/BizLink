@@ -603,6 +603,8 @@ class DatabaseSeeder extends Seeder
             ]
         );
 
+        $this->call(MorePostsSeeder::class);
+
         // Ensure all Opportunities, Stories, and Users have unique slugs / usernames
         Opportunity::whereNull('slug')
             ->orWhere('slug', '')

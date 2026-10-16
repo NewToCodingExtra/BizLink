@@ -38,7 +38,7 @@ export default function ReelCard({ opp, onToggleLike, onInquire, onOpenComments 
   // otherwise the just-watched video is hidden under POSTS.
   const authorProfile = `${profilePath({ username: opp.user?.username || opp.authorUsername, authorId: opp.authorId, brandId: opp.brandId })}?tab=reels`;
   return (
-    <div className="snap-start relative h-[calc(100dvh-130px)] md:h-[calc(100dvh-64px)] w-full bg-black flex items-center justify-center overflow-hidden">
+    <div className="snap-start relative h-[calc(100dvh-128px)] md:h-[calc(100dvh-64px)] w-full bg-black flex items-center justify-center overflow-hidden">
       {opp.videoUrl ? (
         <video
           ref={ref}

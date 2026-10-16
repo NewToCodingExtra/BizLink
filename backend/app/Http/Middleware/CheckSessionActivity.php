@@ -13,6 +13,10 @@ class CheckSessionActivity
     public function handle(Request $request, Closure $next)
     {
         $user = $request->user();
+        if ($user) {
+            \Illuminate\Support\Facades\Cache::put("user-is-online-{$user->id}", true, now()->addMinutes(5));
+            \Illuminate\Support\Facades\Cache::put("user-last-seen-{$user->id}", now()->toIso8601String(), now()->addDays(30));
+        }
         if ($user && $token = $user->currentAccessToken()) {
             $idleDays = Setting::get('session_idle_timeout_days', 7);
             
