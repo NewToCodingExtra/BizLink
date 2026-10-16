@@ -588,9 +588,15 @@ class ConversationController extends Controller
                 }
             }
 
+            $mediaUrl = $m->media_url;
+            if ($mediaUrl && str_contains($mediaUrl, '/storage/bizlink/')) {
+                $idx = strpos($mediaUrl, '/storage/bizlink/');
+                $mediaUrl = substr($mediaUrl, $idx);
+            }
+
             $base = [
                 'id' => $m->id,
-                'mediaUrl' => $m->media_url,
+                'mediaUrl' => $mediaUrl,
                 'mediaType' => $mediaType ?: 'image',
                 'mediaName' => $m->media_name,
                 'mediaSize' => $m->media_size,

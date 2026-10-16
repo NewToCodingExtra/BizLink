@@ -2,6 +2,7 @@ import OpportunityCard from "./OpportunityCard";
 import FilterBar from "./FilterBar";
 import ProgressBar from "./ProgressBar";
 import { OpportunityCardSkeleton } from "./Skeleton";
+import { useScrollDirection } from "../utils/useScrollDirection";
 
 export default function OpportunityFeed({
   opportunities = [],
@@ -22,6 +23,7 @@ export default function OpportunityFeed({
   total = null,
   onLoadMore = null,
 }) {
+  const isHidden = useScrollDirection();
   const handleFilterChange = onFilterChange ?? setActiveFilter ?? (() => {});
 
   const filtered = serverFiltered
@@ -34,7 +36,13 @@ export default function OpportunityFeed({
 
   return (
     <div className="max-w-2xl mx-auto w-full">
-      <div className="sticky top-[64px] z-20 bg-[var(--color-bg)]/80 backdrop-blur supports-[backdrop-filter]:bg-[var(--color-bg)]/80 py-3 -mx-4 px-4 sm:mx-0 sm:px-0 border-b border-border mb-4">
+      <div
+        className={`sticky z-20 bg-[var(--color-bg)]/80 backdrop-blur supports-[backdrop-filter]:bg-[var(--color-bg)]/80 py-3 -mx-4 px-4 sm:mx-0 sm:px-0 border-b border-border mb-4 transition-all duration-300 ease-in-out top-[120px] md:top-[64px] ${
+          isHidden
+            ? "-translate-y-[200px] md:translate-y-0 opacity-0 md:opacity-100 pointer-events-none md:pointer-events-auto"
+            : "translate-y-0 opacity-100"
+        }`}
+      >
         <FilterBar active={activeFilter} onChange={handleFilterChange} />
       </div>
       {refreshing && <ProgressBar className="mb-4" ariaLabel="Refreshing feed" />}

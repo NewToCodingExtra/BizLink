@@ -16,6 +16,99 @@ function formatBytes(bytes) {
   return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + " " + sizes[i];
 }
 
+function resolveMediaUrl(url) {
+  if (!url || typeof url !== "string") return url || "";
+  if (url.includes("/storage/bizlink/")) {
+    const idx = url.indexOf("/storage/bizlink/");
+    return url.substring(idx);
+  }
+  return url;
+}
+
+function MediaGridItem({ item, onClick }) {
+  const [hasError, setHasError] = useState(false);
+  const mediaUrl = resolveMediaUrl(item.mediaUrl);
+  const isVideo = item.mediaType === "video";
+
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className="relative w-full aspect-square min-w-0 block rounded-lg overflow-hidden bg-bg border border-border/70 hover:border-action/60 hover:shadow-xs focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-action transition-all duration-150 group"
+      title={item.mediaName || (isVideo ? "Video" : "Photo")}
+    >
+      {isVideo ? (
+        <>
+          <video
+            src={mediaUrl}
+            className="w-full h-full object-cover"
+            preload="metadata"
+            onError={() => setHasError(true)}
+          />
+          <span className="absolute inset-0 bg-black/30 group-hover:bg-black/20 flex items-center justify-center transition-colors">
+            <span className="w-7 h-7 rounded-full bg-black/60 backdrop-blur-xs flex items-center justify-center text-white">
+              <svg className="w-3.5 h-3.5 ml-0.5" fill="currentColor" viewBox="0 0 24 24">
+                <path d="M8 5v14l11-7z" />
+              </svg>
+            </span>
+          </span>
+        </>
+      ) : hasError ? (
+        <div className="w-full h-full flex flex-col items-center justify-center p-2 text-text-secondary bg-surface/60">
+          <svg className="w-6 h-6 mb-1 opacity-50" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <rect width="18" height="18" x="3" y="3" rx="2" ry="2" strokeWidth="1.8" />
+            <circle cx="8.5" cy="8.5" r="1.5" strokeWidth="1.8" />
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.8" d="m21 15-5-5L5 21" />
+          </svg>
+          <span className="text-[10px] line-clamp-1 font-medium">{item.mediaName || "Image"}</span>
+        </div>
+      ) : (
+        <img
+          src={mediaUrl}
+          alt={item.mediaName || "Shared media"}
+          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-200"
+          loading="lazy"
+          onError={() => setHasError(true)}
+        />
+      )}
+    </button>
+  );
+}
+
+function LinkGridItem({ item }) {
+  const [imgError, setImgError] = useState(false);
+  return (
+    <a
+      href={item.url}
+      target="_blank"
+      rel="noreferrer"
+      className="flex gap-2.5 p-2 rounded-lg bg-bg/60 hover:bg-bg border border-border text-left transition-colors group min-w-0"
+    >
+      {item.image && !imgError ? (
+        <img
+          src={item.image}
+          alt=""
+          onError={() => setImgError(true)}
+          className="w-12 h-12 rounded object-cover shrink-0 border border-border"
+        />
+      ) : (
+        <div className="w-12 h-12 rounded bg-surface border border-border grid place-items-center text-text-secondary shrink-0">
+          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
+          </svg>
+        </div>
+      )}
+      <div className="flex-1 min-w-0">
+        <p className="text-xs font-semibold text-text-primary truncate">{item.title || item.url}</p>
+        {item.description && (
+          <p className="text-[11px] text-text-secondary line-clamp-1 mt-0.5">{item.description}</p>
+        )}
+        <p className="text-[10px] text-action truncate mt-0.5">{item.siteName || item.url}</p>
+      </div>
+    </a>
+  );
+}
+
 export default function ChatInfoPanel({
   conv,
   messages = [],
@@ -393,27 +486,36 @@ export default function ChatInfoPanel({
         {/* Media Tab: Photos & Videos */}
         {activeTab === "media" && (
           <div>
-            <div className="flex gap-2 mb-2.5 text-[11px]">
+            <div className="flex items-center gap-1.5 mb-3 overflow-x-auto pb-1 scrollbar-none text-xs">
               <button
+                type="button"
                 onClick={() => setMediaSubTab("all")}
-                className={`px-2 py-0.5 rounded-full border transition-colors ${
-                  mediaSubTab === "all" ? "bg-action/10 border-action text-action font-semibold" : "border-border text-text-secondary"
+                className={`px-3 py-1 rounded-full border transition-colors shrink-0 font-medium ${
+                  mediaSubTab === "all"
+                    ? "bg-action/10 border-action text-action font-semibold"
+                    : "border-border bg-surface text-text-secondary hover:text-text-primary hover:bg-bg"
                 }`}
               >
                 All
               </button>
               <button
+                type="button"
                 onClick={() => setMediaSubTab("photo")}
-                className={`px-2 py-0.5 rounded-full border transition-colors ${
-                  mediaSubTab === "photo" ? "bg-action/10 border-action text-action font-semibold" : "border-border text-text-secondary"
+                className={`px-3 py-1 rounded-full border transition-colors shrink-0 font-medium ${
+                  mediaSubTab === "photo"
+                    ? "bg-action/10 border-action text-action font-semibold"
+                    : "border-border bg-surface text-text-secondary hover:text-text-primary hover:bg-bg"
                 }`}
               >
                 Photos
               </button>
               <button
+                type="button"
                 onClick={() => setMediaSubTab("video")}
-                className={`px-2 py-0.5 rounded-full border transition-colors ${
-                  mediaSubTab === "video" ? "bg-action/10 border-action text-action font-semibold" : "border-border text-text-secondary"
+                className={`px-3 py-1 rounded-full border transition-colors shrink-0 font-medium ${
+                  mediaSubTab === "video"
+                    ? "bg-action/10 border-action text-action font-semibold"
+                    : "border-border bg-surface text-text-secondary hover:text-text-primary hover:bg-bg"
                 }`}
               >
                 Videos
@@ -421,39 +523,30 @@ export default function ChatInfoPanel({
             </div>
 
             {loadingMedia ? (
-              <div className="grid grid-cols-3 gap-1.5 py-4">
+              <div className="grid grid-cols-3 gap-2 py-2">
                 {[1, 2, 3, 4, 5, 6].map((i) => (
-                  <div key={i} className="aspect-square bg-border/40 animate-pulse rounded-md" />
+                  <div key={i} className="w-full aspect-square min-w-0 bg-border/40 animate-pulse rounded-lg" />
                 ))}
               </div>
             ) : mediaItems.length === 0 ? (
-              <p className="text-xs text-text-secondary py-6 text-center">No photos or videos shared yet.</p>
+              <div className="py-8 px-2 text-center">
+                <div className="w-10 h-10 mx-auto mb-2 rounded-full bg-bg border border-border grid place-items-center text-text-secondary opacity-60">
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <rect width="18" height="18" x="3" y="3" rx="2" ry="2" strokeWidth="1.8" />
+                    <circle cx="8.5" cy="8.5" r="1.5" strokeWidth="1.8" />
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.8" d="m21 15-5-5L5 21" />
+                  </svg>
+                </div>
+                <p className="text-xs text-text-secondary">No photos or videos shared yet.</p>
+              </div>
             ) : (
-              <div className="grid grid-cols-3 gap-1.5 max-h-56 overflow-y-auto custom-scrollbar">
+              <div className="grid grid-cols-3 gap-2 max-h-60 overflow-y-auto custom-scrollbar p-0.5">
                 {mediaItems.map((item) => (
-                  <button
+                  <MediaGridItem
                     key={item.id}
-                    onClick={() => setLightboxItem(item)}
-                    className="relative aspect-square rounded-md overflow-hidden bg-bg group focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-action"
-                  >
-                    {item.mediaType === "video" ? (
-                      <>
-                        <video src={item.mediaUrl} className="w-full h-full object-cover" preload="metadata" />
-                        <span className="absolute inset-0 bg-black/30 flex items-center justify-center">
-                          <svg className="w-5 h-5 text-white drop-shadow" fill="currentColor" viewBox="0 0 24 24">
-                            <path d="M8 5v14l11-7z" />
-                          </svg>
-                        </span>
-                      </>
-                    ) : (
-                      <img
-                        src={item.mediaUrl}
-                        alt=""
-                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-200"
-                        loading="lazy"
-                      />
-                    )}
-                  </button>
+                    item={item}
+                    onClick={() => setLightboxItem({ ...item, mediaUrl: resolveMediaUrl(item.mediaUrl) })}
+                  />
                 ))}
               </div>
             )}
@@ -464,18 +557,29 @@ export default function ChatInfoPanel({
         {activeTab === "files" && (
           <div>
             {loadingMedia ? (
-              <p className="text-xs text-text-secondary py-4 text-center">Loading files…</p>
+              <div className="space-y-2 py-2">
+                {[1, 2, 3].map((i) => (
+                  <div key={i} className="h-12 bg-border/40 animate-pulse rounded-lg" />
+                ))}
+              </div>
             ) : mediaItems.length === 0 ? (
-              <p className="text-xs text-text-secondary py-6 text-center">No documents or files shared yet.</p>
+              <div className="py-8 px-2 text-center">
+                <div className="w-10 h-10 mx-auto mb-2 rounded-full bg-bg border border-border grid place-items-center text-text-secondary opacity-60">
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                  </svg>
+                </div>
+                <p className="text-xs text-text-secondary">No documents or files shared yet.</p>
+              </div>
             ) : (
-              <div className="space-y-1.5 max-h-56 overflow-y-auto custom-scrollbar">
+              <div className="space-y-1.5 max-h-60 overflow-y-auto custom-scrollbar">
                 {mediaItems.map((f) => (
                   <a
                     key={f.id}
-                    href={f.mediaUrl}
+                    href={resolveMediaUrl(f.mediaUrl)}
                     target="_blank"
                     rel="noreferrer"
-                    className="flex items-center gap-2.5 p-2 rounded-lg bg-bg/60 hover:bg-bg border border-border text-left transition-colors group"
+                    className="flex items-center gap-2.5 p-2 rounded-lg bg-bg/60 hover:bg-bg border border-border text-left transition-colors group min-w-0"
                   >
                     <div className="w-8 h-8 rounded bg-surface border border-border grid place-items-center shrink-0 text-text-secondary group-hover:text-action">
                       <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -486,7 +590,7 @@ export default function ChatInfoPanel({
                       <p className="text-xs font-medium text-text-primary truncate">{f.mediaName || "Attachment"}</p>
                       <p className="text-[10px] text-text-secondary">{formatBytes(f.mediaSize)} · {f.time}</p>
                     </div>
-                    <svg className="w-4 h-4 text-text-secondary group-hover:text-action shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <svg className="w-4 h-4 text-text-secondary group-hover:text-action shrink-0 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
                     </svg>
                   </a>
@@ -500,36 +604,24 @@ export default function ChatInfoPanel({
         {activeTab === "links" && (
           <div>
             {loadingMedia ? (
-              <p className="text-xs text-text-secondary py-4 text-center">Loading links…</p>
+              <div className="space-y-2 py-2">
+                {[1, 2, 3].map((i) => (
+                  <div key={i} className="h-14 bg-border/40 animate-pulse rounded-lg" />
+                ))}
+              </div>
             ) : mediaItems.length === 0 ? (
-              <p className="text-xs text-text-secondary py-6 text-center">No links shared in this conversation.</p>
+              <div className="py-8 px-2 text-center">
+                <div className="w-10 h-10 mx-auto mb-2 rounded-full bg-bg border border-border grid place-items-center text-text-secondary opacity-60">
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
+                  </svg>
+                </div>
+                <p className="text-xs text-text-secondary">No links shared in this conversation.</p>
+              </div>
             ) : (
-              <div className="space-y-2 max-h-56 overflow-y-auto custom-scrollbar">
+              <div className="space-y-2 max-h-60 overflow-y-auto custom-scrollbar">
                 {mediaItems.map((item, idx) => (
-                  <a
-                    key={`${item.id}-${idx}`}
-                    href={item.url}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="flex gap-2.5 p-2 rounded-lg bg-bg/60 hover:bg-bg border border-border text-left transition-colors group"
-                  >
-                    {item.image ? (
-                      <img src={item.image} alt="" className="w-12 h-12 rounded object-cover shrink-0 border border-border" />
-                    ) : (
-                      <div className="w-12 h-12 rounded bg-surface border border-border grid place-items-center text-text-secondary shrink-0">
-                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
-                        </svg>
-                      </div>
-                    )}
-                    <div className="flex-1 min-w-0">
-                      <p className="text-xs font-semibold text-text-primary truncate">{item.title || item.url}</p>
-                      {item.description && (
-                        <p className="text-[11px] text-text-secondary line-clamp-1 mt-0.5">{item.description}</p>
-                      )}
-                      <p className="text-[10px] text-action truncate mt-0.5">{item.siteName || item.url}</p>
-                    </div>
-                  </a>
+                  <LinkGridItem key={`${item.id}-${idx}`} item={item} />
                 ))}
               </div>
             )}
