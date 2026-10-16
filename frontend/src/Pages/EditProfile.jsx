@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { Head, Link, router } from "@inertiajs/react";
 import { ArrowLeftIcon, GoogleIcon } from "../components/icons";
-import { httpApi } from "../utils/http";
+import { httpApi, uploadWithProgress } from "../utils/http";
 import { useToast } from '../context/ToastContext';
 
 export default function EditProfile({ user }) {
@@ -66,21 +66,8 @@ export default function EditProfile({ user }) {
     setUploading(true);
     setProgress(0);
     try {
-      const csrf = document.querySelector('meta[name="csrf-token"]')?.getAttribute("content") || "";
-      const form = new FormData();
-      form.append("file", file);
-      const res = await fetch("/uploads", {
-        method: "POST",
-        credentials: "same-origin",
-        headers: {
-          Accept: "application/json",
-          "X-Requested-With": "XMLHttpRequest",
-          "X-CSRF-TOKEN": csrf,
-        },
-        body: form,
-      });
-      const data = await res.json().catch(() => null);
-      if (!res.ok) throw new Error(data?.message || "Photo upload failed");
+      const data = await uploadWithProgress(file, { onProgress: setProgress });
+      if (!data?.url) throw new Error("Photo upload failed");
       setAvatar(data.url);
       setProgress(100);
       setSaved(false);

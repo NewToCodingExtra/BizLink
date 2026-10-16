@@ -42,7 +42,8 @@ RUN cd backend && composer dump-autoload --optimize \
     && chown -R www-data:www-data storage bootstrap/cache
 RUN cd frontend && npm ci --no-audit --no-fund && npm run build
 
-# Apache vhost (port is templated from $PORT at boot) + supervisor.
+# Apache vhost (port is templated from $PORT at boot) + supervisor + php configuration.
+COPY docker/php.ini /usr/local/etc/php/conf.d/bizlink.ini
 COPY docker/apache-vhost.conf /etc/apache2/sites-available/000-default.conf
 COPY docker/supervisord.conf /etc/supervisor/conf.d/supervisord.conf
 COPY docker/entrypoint.sh /usr/local/bin/entrypoint.sh

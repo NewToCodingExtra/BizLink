@@ -16,6 +16,13 @@ router.on('invalid', (event) => {
   }
 });
 
+router.on('navigate', (event) => {
+  const token = event.detail.page.props?.csrf_token;
+  if (token) {
+    document.querySelector('meta[name="csrf-token"]')?.setAttribute('content', token);
+  }
+});
+
 createInertiaApp({
   resolve: (name) =>
     resolvePageComponent(`./Pages/${name}.jsx`, import.meta.glob('./Pages/**/*.jsx')).then((page) => {
@@ -23,6 +30,9 @@ createInertiaApp({
       return page;
     }),
   setup({ el, App, props }) {
+    if (props?.initialPage?.props?.csrf_token) {
+      document.querySelector('meta[name="csrf-token"]')?.setAttribute('content', props.initialPage.props.csrf_token);
+    }
     createRoot(el).render(
       <ThemeProvider>
         <ToastProvider>

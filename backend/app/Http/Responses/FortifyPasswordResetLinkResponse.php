@@ -2,10 +2,10 @@
 
 namespace App\Http\Responses;
 
-use Laravel\Fortify\Contracts\PasswordResetLinkRequestResponse as PasswordResetLinkRequestResponseContract;
+use Laravel\Fortify\Contracts\SuccessfulPasswordResetLinkRequestResponse as SuccessfulPasswordResetLinkRequestResponseContract;
 use Laravel\Fortify\Fortify;
 
-class FortifyPasswordResetLinkResponse implements PasswordResetLinkRequestResponseContract
+class FortifyPasswordResetLinkResponse implements SuccessfulPasswordResetLinkRequestResponseContract
 {
     public function toResponse($request)
     {

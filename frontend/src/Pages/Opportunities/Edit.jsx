@@ -3,39 +3,9 @@ import { useForm, Head, Link } from '@inertiajs/react';
 import { useToast } from '../../context/ToastContext';
 import Modal from '../../components/Modal';
 import Button from '../../components/Button';
+import { uploadWithProgress } from '../../utils/http';
 
 const CATEGORIES = ['Food & Beverage', 'Beauty & Wellness', 'Health & Fitness', 'Services & Logistics', 'Education', 'Fashion & Apparel', 'Home & Living'];
-function csrfToken() {
-  return document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '';
-}
-
-function uploadToServer(file, onProgress) {
-  return new Promise((resolve, reject) => {
-    const fd = new FormData();
-    fd.append('file', file);
-    const xhr = new XMLHttpRequest();
-    xhr.open('POST', '/uploads');
-    xhr.setRequestHeader('X-CSRF-TOKEN', csrfToken());
-    xhr.setRequestHeader('X-Requested-With', 'XMLHttpRequest');
-    xhr.setRequestHeader('Accept', 'application/json');
-    xhr.withCredentials = true;
-    xhr.upload.onprogress = (ev) => {
-      if (ev.lengthComputable && onProgress) onProgress(Math.round((ev.loaded / ev.total) * 100));
-    };
-    xhr.onload = () => {
-      let json = null;
-      try {
-        json = xhr.responseText ? JSON.parse(xhr.responseText) : null;
-      } catch {
-        json = null;
-      }
-      if (xhr.status >= 200 && xhr.status < 300) resolve(json || {});
-      else reject(new Error(json?.message || `Upload failed (${xhr.status})`));
-    };
-    xhr.onerror = () => reject(new Error('Upload failed'));
-    xhr.send(fd);
-  });
-}
 
 export default function EditOpportunity({ opportunity }) {
   const fileRef = useRef(null);
@@ -88,7 +58,7 @@ export default function EditOpportunity({ opportunity }) {
     setUploading(true);
     setProgress(0);
     try {
-      const res = await uploadToServer(file, setProgress);
+      const res = await uploadWithProgress(file, { onProgress: setProgress });
       const mediaType = res.media_type || (file.type.startsWith('video') ? 'video' : 'image');
       setData('media_type', mediaType);
       if (mediaType === 'video') {

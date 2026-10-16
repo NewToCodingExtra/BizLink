@@ -33,7 +33,7 @@ function loadVideo(url, timeoutMs = 9000) {
     const v = document.createElement("video");
     v.muted = true;
     v.playsInline = true;
-    v.preload = "auto";
+    v.preload = "metadata";
     v.crossOrigin = "anonymous";
     const timer = setTimeout(() => {
       v.src = "";
