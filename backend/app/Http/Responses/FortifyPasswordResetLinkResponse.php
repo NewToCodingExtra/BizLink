@@ -9,6 +9,13 @@ class FortifyPasswordResetLinkResponse implements PasswordResetLinkRequestRespon
 {
     public function toResponse($request)
     {
-        return back()->with('success', 'If an account exists, a reset link was sent.');
+        $resetUrl = session('reset_url');
+        $msg = $resetUrl
+            ? 'Reset link generated. Click below to set a new password.'
+            : 'If an account exists, a reset link was sent.';
+
+        return back()
+            ->with('success', $msg)
+            ->with('reset_url', $resetUrl);
     }
 }

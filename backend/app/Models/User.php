@@ -64,6 +64,15 @@ class User extends Authenticatable
 
     public function sendPasswordResetNotification($token): void
     {
+        $resetUrl = url(route('password.reset', [
+            'token' => $token,
+            'email' => $this->email,
+        ], false));
+
+        // Flash reset link in session so seeded/demo accounts without an active email inbox can reset password
+        session()->flash('reset_url', $resetUrl);
+        session()->flash('reset_email', $this->email);
+
         try {
             $this->notify(new \Illuminate\Auth\Notifications\ResetPassword($token));
         } catch (\Throwable $e) {
