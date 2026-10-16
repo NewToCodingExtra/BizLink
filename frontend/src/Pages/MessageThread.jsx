@@ -76,7 +76,20 @@ export default function MessageThread({ conv: initialConv, conversations = [], q
   const [typingName, setTypingName] = useState("");
   const [liveDown, setLiveDown] = useState(false);
   const [highlightedMsgId, setHighlightedMsgId] = useState(null);
-  const [showInfoPanel, setShowInfoPanel] = useState(true);
+  const [showInfoPanel, setShowInfoPanel] = useState(() => {
+    if (typeof window !== "undefined") {
+      return window.innerWidth >= 1024;
+    }
+    return false;
+  });
+  const [unblocking, setUnblocking] = useState(false);
+  const [deletingConv, setDeletingConv] = useState(false);
+
+  useEffect(() => {
+    if (typeof window !== "undefined" && window.innerWidth < 1024) {
+      setShowInfoPanel(false);
+    }
+  }, [conv?.id]);
 
   // Attachments and modals
   const [showAttachMenu, setShowAttachMenu] = useState(false);
@@ -140,9 +153,11 @@ export default function MessageThread({ conv: initialConv, conversations = [], q
     if (!client) return;
 
     const channel = client.private(`conversation.${conv.id}`);
-    channel.listen(".message.sent", (e) => {
-      const msg = e?.message;
-      if (!msg || Number(msg.senderId) === Number(me?.id)) return;
+
+    const handleIncomingMessage = (e) => {
+      const msg = e?.message || e?.data || e;
+      if (!msg || !msg.id) return;
+      if (Number(msg.senderId) === Number(me?.id)) return;
       setMessages((prev) => {
         const idx = prev.findIndex((m) => Number(m.id) === Number(msg.id));
         if (idx !== -1) {
@@ -152,15 +167,34 @@ export default function MessageThread({ conv: initialConv, conversations = [], q
         }
         return [...prev, { ...msg, from: "them" }];
       });
-    });
+      // Acknowledge read in real time
+      httpApi.post(`/conversations/${conv.id}/read`).catch(() => {});
+      setTimeout(() => {
+        scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: "smooth" });
+      }, 30);
+    };
 
-    channel.listen(".message.deleted", (e) => {
+    [
+      ".message.sent",
+      "message.sent",
+      ".MessageSent",
+      "MessageSent",
+      ".message.created",
+      "message.created",
+      ".MessageCreated",
+      "MessageCreated",
+    ].forEach((ev) => channel.listen(ev, handleIncomingMessage));
+
+    const handleDeletedMessage = (e) => {
       const deletedId = e?.messageId;
       if (!deletedId) return;
       setMessages((prev) => prev.filter((m) => Number(m.id) !== Number(deletedId)));
-    });
+    };
+    [".message.deleted", "message.deleted", ".MessageDeleted", "MessageDeleted"].forEach((ev) =>
+      channel.listen(ev, handleDeletedMessage)
+    );
 
-    channel.listen(".poll.updated", (e) => {
+    const handlePollUpdated = (e) => {
       const updatedPoll = e?.poll;
       if (!updatedPoll) return;
       setMessages((prev) =>
@@ -171,9 +205,12 @@ export default function MessageThread({ conv: initialConv, conversations = [], q
           return m;
         })
       );
-    });
+    };
+    [".poll.updated", "poll.updated", ".PollUpdated", "PollUpdated"].forEach((ev) =>
+      channel.listen(ev, handlePollUpdated)
+    );
 
-    channel.listen(".poll.closed", (e) => {
+    const handlePollClosed = (e) => {
       const closedPoll = e?.poll;
       if (!closedPoll) return;
       setMessages((prev) =>
@@ -184,23 +221,32 @@ export default function MessageThread({ conv: initialConv, conversations = [], q
           return m;
         })
       );
-    });
+    };
+    [".poll.closed", "poll.closed", ".PollClosed", "PollClosed"].forEach((ev) =>
+      channel.listen(ev, handlePollClosed)
+    );
 
-    channel.listen(".conversation.read", (e) => {
+    const handleConversationRead = (e) => {
       if (e?.readAt && Number(e?.userId) !== Number(me?.id)) {
         setConv((prev) => (prev ? { ...prev, peerReadAt: e.readAt } : prev));
       }
-    });
+    };
+    [".conversation.read", "conversation.read", ".ConversationRead", "ConversationRead"].forEach((ev) =>
+      channel.listen(ev, handleConversationRead)
+    );
 
-    channel.listen(".meet.scheduled", (e) => {
+    const handleMeetScheduled = (e) => {
       const msg = e?.message;
       if (!msg || Number(msg.senderId) === Number(me?.id)) return;
       setMessages((prev) =>
         prev.some((m) => Number(m.id) === Number(msg.id)) ? prev : [...prev, { ...msg, from: "them" }]
       );
-    });
+    };
+    [".meet.scheduled", "meet.scheduled", ".MeetScheduled", "MeetScheduled"].forEach((ev) =>
+      channel.listen(ev, handleMeetScheduled)
+    );
 
-    channel.listen(".meet.ended", (e) => {
+    const handleMeetEnded = (e) => {
       const { eventId, status, messageId, message: updatedMsg } = e || {};
       setMessages((prev) =>
         prev.map((m) => {
@@ -217,7 +263,10 @@ export default function MessageThread({ conv: initialConv, conversations = [], q
           return m;
         })
       );
-    });
+    };
+    [".meet.ended", "meet.ended", ".MeetEnded", "MeetEnded"].forEach((ev) =>
+      channel.listen(ev, handleMeetEnded)
+    );
 
     channel.listenForWhisper("typing", (e) => {
       if (!e?.name || e.name === me?.name) return;
@@ -598,6 +647,41 @@ export default function MessageThread({ conv: initialConv, conversations = [], q
     );
   };
 
+  const handleUnblock = async () => {
+    if (!conv?.id || unblocking) return;
+    setUnblocking(true);
+    try {
+      await httpApi.post(`/conversations/${conv.id}/unblock`);
+      setConv((c) => (c ? { ...c, isBlocked: false } : c));
+      toast.success("User unblocked");
+    } catch (err) {
+      toast.error(err.message || "Failed to unblock user");
+    } finally {
+      setUnblocking(false);
+    }
+  };
+
+  const handleDeleteConversation = async () => {
+    if (!conv?.id || deletingConv) return;
+    const ok = await confirm({
+      title: "Delete Conversation",
+      message: "Are you sure you want to delete this conversation? This action cannot be undone.",
+      confirmText: "Delete",
+      danger: true,
+    });
+    if (!ok) return;
+
+    setDeletingConv(true);
+    try {
+      await httpApi.delete(`/conversations/${conv.id}`);
+      toast.success("Conversation deleted");
+      router.visit("/messages");
+    } catch (err) {
+      toast.error(err.message || "Failed to delete conversation");
+      setDeletingConv(false);
+    }
+  };
+
   const send = async (e) => {
     if (e) e.preventDefault();
     if (conv?.isBlocked) {
@@ -898,19 +982,19 @@ export default function MessageThread({ conv: initialConv, conversations = [], q
                 />
               </div>
 
-              <div className="flex flex-col min-w-0 flex-1">
+              <div className="flex flex-col min-w-0 flex-1 justify-center gap-0.5 leading-tight">
                 <div className="flex items-center gap-2">
                   <Link
                     href={profilePath({ username: conv.withUsername, authorId: conv.withId, brandId: conv.brandId })}
-                    className="text-sm font-bold text-text-primary hover:text-action truncate tracking-tight"
+                    className="text-sm font-bold text-text-primary hover:text-action truncate tracking-tight inline-block min-h-0 py-0 leading-tight"
                   >
                     {conv.with}
                   </Link>
                   {conv.isMuted && (
-                    <BellSlashIcon className="w-3.5 h-3.5 text-text-secondary" title="Muted" />
+                    <BellSlashIcon className="w-3.5 h-3.5 text-text-secondary shrink-0" title="Muted" />
                   )}
                 </div>
-                <div className="flex items-center gap-1.5 text-xs text-text-secondary min-w-0">
+                <div className="flex items-center gap-1.5 text-xs text-text-secondary min-w-0 leading-none">
                   <span
                     className={`w-1.5 h-1.5 rounded-full shrink-0 ${
                       conv.isOnline ? "bg-emerald-500" : "bg-slate-400"
@@ -1417,102 +1501,134 @@ export default function MessageThread({ conv: initialConv, conversations = [], q
             </div>
           )}
 
-          {/* Composer */}
-          <form
-            onSubmit={send}
-            className="p-3 sm:p-4 bg-surface border-t border-border shrink-0 shadow-lg relative z-10"
-          >
-            {liveDown && (
-              <p className="mb-2 text-xs text-warning bg-warning/10 border border-warning/20 rounded-lg px-3 py-1.5">
-                Reconnecting… live updates paused, refreshing every 15s.
-              </p>
-            )}
-            {typingName && !liveDown && (
-              <p className="mb-2 text-xs text-text-secondary italic flex items-center gap-1.5">
-                <span className="inline-block w-2 h-2 rounded-full bg-action animate-ping" />
-                {typingName} is typing…
-              </p>
-            )}
-
-            {/* Reply Quote Strip */}
-            {replyTo && (
-              <div className="mb-2.5 p-2.5 rounded-xl bg-bg border border-border flex items-center justify-between gap-3 animate-in fade-in slide-in-from-bottom-2">
-                <div className="flex items-center gap-2 min-w-0">
-                  <div className="w-6 h-6 rounded-full bg-action/10 text-action grid place-items-center shrink-0">
-                    <ReplyIcon className="w-3.5 h-3.5" />
-                  </div>
-                  <div className="min-w-0">
-                    <p className="text-xs font-semibold text-text-primary">
-                      Replying to {replyTo.senderName}
-                    </p>
-                    <p className="text-[11px] text-text-secondary truncate">{replyTo.text}</p>
-                  </div>
+          {/* Composer or Messenger-style Blocked Card */}
+          {conv.isBlocked ? (
+            <div className="p-4 sm:p-5 bg-surface border-t border-border shrink-0 text-center shadow-lg relative z-10">
+              <div className="max-w-md mx-auto flex flex-col items-center">
+                <div className="w-11 h-11 rounded-full bg-error/10 text-error flex items-center justify-center mb-2">
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636" />
+                  </svg>
                 </div>
-                <button
-                  type="button"
-                  onClick={() => setReplyTo(null)}
-                  className="p-1 text-text-secondary hover:text-text-primary rounded-full hover:bg-surface transition-colors"
-                  aria-label="Cancel reply"
-                >
-                  <XIcon className="w-4 h-4" />
-                </button>
+                <h3 className="text-sm font-bold text-text-primary">You cannot message this account</h3>
+                <p className="text-xs text-text-secondary mt-1 max-w-sm leading-relaxed">
+                  Direct communication in this thread has been blocked. You can unblock this user to resume chatting, or delete this conversation.
+                </p>
+                <div className="flex items-center justify-center gap-2.5 mt-3.5 flex-wrap">
+                  <button
+                    type="button"
+                    onClick={handleUnblock}
+                    disabled={unblocking}
+                    className="px-4 py-2 rounded-full bg-action hover:bg-action-hover text-white text-xs font-semibold shadow-xs transition-colors flex items-center gap-1.5 disabled:opacity-50"
+                  >
+                    <span>{unblocking ? "Unblocking..." : "Unblock User"}</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleDeleteConversation}
+                    disabled={deletingConv}
+                    className="px-4 py-2 rounded-full border border-error/30 hover:bg-error/10 text-error text-xs font-semibold transition-colors flex items-center gap-1.5 disabled:opacity-50"
+                  >
+                    <TrashIcon className="w-3.5 h-3.5" />
+                    <span>{deletingConv ? "Deleting..." : "Delete Conversation"}</span>
+                  </button>
+                </div>
               </div>
-            )}
-
-            {/* Pinned Quote Card */}
-            {pinned && (
-              <div className="mb-2 relative">
-                <QuoteCard quote={pinned} mode="composer" />
-                <button
-                  type="button"
-                  onClick={() => setPinned(null)}
-                  className="absolute top-1.5 right-1.5 text-text-secondary hover:text-text-primary bg-surface/80 rounded-full p-0.5"
-                  aria-label="Remove quote"
-                >
-                  <XIcon className="w-3.5 h-3.5" />
-                </button>
-              </div>
-            )}
-
-            <div className="flex items-center gap-2">
-              <button
-                type="button"
-                onClick={() => setShowAttachMenu(!showAttachMenu)}
-                disabled={conv.isBlocked}
-                className="w-10 h-10 rounded-full border border-border bg-bg hover:bg-surface flex items-center justify-center text-text-secondary hover:text-action transition-colors shrink-0 disabled:opacity-50"
-                aria-label="Attachments"
-              >
-                <PlusIcon className="w-5 h-5" />
-              </button>
-              <input
-                ref={inputRef}
-                name="text"
-                required
-                value={text}
-                onChange={(e) => onType(e.target.value)}
-                onBlur={handleBlur}
-                placeholder={
-                  conv.isBlocked
-                    ? "Messaging is disabled"
-                    : uploading
-                    ? "Uploading attachment..."
-                    : "Type a message..."
-                }
-                disabled={uploading || conv.isBlocked}
-                className={getInputClass("text")}
-              />
-              <button
-                type="submit"
-                disabled={sending || uploading || !text.trim() || conv.isBlocked}
-                className="px-5 sm:px-6 py-2.5 sm:py-3 rounded-full bg-action hover:bg-action-hover disabled:bg-blue-300 text-white text-sm font-semibold shrink-0 transition-colors shadow-sm"
-              >
-                Send
-              </button>
             </div>
-            {fieldErrors.text && (
-              <p className="mt-1 text-xs text-error absolute ml-2">{fieldErrors.text}</p>
-            )}
-          </form>
+          ) : (
+            <form
+              onSubmit={send}
+              className="p-3 sm:p-4 bg-surface border-t border-border shrink-0 shadow-lg relative z-10"
+            >
+              {liveDown && (
+                <p className="mb-2 text-xs text-warning bg-warning/10 border border-warning/20 rounded-lg px-3 py-1.5">
+                  Reconnecting… live updates paused, refreshing every 15s.
+                </p>
+              )}
+              {typingName && !liveDown && (
+                <p className="mb-2 text-xs text-text-secondary italic flex items-center gap-1.5">
+                  <span className="inline-block w-2 h-2 rounded-full bg-action animate-ping" />
+                  {typingName} is typing…
+                </p>
+              )}
+
+              {/* Reply Quote Strip */}
+              {replyTo && (
+                <div className="mb-2.5 p-2.5 rounded-xl bg-bg border border-border flex items-center justify-between gap-3 animate-in fade-in slide-in-from-bottom-2">
+                  <div className="flex items-center gap-2 min-w-0">
+                    <div className="w-6 h-6 rounded-full bg-action/10 text-action grid place-items-center shrink-0">
+                      <ReplyIcon className="w-3.5 h-3.5" />
+                    </div>
+                    <div className="min-w-0">
+                      <p className="text-xs font-semibold text-text-primary">
+                        Replying to {replyTo.senderName}
+                      </p>
+                      <p className="text-[11px] text-text-secondary truncate">{replyTo.text}</p>
+                    </div>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setReplyTo(null)}
+                    className="p-1 text-text-secondary hover:text-text-primary rounded-full hover:bg-surface transition-colors"
+                    aria-label="Cancel reply"
+                  >
+                    <XIcon className="w-4 h-4" />
+                  </button>
+                </div>
+              )}
+
+              {/* Pinned Quote Card */}
+              {pinned && (
+                <div className="mb-2 relative">
+                  <QuoteCard quote={pinned} mode="composer" />
+                  <button
+                    type="button"
+                    onClick={() => setPinned(null)}
+                    className="absolute top-1.5 right-1.5 text-text-secondary hover:text-text-primary bg-surface/80 rounded-full p-0.5"
+                    aria-label="Remove quote"
+                  >
+                    <XIcon className="w-3.5 h-3.5" />
+                  </button>
+                </div>
+              )}
+
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => setShowAttachMenu(!showAttachMenu)}
+                  className="w-10 h-10 rounded-full border border-border bg-bg hover:bg-surface flex items-center justify-center text-text-secondary hover:text-action transition-colors shrink-0 disabled:opacity-50"
+                  aria-label="Attachments"
+                >
+                  <PlusIcon className="w-5 h-5" />
+                </button>
+                <input
+                  ref={inputRef}
+                  name="text"
+                  required
+                  value={text}
+                  onChange={(e) => onType(e.target.value)}
+                  onBlur={handleBlur}
+                  placeholder={
+                    uploading
+                      ? "Uploading attachment..."
+                      : "Type a message..."
+                  }
+                  disabled={uploading}
+                  className={getInputClass("text")}
+                />
+                <button
+                  type="submit"
+                  disabled={sending || uploading || !text.trim()}
+                  className="px-5 sm:px-6 py-2.5 sm:py-3 rounded-full bg-action hover:bg-action-hover disabled:bg-blue-300 text-white text-sm font-semibold shrink-0 transition-colors shadow-sm"
+                >
+                  Send
+                </button>
+              </div>
+              {fieldErrors.text && (
+                <p className="mt-1 text-xs text-error absolute ml-2">{fieldErrors.text}</p>
+              )}
+            </form>
+          )}
         </main>
 
         {/* Pane 3: Chat Info Panel (Desktop ≥ 1024px inline, Drawer overlay on smaller screens) */}

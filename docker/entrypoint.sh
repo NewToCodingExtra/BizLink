@@ -15,9 +15,13 @@ if [ -z "$APP_KEY" ]; then
   export APP_KEY="base64:$(head -c 32 /dev/urandom | base64)"
 fi
 
-if [ -n "$REVERB_APP_KEY" ]; then
-  export BROADCAST_CONNECTION="${BROADCAST_CONNECTION:-reverb}"
-fi
+export REVERB_APP_KEY="${REVERB_APP_KEY:-bizlink-reverb-key-2026}"
+export REVERB_APP_SECRET="${REVERB_APP_SECRET:-bizlink-reverb-secret-2026}"
+export REVERB_APP_ID="${REVERB_APP_ID:-bizlink}"
+export BROADCAST_CONNECTION="${BROADCAST_CONNECTION:-reverb}"
+export REVERB_INTERNAL_HOST="${REVERB_INTERNAL_HOST:-127.0.0.1}"
+export REVERB_INTERNAL_PORT="${REVERB_INTERNAL_PORT:-8085}"
+export REVERB_INTERNAL_SCHEME="${REVERB_INTERNAL_SCHEME:-http}"
 
 # Writable paths (Railway volume should mount at .../backend/storage).
 mkdir -p storage/framework/cache storage/framework/sessions storage/framework/views storage/logs storage/app/public bootstrap/cache

@@ -181,13 +181,13 @@ export default function OpportunityDetail({ opp: initialOpp }) {
         <div className="p-4 sm:p-6">
           <div className="flex items-start justify-between gap-3">
             <div className="flex items-start gap-2.5 sm:gap-3 min-w-0 flex-1">
-              <Link href={profilePath({ username: opp.user?.username || opp.authorUsername, authorId: opp.authorId, brandId: opp.brandId })} className="shrink-0 pt-0.5">
+              <Link href={profilePath({ username: opp.user?.username || opp.authorUsername, authorId: opp.authorId, brandId: opp.brandId })} className="shrink-0 pt-0.5 min-h-0">
                 <img src={opp.brandAvatar || "https://i.pravatar.cc/100?img=12"} alt={opp.brandName} className="w-10 h-10 sm:w-12 sm:h-12 rounded-full object-cover aspect-square border border-border/40" />
               </Link>
-              <div className="min-w-0 flex-1">
+              <div className="min-w-0 flex-1 flex flex-col justify-center gap-0.5 leading-tight">
                 <AuthorIdentity opp={opp} nameClassName="text-sm sm:text-base font-semibold" />
                 {opp.category && (
-                  <p className="mt-0.5 text-xs text-text-secondary truncate">{opp.category}</p>
+                  <p className="text-xs text-text-secondary truncate leading-none">{opp.category}</p>
                 )}
               </div>
             </div>

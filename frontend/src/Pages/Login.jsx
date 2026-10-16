@@ -78,13 +78,21 @@ export default function Login() {
             <input value={data.email} onChange={(e) => setData('email', e.target.value)} onBlur={(e) => handleBlur('email', e)} type="email" required placeholder="you@email.com" className={getInputClass('email')} />
           </div>
           <div>
-            <div className="flex items-center justify-between">
-              <label className="text-sm font-medium text-text-primary">Password</label>
-              <Link href="/forgot-password" className="text-xs font-medium text-[var(--color-action)] hover:text-[var(--color-action-hover)]">Forgot password?</Link>
+            <div className="flex items-center justify-between gap-2 mb-1.5 leading-none">
+              <label htmlFor="login-password" className="text-sm font-medium text-text-primary m-0 p-0 leading-none select-none">Password</label>
+              <Link
+                href="/forgot-password"
+                className="text-xs font-medium text-action hover:text-action-hover m-0 p-0 leading-none shrink-0 min-h-0"
+              >
+                Forgot password?
+              </Link>
             </div>
-            <div className="mt-1">
-              <PasswordInput value={data.password} onChange={(e) => setData('password', e.target.value)} onBlur={(e) => handleBlur('password', e)} error={!!errors.password} />
-            </div>
+            <PasswordInput
+              value={data.password}
+              onChange={(e) => setData('password', e.target.value)}
+              onBlur={(e) => handleBlur('password', e)}
+              error={!!errors.password}
+            />
           </div>
           <button type="submit" disabled={processing} className="w-full bg-action hover:bg-action-hover disabled:bg-blue-300 text-white text-sm font-medium py-2.5 rounded-lg transition-colors">
             {processing ? 'Logging in...' : 'Log in'}

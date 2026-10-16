@@ -120,7 +120,13 @@ input, textarea { caret-color: var(--color-action); }
 
 /* Touch: 44px minimum on coarse pointers without inflating desktop density */
 @media (pointer: coarse) {
-  a, button { min-height: 44px; }
+  button:not([class*="min-h-"]):not([class*="h-"]),
+  input[type="button"],
+  input[type="submit"],
+  .touch-target,
+  nav a {
+    min-height: 44px;
+  }
   a { text-underline-offset: 3px; }
 }
 /* Never rely on hover alone — touch gets active feedback instead */

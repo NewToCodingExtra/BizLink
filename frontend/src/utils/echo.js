@@ -16,11 +16,8 @@ export function getEcho() {
   try {
     const key =
       import.meta.env.VITE_REVERB_APP_KEY ||
-      (typeof document !== "undefined" ? document.querySelector('meta[name="reverb-key"]')?.getAttribute("content") : null);
-    if (!key) {
-      echo = null;
-      return echo;
-    }
+      (typeof document !== "undefined" ? document.querySelector('meta[name="reverb-key"]')?.getAttribute("content") : null) ||
+      "bizlink-reverb-key-2026";
     // No VITE_* values are baked in on hosted builds — derive sane defaults
     // from the page itself so wss://domain (443) just works in production
     // while local dev keeps 127.0.0.1:8080 over plain ws.

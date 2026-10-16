@@ -32,14 +32,14 @@ return [
 
         'reverb' => [
             'driver' => 'reverb',
-            'key' => env('REVERB_APP_KEY'),
-            'secret' => env('REVERB_APP_SECRET'),
-            'app_id' => env('REVERB_APP_ID'),
+            'key' => env('REVERB_APP_KEY', 'bizlink-reverb-key-2026'),
+            'secret' => env('REVERB_APP_SECRET', 'bizlink-reverb-secret-2026'),
+            'app_id' => env('REVERB_APP_ID', 'bizlink'),
             'options' => [
-                'host' => env('REVERB_HOST'),
-                'port' => env('REVERB_PORT', 443),
-                'scheme' => env('REVERB_SCHEME', 'https'),
-                'useTLS' => env('REVERB_SCHEME', 'https') === 'https',
+                'host' => env('REVERB_INTERNAL_HOST', env('REVERB_HOST', '127.0.0.1')),
+                'port' => (int) env('REVERB_INTERNAL_PORT', env('REVERB_PORT', 8085)),
+                'scheme' => env('REVERB_INTERNAL_SCHEME', env('REVERB_SCHEME', 'http')),
+                'useTLS' => env('REVERB_INTERNAL_SCHEME', env('REVERB_SCHEME', 'http')) === 'https',
             ],
             'client_options' => [
                 'connect_timeout' => 2,

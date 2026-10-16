@@ -44,23 +44,27 @@ export default function ForgotPassword() {
         <p className="text-[11px] tracking-[0.16em] font-semibold text-action">BIZLINK · PASSWORD RESET</p>
         <h1 className="text-2xl font-bold text-text-primary mt-2">Forgot password</h1>
         <p className="text-sm text-text-secondary mt-1">Email accounts only — Google/Facebook accounts sign in with those buttons.</p>
-        {(message || recentlySuccessful) && (
-          <p className="mt-4 text-sm text-success bg-success/10 border border-success/20 rounded-lg px-3 py-2">{message || 'Reset link sent.'}</p>
-        )}
-        {flash?.reset_url && (
-          <div className="mt-3 p-3 bg-action/10 border border-action/20 rounded-xl space-y-1.5">
-            <p className="text-xs font-semibold text-text-primary">Demo / Test Account Reset Link:</p>
-            <p className="text-xs text-text-secondary leading-snug">
-              Because seeded dummy accounts have no real external inbox, use this direct link to test setting a new password:
+        {flash?.reset_url ? (
+          <div className="mt-4 p-4 bg-emerald-500/10 border border-emerald-500/30 rounded-xl space-y-2.5 text-center">
+            <div className="flex items-center justify-center gap-1.5 text-emerald-600 dark:text-emerald-400 font-semibold text-sm">
+              <svg className="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              <span>Password Reset Link Ready</span>
+            </div>
+            <p className="text-xs text-text-secondary leading-relaxed">
+              Because mail servers may delay or block automated delivery, click the button below to set your new password immediately:
             </p>
             <Link
               href={flash.reset_url}
-              className="inline-flex items-center gap-1.5 mt-1 px-3 py-1.5 rounded-lg bg-action hover:bg-action-hover text-white text-xs font-semibold transition-colors shadow-2xs"
+              className="inline-flex items-center justify-center gap-2 w-full py-2.5 px-4 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-semibold transition-colors shadow-sm"
             >
-              <span>Click here to set new password &rarr;</span>
+              <span>Click Here to Reset Password &rarr;</span>
             </Link>
           </div>
-        )}
+        ) : (message || recentlySuccessful) ? (
+          <p className="mt-4 text-sm text-success bg-success/10 border border-success/20 rounded-lg px-3 py-2">{message || 'Reset link sent.'}</p>
+        ) : null}
 
         <form onSubmit={submit} className="mt-6 space-y-4">
           <div>

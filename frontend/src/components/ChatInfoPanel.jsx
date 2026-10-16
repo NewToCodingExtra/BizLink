@@ -1,5 +1,5 @@
 import { useEffect, useState, useRef } from "react";
-import { Link } from "@inertiajs/react";
+import { Link, router } from "@inertiajs/react";
 import { profilePath } from "../utils/profilePath";
 import { httpApi } from "../utils/http";
 import { useToast } from "../context/ToastContext";
@@ -163,6 +163,33 @@ export default function ChatInfoPanel({
     }
   };
 
+  const handleUnblockUser = async () => {
+    if (!conv?.id) return;
+    setBlocking(true);
+    try {
+      await httpApi.post(`/conversations/${conv.id}/unblock`);
+      setIsBlocked(false);
+      if (onBlockToggled) onBlockToggled(false);
+      toast.success(`${conv.with} has been unblocked.`);
+    } catch {
+      toast.error("Failed to unblock user. Try again.");
+    } finally {
+      setBlocking(false);
+    }
+  };
+
+  const handleDeleteConversation = async () => {
+    if (!conv?.id) return;
+    if (!window.confirm("Are you sure you want to delete this conversation? This action cannot be undone.")) return;
+    try {
+      await httpApi.delete(`/conversations/${conv.id}`);
+      toast.success("Conversation deleted");
+      router.visit("/messages");
+    } catch {
+      toast.error("Failed to delete conversation.");
+    }
+  };
+
   const userProfileLink = profilePath({
     username: conv.withUsername,
     authorId: conv.withId,
@@ -170,7 +197,7 @@ export default function ChatInfoPanel({
   });
 
   return (
-    <div className={`flex flex-col h-full bg-surface border-l border-border overflow-y-auto ${className}`}>
+    <div className={`flex flex-col h-full bg-surface border-l border-border overflow-y-auto pb-28 sm:pb-16 ${className}`}>
       {/* Header bar for mobile drawer close */}
       <div className="flex items-center justify-between p-3.5 border-b border-border lg:hidden shrink-0">
         <span className="text-sm font-semibold text-text-primary">Chat Details</span>
@@ -187,7 +214,7 @@ export default function ChatInfoPanel({
 
       {/* Main Profile Header */}
       <div className="p-5 flex flex-col items-center text-center border-b border-border/70 shrink-0">
-        <div className="relative mb-3">
+        <div className="relative mb-2.5">
           <Link href={userProfileLink}>
             <img
               src={conv.avatar || "https://i.pravatar.cc/100?img=12"}
@@ -202,13 +229,13 @@ export default function ChatInfoPanel({
             title={conv.isOnline ? "Active now" : (conv.lastActiveText || "Offline")}
           />
         </div>
-        <Link href={userProfileLink} className="text-base font-bold text-text-primary hover:underline">
+        <Link href={userProfileLink} className="text-base font-bold text-text-primary hover:underline leading-tight min-h-0">
           {conv.with}
         </Link>
         {conv.withUsername && (
-          <p className="text-xs text-text-secondary mt-0.5">@{conv.withUsername}</p>
+          <p className="text-xs text-text-secondary mt-0.5 leading-tight">@{conv.withUsername}</p>
         )}
-        <p className="text-xs text-text-secondary mt-1 flex items-center gap-1.5 justify-center">
+        <p className="text-xs text-text-secondary mt-0.5 flex items-center gap-1.5 justify-center leading-tight">
           <span className={`w-1.5 h-1.5 rounded-full ${conv.isOnline ? "bg-emerald-500" : "bg-slate-400"}`} />
           <span>{conv.isOnline ? "Active now" : (conv.lastActiveText || "Offline")}</span>
         </p>
@@ -529,16 +556,41 @@ export default function ChatInfoPanel({
             </span>
           </button>
 
+          {isBlocked ? (
+            <button
+              type="button"
+              onClick={handleUnblockUser}
+              disabled={blocking}
+              className="w-full flex items-center gap-2.5 p-2.5 rounded-xl hover:bg-action/10 text-left text-xs font-medium text-action transition-colors disabled:opacity-50"
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 11V7a4 4 0 118 0m-4 8v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2z" />
+              </svg>
+              <span>{blocking ? "Unblocking…" : "Unblock User"}</span>
+            </button>
+          ) : (
+            <button
+              type="button"
+              onClick={() => setShowBlockModal(true)}
+              disabled={blocking}
+              className="w-full flex items-center gap-2.5 p-2.5 rounded-xl hover:bg-red-500/10 text-left text-xs font-medium text-error transition-colors disabled:opacity-50"
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636" />
+              </svg>
+              <span>Block User</span>
+            </button>
+          )}
+
           <button
             type="button"
-            onClick={() => setShowBlockModal(true)}
-            disabled={isBlocked}
-            className="w-full flex items-center gap-2.5 p-2.5 rounded-xl hover:bg-red-500/10 text-left text-xs font-medium text-error transition-colors disabled:opacity-50"
+            onClick={handleDeleteConversation}
+            className="w-full flex items-center gap-2.5 p-2.5 rounded-xl hover:bg-error/10 text-left text-xs font-medium text-error transition-colors"
           >
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636" />
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6M9 7V4a1 1 0 011-1h4a1 1 0 011 1v3m-9 0h10" />
             </svg>
-            <span>{isBlocked ? "User Blocked" : "Block User"}</span>
+            <span>Delete Conversation</span>
           </button>
 
           <button

@@ -43,7 +43,7 @@ export default function AuthorIdentity({ opp, nameClassName = "text-sm font-semi
       <Link
         href={href}
         title={opp.brandName}
-        className={`${nameClassName} text-text-primary hover:text-action truncate shrink min-w-0 leading-tight`}
+        className={`${nameClassName} text-text-primary hover:text-action truncate shrink min-w-0 leading-tight min-h-0 py-0`}
       >
         {opp.brandName}
       </Link>

@@ -676,6 +676,47 @@ class ConversationController extends Controller
     }
 
     /**
+     * Unblock the user on the other side of this conversation.
+     */
+    public function unblockUser(Request $request, Conversation $conversation)
+    {
+        $user = $request->user();
+        if (!$conversation->isParticipant($user?->id)) {
+            return response()->json(['message' => 'Forbidden'], 403);
+        }
+
+        $otherId = $conversation->getOtherParticipantId($user->id);
+        if ($otherId) {
+            \Illuminate\Support\Facades\DB::table('user_blocks')
+                ->where('blocker_id', $user->id)
+                ->where('blocked_id', $otherId)
+                ->delete();
+        }
+
+        return response()->json(['blocked' => false, 'message' => 'User unblocked successfully.']);
+    }
+
+    /**
+     * Delete an entire conversation and its associated messages.
+     */
+    public function destroy(Request $request, Conversation $conversation)
+    {
+        $user = $request->user();
+        if (!$conversation->isParticipant($user?->id)) {
+            return response()->json(['message' => 'Forbidden'], 403);
+        }
+
+        // Clean up any meet events, reactions, reads, and messages
+        $conversation->messages()->delete();
+        \Illuminate\Support\Facades\DB::table('conversation_reads')
+            ->where('conversation_id', $conversation->id)
+            ->delete();
+        $conversation->delete();
+
+        return response()->json(['success' => true, 'message' => 'Conversation deleted successfully.']);
+    }
+
+    /**
      * Extract rich link preview metadata.
      */
     public function linkPreview(Request $request)

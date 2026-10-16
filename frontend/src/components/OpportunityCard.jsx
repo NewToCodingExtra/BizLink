@@ -55,12 +55,12 @@ export default function OpportunityCard({ opp, comments, onToggleLike, onToggleS
   return (
     <article className="bg-surface rounded-xl border border-border shadow-sm hover:shadow-md transition-shadow duration-150 overflow-hidden">
       <div className="p-3.5 sm:p-4 flex items-start gap-2.5 sm:gap-3">
-        <Link href={profilePath({ username: opp.user?.username || opp.authorUsername, authorId: opp.authorId, brandId: opp.brandId })} className="shrink-0 pt-0.5">
+        <Link href={profilePath({ username: opp.user?.username || opp.authorUsername, authorId: opp.authorId, brandId: opp.brandId })} className="shrink-0 pt-0.5 min-h-0">
           <img src={opp.brandAvatar} alt={opp.brandName} className="w-9 h-9 sm:w-10 sm:h-10 rounded-full object-cover shrink-0 aspect-square border border-border/40" />
         </Link>
-        <div className="flex-1 min-w-0">
+        <div className="flex-1 min-w-0 flex flex-col justify-center gap-0.5 leading-tight">
           <AuthorIdentity opp={opp} />
-          <div className="mt-0.5 flex items-center gap-1 text-xs text-text-secondary truncate">
+          <div className="flex items-center gap-1 text-xs text-text-secondary truncate leading-none">
             <span>{opp.category}</span>
             <span>·</span>
             <span>{formatDate(opp.createdAt)}</span>
