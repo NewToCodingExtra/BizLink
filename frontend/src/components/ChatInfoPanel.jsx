@@ -199,6 +199,8 @@ export default function ChatInfoPanel({
   const [showReportModal, setShowReportModal] = useState(false);
   const [blocking, setBlocking] = useState(false);
   const [isBlocked, setIsBlocked] = useState(conv?.isBlocked || false);
+  const [sharedContentOpen, setSharedContentOpen] = useState(true);
+  const [privacyOpen, setPrivacyOpen] = useState(true);
 
   useEffect(() => {
     setIsBlocked(conv?.isBlocked || false);
@@ -479,179 +481,208 @@ export default function ChatInfoPanel({
       )}
 
       {/* Tabbed Media, Files & Links Section */}
-      <div className="p-4 border-b border-border flex-1 min-h-[220px]">
-        <div className="flex items-center justify-between mb-3">
-          <span className="text-xs font-bold uppercase tracking-wider text-text-secondary">Shared Content</span>
-        </div>
+      <div className="p-4 border-b border-border shrink-0">
+        <button
+          type="button"
+          onClick={() => setSharedContentOpen(!sharedContentOpen)}
+          className="w-full flex items-center justify-between mb-3 text-left group cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-action rounded-md"
+          aria-expanded={sharedContentOpen}
+        >
+          <div className="flex items-center gap-2">
+            <span className="text-xs font-bold uppercase tracking-wider text-text-secondary group-hover:text-text-primary transition-colors">Shared Content</span>
+            {mediaItems.length > 0 && !loadingMedia && (
+              <span className="text-[10px] font-semibold text-text-secondary bg-bg px-2 py-0.5 rounded-full border border-border">
+                {mediaItems.length}
+              </span>
+            )}
+          </div>
+          <svg
+            className={`w-4 h-4 text-text-secondary group-hover:text-text-primary transition-transform duration-200 ${
+              sharedContentOpen ? "rotate-180" : ""
+            }`}
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
+          </svg>
+        </button>
 
-        {/* Tab switcher */}
-        <div className="flex gap-1 p-1 bg-bg rounded-lg mb-3">
-          <button
-            onClick={() => setActiveTab("media")}
-            className={`flex-1 py-1.5 text-xs font-semibold rounded-md transition-colors ${
-              activeTab === "media" ? "bg-surface text-text-primary shadow-sm" : "text-text-secondary hover:text-text-primary"
-            }`}
-          >
-            Media
-          </button>
-          <button
-            onClick={() => setActiveTab("files")}
-            className={`flex-1 py-1.5 text-xs font-semibold rounded-md transition-colors ${
-              activeTab === "files" ? "bg-surface text-text-primary shadow-sm" : "text-text-secondary hover:text-text-primary"
-            }`}
-          >
-            Files
-          </button>
-          <button
-            onClick={() => setActiveTab("links")}
-            className={`flex-1 py-1.5 text-xs font-semibold rounded-md transition-colors ${
-              activeTab === "links" ? "bg-surface text-text-primary shadow-sm" : "text-text-secondary hover:text-text-primary"
-            }`}
-          >
-            Links
-          </button>
-        </div>
-
-        {/* Media Tab: Photos & Videos */}
-        {activeTab === "media" && (
+        {sharedContentOpen && (
           <div>
-            <div className="flex items-center gap-1.5 mb-3 overflow-x-auto pb-1 scrollbar-none text-xs">
+            {/* Tab switcher */}
+            <div className="flex gap-1 p-1 bg-bg rounded-lg mb-3">
               <button
                 type="button"
-                onClick={() => setMediaSubTab("all")}
-                className={`px-3 py-1 rounded-full border transition-colors shrink-0 font-medium ${
-                  mediaSubTab === "all"
-                    ? "bg-action/10 border-action text-action font-semibold"
-                    : "border-border bg-surface text-text-secondary hover:text-text-primary hover:bg-bg"
+                onClick={() => setActiveTab("media")}
+                className={`flex-1 py-1.5 text-xs font-semibold rounded-md transition-colors ${
+                  activeTab === "media" ? "bg-surface text-text-primary shadow-sm" : "text-text-secondary hover:text-text-primary"
                 }`}
               >
-                All
+                Media
               </button>
               <button
                 type="button"
-                onClick={() => setMediaSubTab("photo")}
-                className={`px-3 py-1 rounded-full border transition-colors shrink-0 font-medium ${
-                  mediaSubTab === "photo"
-                    ? "bg-action/10 border-action text-action font-semibold"
-                    : "border-border bg-surface text-text-secondary hover:text-text-primary hover:bg-bg"
+                onClick={() => setActiveTab("files")}
+                className={`flex-1 py-1.5 text-xs font-semibold rounded-md transition-colors ${
+                  activeTab === "files" ? "bg-surface text-text-primary shadow-sm" : "text-text-secondary hover:text-text-primary"
                 }`}
               >
-                Photos
+                Files
               </button>
               <button
                 type="button"
-                onClick={() => setMediaSubTab("video")}
-                className={`px-3 py-1 rounded-full border transition-colors shrink-0 font-medium ${
-                  mediaSubTab === "video"
-                    ? "bg-action/10 border-action text-action font-semibold"
-                    : "border-border bg-surface text-text-secondary hover:text-text-primary hover:bg-bg"
+                onClick={() => setActiveTab("links")}
+                className={`flex-1 py-1.5 text-xs font-semibold rounded-md transition-colors ${
+                  activeTab === "links" ? "bg-surface text-text-primary shadow-sm" : "text-text-secondary hover:text-text-primary"
                 }`}
               >
-                Videos
+                Links
               </button>
             </div>
 
-            {loadingMedia ? (
-              <div className="grid grid-cols-3 gap-2 py-2">
-                {[1, 2, 3, 4, 5, 6].map((i) => (
-                  <div key={i} className="w-full aspect-square min-w-0 bg-border/40 animate-pulse rounded-lg" />
-                ))}
-              </div>
-            ) : mediaItems.length === 0 ? (
-              <div className="py-8 px-2 text-center">
-                <div className="w-10 h-10 mx-auto mb-2 rounded-full bg-bg border border-border grid place-items-center text-text-secondary opacity-60">
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <rect width="18" height="18" x="3" y="3" rx="2" ry="2" strokeWidth="1.8" />
-                    <circle cx="8.5" cy="8.5" r="1.5" strokeWidth="1.8" />
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.8" d="m21 15-5-5L5 21" />
-                  </svg>
+            {/* Media Tab: Photos & Videos */}
+            {activeTab === "media" && (
+              <div>
+                <div className="flex items-center gap-1.5 mb-3 overflow-x-auto pb-1 scrollbar-none text-xs">
+                  <button
+                    type="button"
+                    onClick={() => setMediaSubTab("all")}
+                    className={`px-3 py-1 rounded-full border transition-colors shrink-0 font-medium ${
+                      mediaSubTab === "all"
+                        ? "bg-action/10 border-action text-action font-semibold"
+                        : "border-border bg-surface text-text-secondary hover:text-text-primary hover:bg-bg"
+                    }`}
+                  >
+                    All
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setMediaSubTab("photo")}
+                    className={`px-3 py-1 rounded-full border transition-colors shrink-0 font-medium ${
+                      mediaSubTab === "photo"
+                        ? "bg-action/10 border-action text-action font-semibold"
+                        : "border-border bg-surface text-text-secondary hover:text-text-primary hover:bg-bg"
+                    }`}
+                  >
+                    Photos
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setMediaSubTab("video")}
+                    className={`px-3 py-1 rounded-full border transition-colors shrink-0 font-medium ${
+                      mediaSubTab === "video"
+                        ? "bg-action/10 border-action text-action font-semibold"
+                        : "border-border bg-surface text-text-secondary hover:text-text-primary hover:bg-bg"
+                    }`}
+                  >
+                    Videos
+                  </button>
                 </div>
-                <p className="text-xs text-text-secondary">No photos or videos shared yet.</p>
-              </div>
-            ) : (
-              <div className="grid grid-cols-3 gap-2 max-h-60 overflow-y-auto custom-scrollbar p-0.5">
-                {mediaItems.map((item) => (
-                  <MediaGridItem
-                    key={item.id}
-                    item={item}
-                    onClick={() => setLightboxItem({ ...item, mediaUrl: resolveMediaUrl(item.mediaUrl) })}
-                  />
-                ))}
+
+                {loadingMedia ? (
+                  <div className="grid grid-cols-3 gap-2 py-1 max-h-72 overflow-hidden">
+                    {[1, 2, 3, 4, 5, 6].map((i) => (
+                      <div key={i} className="w-full aspect-square min-w-0 bg-border/40 animate-pulse rounded-xl" />
+                    ))}
+                  </div>
+                ) : mediaItems.length === 0 ? (
+                  <div className="py-8 px-2 text-center">
+                    <div className="w-10 h-10 mx-auto mb-2 rounded-full bg-bg border border-border grid place-items-center text-text-secondary opacity-60">
+                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <rect width="18" height="18" x="3" y="3" rx="2" ry="2" strokeWidth="1.8" />
+                        <circle cx="8.5" cy="8.5" r="1.5" strokeWidth="1.8" />
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.8" d="m21 15-5-5L5 21" />
+                      </svg>
+                    </div>
+                    <p className="text-xs text-text-secondary">No photos or videos shared yet.</p>
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-3 gap-2 max-h-72 overflow-y-auto custom-scrollbar p-0.5">
+                    {mediaItems.map((item) => (
+                      <MediaGridItem
+                        key={item.id}
+                        item={item}
+                        onClick={() => setLightboxItem({ ...item, mediaUrl: resolveMediaUrl(item.mediaUrl) })}
+                      />
+                    ))}
+                  </div>
+                )}
               </div>
             )}
-          </div>
-        )}
 
-        {/* Files Tab */}
-        {activeTab === "files" && (
-          <div>
-            {loadingMedia ? (
-              <div className="space-y-2 py-2">
-                {[1, 2, 3].map((i) => (
-                  <div key={i} className="h-12 bg-border/40 animate-pulse rounded-lg" />
-                ))}
-              </div>
-            ) : mediaItems.length === 0 ? (
-              <div className="py-8 px-2 text-center">
-                <div className="w-10 h-10 mx-auto mb-2 rounded-full bg-bg border border-border grid place-items-center text-text-secondary opacity-60">
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                  </svg>
-                </div>
-                <p className="text-xs text-text-secondary">No documents or files shared yet.</p>
-              </div>
-            ) : (
-              <div className="space-y-1.5 max-h-60 overflow-y-auto custom-scrollbar">
-                {mediaItems.map((f) => (
-                  <a
-                    key={f.id}
-                    href={resolveMediaUrl(f.mediaUrl)}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="flex items-center gap-2.5 p-2 rounded-lg bg-bg/60 hover:bg-bg border border-border text-left transition-colors group min-w-0"
-                  >
-                    <div className="w-8 h-8 rounded bg-surface border border-border grid place-items-center shrink-0 text-text-secondary group-hover:text-action">
-                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            {/* Files Tab */}
+            {activeTab === "files" && (
+              <div>
+                {loadingMedia ? (
+                  <div className="space-y-2 py-1 max-h-72 overflow-hidden">
+                    {[1, 2, 3].map((i) => (
+                      <div key={i} className="h-12 bg-border/40 animate-pulse rounded-lg" />
+                    ))}
+                  </div>
+                ) : mediaItems.length === 0 ? (
+                  <div className="py-8 px-2 text-center">
+                    <div className="w-10 h-10 mx-auto mb-2 rounded-full bg-bg border border-border grid place-items-center text-text-secondary opacity-60">
+                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                       </svg>
                     </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-xs font-medium text-text-primary truncate">{f.mediaName || "Attachment"}</p>
-                      <p className="text-[10px] text-text-secondary">{formatBytes(f.mediaSize)} · {f.time}</p>
-                    </div>
-                    <svg className="w-4 h-4 text-text-secondary group-hover:text-action shrink-0 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
-                    </svg>
-                  </a>
-                ))}
+                    <p className="text-xs text-text-secondary">No documents or files shared yet.</p>
+                  </div>
+                ) : (
+                  <div className="space-y-1.5 max-h-72 overflow-y-auto custom-scrollbar pr-0.5">
+                    {mediaItems.map((f) => (
+                      <a
+                        key={f.id}
+                        href={resolveMediaUrl(f.mediaUrl)}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="flex items-center gap-2.5 p-2 rounded-lg bg-bg/60 hover:bg-bg border border-border text-left transition-colors group min-w-0"
+                      >
+                        <div className="w-8 h-8 rounded bg-surface border border-border grid place-items-center shrink-0 text-text-secondary group-hover:text-action">
+                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                          </svg>
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-xs font-medium text-text-primary truncate">{f.mediaName || "Attachment"}</p>
+                          <p className="text-[10px] text-text-secondary">{formatBytes(f.mediaSize)} · {f.time}</p>
+                        </div>
+                        <svg className="w-4 h-4 text-text-secondary group-hover:text-action shrink-0 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                        </svg>
+                      </a>
+                    ))}
+                  </div>
+                )}
               </div>
             )}
-          </div>
-        )}
 
-        {/* Links Tab */}
-        {activeTab === "links" && (
-          <div>
-            {loadingMedia ? (
-              <div className="space-y-2 py-2">
-                {[1, 2, 3].map((i) => (
-                  <div key={i} className="h-14 bg-border/40 animate-pulse rounded-lg" />
-                ))}
-              </div>
-            ) : mediaItems.length === 0 ? (
-              <div className="py-8 px-2 text-center">
-                <div className="w-10 h-10 mx-auto mb-2 rounded-full bg-bg border border-border grid place-items-center text-text-secondary opacity-60">
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
-                  </svg>
-                </div>
-                <p className="text-xs text-text-secondary">No links shared in this conversation.</p>
-              </div>
-            ) : (
-              <div className="space-y-2 max-h-60 overflow-y-auto custom-scrollbar">
-                {mediaItems.map((item, idx) => (
-                  <LinkGridItem key={`${item.id}-${idx}`} item={item} />
-                ))}
+            {/* Links Tab */}
+            {activeTab === "links" && (
+              <div>
+                {loadingMedia ? (
+                  <div className="space-y-2 py-1 max-h-72 overflow-hidden">
+                    {[1, 2, 3].map((i) => (
+                      <div key={i} className="h-14 bg-border/40 animate-pulse rounded-lg" />
+                    ))}
+                  </div>
+                ) : mediaItems.length === 0 ? (
+                  <div className="py-8 px-2 text-center">
+                    <div className="w-10 h-10 mx-auto mb-2 rounded-full bg-bg border border-border grid place-items-center text-text-secondary opacity-60">
+                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
+                      </svg>
+                    </div>
+                    <p className="text-xs text-text-secondary">No links shared in this conversation.</p>
+                  </div>
+                ) : (
+                  <div className="space-y-2 max-h-72 overflow-y-auto custom-scrollbar pr-0.5">
+                    {mediaItems.map((item, idx) => (
+                      <LinkGridItem key={`${item.id}-${idx}`} item={item} />
+                    ))}
+                  </div>
+                )}
               </div>
             )}
           </div>
@@ -660,9 +691,27 @@ export default function ChatInfoPanel({
 
       {/* Privacy & Support Actions */}
       <div className="p-4 space-y-2 shrink-0">
-        <span className="text-xs font-bold uppercase tracking-wider text-text-secondary">Privacy & Support</span>
+        <button
+          type="button"
+          onClick={() => setPrivacyOpen(!privacyOpen)}
+          className="w-full flex items-center justify-between text-left group cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-action rounded-md"
+          aria-expanded={privacyOpen}
+        >
+          <span className="text-xs font-bold uppercase tracking-wider text-text-secondary group-hover:text-text-primary transition-colors">Privacy & Support</span>
+          <svg
+            className={`w-4 h-4 text-text-secondary group-hover:text-text-primary transition-transform duration-200 ${
+              privacyOpen ? "rotate-180" : ""
+            }`}
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
+          </svg>
+        </button>
 
-        <div className="pt-1 space-y-1">
+        {privacyOpen && (
+          <div className="pt-1 space-y-1">
           <button
             type="button"
             onClick={handleToggleMute}
@@ -729,6 +778,7 @@ export default function ChatInfoPanel({
             <span>Report Conversation</span>
           </button>
         </div>
+        )}
       </div>
 
       {/* Fullscreen Interactive Media Lightbox */}
