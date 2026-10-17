@@ -2,65 +2,94 @@ import { useEffect, useState, useRef } from "react";
 import { Link, router } from "@inertiajs/react";
 import { profilePath } from "../utils/profilePath";
 import { httpApi } from "../utils/http";
+import { resolveMediaUrl, isVideoUrl, formatBytes } from "../utils/media";
+import { captureVideoThumbnail } from "../utils/videoThumb";
 import { useToast } from "../context/ToastContext";
 import Modal from "./Modal";
 import Button from "./Button";
 import ReportModal from "./ReportModal";
 import MediaLightbox from "./MediaLightbox";
 
-function formatBytes(bytes) {
-  if (!bytes || bytes === 0) return "0 B";
-  const k = 1024;
-  const sizes = ["B", "KB", "MB", "GB"];
-  const i = Math.floor(Math.log(bytes) / Math.log(k));
-  return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + " " + sizes[i];
-}
-
-function resolveMediaUrl(url) {
-  if (!url || typeof url !== "string") return url || "";
-  if (url.includes("/storage/bizlink/")) {
-    const idx = url.indexOf("/storage/bizlink/");
-    return url.substring(idx);
-  }
-  return url;
-}
-
 function MediaGridItem({ item, onClick }) {
   const [hasError, setHasError] = useState(false);
+  const [poster, setPoster] = useState(null);
   const mediaUrl = resolveMediaUrl(item.mediaUrl);
-  const isVideo = item.mediaType === "video";
+  const isVideo = item.mediaType === "video" || isVideoUrl(mediaUrl);
+
+  useEffect(() => {
+    let alive = true;
+    if (isVideo && mediaUrl) {
+      captureVideoThumbnail(mediaUrl)
+        .then((shot) => {
+          if (alive && shot) setPoster(shot);
+        })
+        .catch(() => {});
+    }
+    return () => {
+      alive = false;
+    };
+  }, [isVideo, mediaUrl]);
 
   return (
     <button
       type="button"
       onClick={onClick}
-      className="relative w-full aspect-square min-w-0 block rounded-lg overflow-hidden bg-bg border border-border/70 hover:border-action/60 hover:shadow-xs focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-action transition-all duration-150 group"
+      className="relative w-full aspect-square min-w-0 block rounded-xl overflow-hidden bg-surface border border-border/70 hover:border-action/60 hover:shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-action transition-all duration-200 group text-left cursor-pointer"
       title={item.mediaName || (isVideo ? "Video" : "Photo")}
     >
-      {isVideo ? (
-        <>
-          <video
-            src={mediaUrl}
-            className="w-full h-full object-cover"
-            preload="metadata"
-            onError={() => setHasError(true)}
-          />
-          <span className="absolute inset-0 bg-black/30 group-hover:bg-black/20 flex items-center justify-center transition-colors">
-            <span className="w-7 h-7 rounded-full bg-black/60 backdrop-blur-xs flex items-center justify-center text-white">
-              <svg className="w-3.5 h-3.5 ml-0.5" fill="currentColor" viewBox="0 0 24 24">
+      {hasError ? (
+        <div className="w-full h-full flex flex-col items-center justify-between p-2 text-text-secondary bg-surface/90 hover:bg-surface transition-colors">
+          <div className="w-full flex justify-end">
+            <span className="text-[9px] font-semibold tracking-wider uppercase px-1.5 py-0.5 rounded bg-bg text-text-secondary border border-border/50">
+              {isVideo ? "VID" : "IMG"}
+            </span>
+          </div>
+          <div className="w-8 h-8 rounded-full bg-bg border border-border flex items-center justify-center text-text-secondary opacity-70 group-hover:scale-110 transition-transform">
+            {isVideo ? (
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
+              </svg>
+            ) : (
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <rect width="18" height="18" x="3" y="3" rx="2" ry="2" strokeWidth="2" />
+                <circle cx="8.5" cy="8.5" r="1.5" strokeWidth="2" />
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="m21 15-5-5L5 21" />
+              </svg>
+            )}
+          </div>
+          <p className="w-full text-[10px] text-center font-medium text-text-secondary truncate px-1" title={item.mediaName}>
+            {item.mediaName || (isVideo ? "Video" : "Photo")}
+          </p>
+        </div>
+      ) : isVideo ? (
+        <div className="relative w-full h-full bg-black">
+          {poster ? (
+            <img
+              src={poster}
+              alt={item.mediaName || "Video thumbnail"}
+              className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-200"
+            />
+          ) : (
+            <video
+              src={mediaUrl}
+              className="w-full h-full object-cover pointer-events-none"
+              preload="metadata"
+              playsInline
+              muted
+              onError={() => setHasError(true)}
+            />
+          )}
+          <div className="absolute inset-0 bg-black/25 group-hover:bg-black/15 flex items-center justify-center transition-colors">
+            <span className="w-8 h-8 rounded-full bg-black/60 backdrop-blur-xs flex items-center justify-center text-white shadow-sm group-hover:scale-110 group-hover:bg-black/75 transition-all">
+              <svg className="w-4 h-4 ml-0.5" fill="currentColor" viewBox="0 0 24 24">
                 <path d="M8 5v14l11-7z" />
               </svg>
             </span>
+          </div>
+          <span className="absolute bottom-1.5 left-1.5 px-1.5 py-0.5 rounded bg-black/70 text-[9px] font-bold text-white tracking-wider flex items-center gap-1 backdrop-blur-xs shadow-xs">
+            <svg className="w-2.5 h-2.5" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z" /></svg>
+            VID
           </span>
-        </>
-      ) : hasError ? (
-        <div className="w-full h-full flex flex-col items-center justify-center p-2 text-text-secondary bg-surface/60">
-          <svg className="w-6 h-6 mb-1 opacity-50" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <rect width="18" height="18" x="3" y="3" rx="2" ry="2" strokeWidth="1.8" />
-            <circle cx="8.5" cy="8.5" r="1.5" strokeWidth="1.8" />
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.8" d="m21 15-5-5L5 21" />
-          </svg>
-          <span className="text-[10px] line-clamp-1 font-medium">{item.mediaName || "Image"}</span>
         </div>
       ) : (
         <img
