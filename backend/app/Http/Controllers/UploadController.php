@@ -107,7 +107,7 @@ class UploadController extends Controller
         $path = $file->storeAs('bizlink/' . now()->format('Y/m/d'), Str::uuid() . '.' . $extension, 'public');
 
         return response()->json([
-            'url' => asset('storage/' . $path),
+            'url' => '/storage/' . $path,
             'media_type' => $mediaType,
             'media_name' => basename($path),
             'media_size' => $file->getSize() ?: 0,
