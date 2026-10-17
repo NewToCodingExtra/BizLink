@@ -92,6 +92,29 @@ class OpportunityController extends Controller
 
         $user = $request->user();
 
+        $mediaType = $data['media_type'] ?? 'image';
+        $image = $data['image'] ?? null;
+        if ($image && str_contains($image, '/storage/bizlink/')) {
+            $image = substr($image, strpos($image, '/storage/bizlink/'));
+        } elseif ($image && str_contains($image, '/storage/')) {
+            $image = substr($image, strpos($image, '/storage/'));
+        }
+
+        $videoUrl = $data['video_url'] ?? null;
+        if ($videoUrl && str_contains($videoUrl, '/storage/bizlink/')) {
+            $videoUrl = substr($videoUrl, strpos($videoUrl, '/storage/bizlink/'));
+        } elseif ($videoUrl && str_contains($videoUrl, '/storage/')) {
+            $videoUrl = substr($videoUrl, strpos($videoUrl, '/storage/'));
+        }
+
+        // If it's a video, don't force an unrelated stock photo onto it.
+        // If it's an image and no image was uploaded, fall back to default listing image.
+        if ($mediaType === 'video') {
+            $image = $image ?: null;
+        } else {
+            $image = $image ?: 'https://images.unsplash.com/photo-1497366216548-37526070297c?w=800&q=80&auto=format&fit=crop';
+        }
+
         $opp = Opportunity::create([
             'user_id' => $user->id,
             'brand_name' => $data['brand_name'] ?? $user->name,
@@ -105,9 +128,9 @@ class OpportunityController extends Controller
             'roi_percent' => (float) $data['roi_percent'],
             'roi' => self::formatRoi((float) $data['roi_percent']),
             'description' => $data['description'] ?? null,
-            'image' => $data['image'] ?? 'https://images.unsplash.com/photo-1497366216548-37526070297c?w=800&q=80&auto=format&fit=crop',
-            'media_type' => $data['media_type'] ?? 'image',
-            'video_url' => $data['video_url'] ?? null,
+            'image' => $image,
+            'media_type' => $mediaType,
+            'video_url' => $videoUrl,
             'featured' => false,
             'verified' => false,
             'likes_count' => 0,
@@ -179,6 +202,20 @@ class OpportunityController extends Controller
             'brand_avatar' => 'sometimes|nullable|string|max:2048',
         ]);
 
+        $image = array_key_exists('image', $data) ? ($data['image'] ?: $opportunity->image) : $opportunity->image;
+        if ($image && str_contains($image, '/storage/bizlink/')) {
+            $image = substr($image, strpos($image, '/storage/bizlink/'));
+        } elseif ($image && str_contains($image, '/storage/')) {
+            $image = substr($image, strpos($image, '/storage/'));
+        }
+
+        $videoUrl = array_key_exists('video_url', $data) ? $data['video_url'] : $opportunity->video_url;
+        if ($videoUrl && str_contains($videoUrl, '/storage/bizlink/')) {
+            $videoUrl = substr($videoUrl, strpos($videoUrl, '/storage/bizlink/'));
+        } elseif ($videoUrl && str_contains($videoUrl, '/storage/')) {
+            $videoUrl = substr($videoUrl, strpos($videoUrl, '/storage/'));
+        }
+
         $opportunity->update([
             'type' => $data['type'],
             'category' => $data['category'] ?? 'General',
@@ -188,9 +225,9 @@ class OpportunityController extends Controller
             'roi_percent' => (float) $data['roi_percent'],
             'roi' => self::formatRoi((float) $data['roi_percent']),
             'description' => $data['description'] ?? null,
-            'image' => array_key_exists('image', $data) ? ($data['image'] ?: $opportunity->image) : $opportunity->image,
+            'image' => $image,
             'media_type' => $data['media_type'] ?? $opportunity->media_type,
-            'video_url' => array_key_exists('video_url', $data) ? $data['video_url'] : $opportunity->video_url,
+            'video_url' => $videoUrl,
             'brand_name' => $data['brand_name'] ?? $opportunity->brand_name,
             'brand_avatar' => $data['brand_avatar'] ?? $opportunity->brand_avatar,
         ]);

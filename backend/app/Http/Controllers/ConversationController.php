@@ -231,7 +231,7 @@ class ConversationController extends Controller
             'sender_id' => $request->user()->id,
             'from_side' => 'me',
             'text' => $text,
-            'media_url' => $data['media_url'] ?? null,
+            'media_url' => $this->normalizeMediaUrl($data['media_url'] ?? null),
             'media_type' => $data['media_type'] ?? null,
             'media_name' => $data['media_name'] ?? null,
             'media_size' => $data['media_size'] ?? null,
@@ -363,9 +363,12 @@ class ConversationController extends Controller
                     'senderName' => $rep->sender?->name ?? 'User',
                     'text' => $rep->is_hidden ? '[Removed by moderation]' : $rep->text,
                     'mediaType' => $rep->media_type,
+                    'mediaUrl' => $this->normalizeMediaUrl($rep->media_url),
                 ];
             }
         }
+
+        $mediaUrl = $this->normalizeMediaUrl($message->media_url);
 
         return [
             'id' => $message->id,
@@ -380,7 +383,7 @@ class ConversationController extends Controller
             'reactions' => $reactionCounts,
             'myReactions' => $myReactions,
             'replyTo' => $replyTo,
-            'mediaUrl' => $message->media_url,
+            'mediaUrl' => $mediaUrl,
             'mediaType' => $message->media_type,
             'mediaName' => $message->media_name,
             'mediaSize' => $message->media_size,
@@ -403,6 +406,18 @@ class ConversationController extends Controller
     private function pollPayload(\App\Models\Poll $poll, ?int $viewerId): array
     {
         return app(\App\Services\PollService::class)->payload($poll, $viewerId);
+    }
+
+    private function normalizeMediaUrl(?string $url): ?string
+    {
+        if (!$url) return null;
+        if (str_contains($url, '/storage/bizlink/')) {
+            return substr($url, strpos($url, '/storage/bizlink/'));
+        }
+        if (str_contains($url, '/storage/')) {
+            return substr($url, strpos($url, '/storage/'));
+        }
+        return $url;
     }
 
     private function serialize(Conversation $c, bool $withMessages = false): array
@@ -588,11 +603,7 @@ class ConversationController extends Controller
                 }
             }
 
-            $mediaUrl = $m->media_url;
-            if ($mediaUrl && str_contains($mediaUrl, '/storage/bizlink/')) {
-                $idx = strpos($mediaUrl, '/storage/bizlink/');
-                $mediaUrl = substr($mediaUrl, $idx);
-            }
+            $mediaUrl = $this->normalizeMediaUrl($m->media_url);
 
             $base = [
                 'id' => $m->id,
@@ -866,7 +877,7 @@ class ConversationController extends Controller
             'sender_id' => $user->id,
             'from_side' => 'me',
             'text' => $message->text,
-            'media_url' => $message->media_url,
+            'media_url' => $this->normalizeMediaUrl($message->media_url),
             'media_type' => $message->media_type,
             'media_name' => $message->media_name,
             'media_size' => $message->media_size,

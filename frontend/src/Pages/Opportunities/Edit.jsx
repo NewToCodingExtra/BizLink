@@ -4,6 +4,8 @@ import { useToast } from '../../context/ToastContext';
 import Modal from '../../components/Modal';
 import Button from '../../components/Button';
 import { uploadWithProgress } from '../../utils/http';
+import { resolveMediaUrl, isVideoUrl } from '../../utils/media';
+import { captureVideoThumbnail } from '../../utils/videoThumb';
 
 const CATEGORIES = ['Food & Beverage', 'Beauty & Wellness', 'Health & Fitness', 'Services & Logistics', 'Education', 'Fashion & Apparel', 'Home & Living'];
 
@@ -17,9 +19,9 @@ export default function EditOpportunity({ opportunity }) {
     capital_amount: opportunity?.capitalAmount ?? '',
     roi_percent: opportunity?.roiPercent ?? '',
     description: opportunity?.description || '',
-    image: opportunity?.image || '',
+    image: resolveMediaUrl(opportunity?.image) || '',
     media_type: opportunity?.mediaType || 'image',
-    video_url: opportunity?.videoUrl || '',
+    video_url: resolveMediaUrl(opportunity?.videoUrl) || '',
     brand_name: opportunity?.brandName || '',
     brand_avatar: opportunity?.brandAvatar || '',
   });
@@ -60,14 +62,23 @@ export default function EditOpportunity({ opportunity }) {
     try {
       const res = await uploadWithProgress(file, { onProgress: setProgress });
       const mediaType = res.media_type || (file.type.startsWith('video') ? 'video' : 'image');
-      setData('media_type', mediaType);
-      if (mediaType === 'video') {
-        setData('video_url', res.url || '');
-        setData('image', '');
-      } else {
-        setData('image', res.url || '');
-        setData('video_url', '');
+      const normalizedUrl = resolveMediaUrl(res.url);
+
+      let videoPoster = null;
+      if (mediaType === 'video' && normalizedUrl) {
+        try {
+          videoPoster = await captureVideoThumbnail(normalizedUrl);
+        } catch {
+          videoPoster = null;
+        }
       }
+
+      setData((prev) => ({
+        ...prev,
+        media_type: mediaType,
+        image: mediaType === 'video' ? (videoPoster || '') : normalizedUrl,
+        video_url: mediaType === 'video' ? normalizedUrl : '',
+      }));
       setProgress(100);
       setDisk(res.disk === 'gcs' ? 'Stored in Google Cloud Storage' : res.disk ? String(res.disk) : 'Upload complete.');
     } catch (err) {
@@ -79,8 +90,15 @@ export default function EditOpportunity({ opportunity }) {
   };
 
   const onPasteUrl = (value) => {
-    if (data.media_type === 'video') setData('video_url', value);
-    else setData('image', value);
+    const isVideo = isVideoUrl(value);
+    const mediaType = isVideo ? 'video' : 'image';
+    const normalized = resolveMediaUrl(value);
+    setData((prev) => ({
+      ...prev,
+      media_type: mediaType,
+      video_url: isVideo ? normalized : '',
+      image: isVideo ? prev.image : normalized,
+    }));
     setDisk('');
   };
 

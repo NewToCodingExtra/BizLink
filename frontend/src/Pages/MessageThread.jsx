@@ -33,8 +33,58 @@ import LinkPreviewCard, { renderWithLinks, extractUrl } from "../components/Link
 import { httpApi, csrfFetch } from "../utils/http";
 import { getEcho, watchEchoHealth } from "../utils/echo";
 import { profilePath } from "../utils/profilePath";
+import { resolveMediaUrl } from "../utils/media";
 import { useToast } from "../context/ToastContext";
 import { useConfirm } from "../context/ConfirmContext";
+
+function ChatImageAttachment({ mediaUrl, mediaName, time, isMe, onOpenLightbox }) {
+  const [hasError, setHasError] = useState(false);
+  const resolvedUrl = resolveMediaUrl(mediaUrl);
+
+  if (hasError) {
+    return (
+      <div
+        onClick={() => onOpenLightbox({ mediaUrl: resolvedUrl, mediaType: "image", mediaName: mediaName || "Photo", time })}
+        className={`p-3 rounded-xl border flex items-center gap-3 cursor-pointer transition-colors ${
+          isMe
+            ? "bg-black/20 border-white/20 hover:bg-black/30 text-white"
+            : "bg-bg border-border hover:bg-surface text-text-primary"
+        }`}
+      >
+        <div className="w-10 h-10 rounded-lg bg-surface/80 border border-border/60 flex items-center justify-center shrink-0 text-text-secondary">
+          <ImageIcon className="w-5 h-5 opacity-70" />
+        </div>
+        <div className="min-w-0 flex-1">
+          <p className="text-xs font-medium truncate">{mediaName || "Photo attachment"}</p>
+          <p className="text-[10px] opacity-70">Click to view</p>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <button
+      type="button"
+      onClick={() =>
+        onOpenLightbox({
+          mediaUrl: resolvedUrl,
+          mediaType: "image",
+          mediaName: mediaName || "Photo",
+          time,
+        })
+      }
+      className="block w-full text-left rounded-xl overflow-hidden border border-black/10 group cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-action"
+    >
+      <img
+        src={resolvedUrl}
+        alt={mediaName || "attachment"}
+        className="rounded-xl max-h-72 w-full object-cover group-hover:scale-[1.02] transition-transform duration-200"
+        loading="lazy"
+        onError={() => setHasError(true)}
+      />
+    </button>
+  );
+}
 
 function getDateLabel(isoString) {
   if (!isoString) return "";
@@ -812,7 +862,7 @@ export default function MessageThread({ conv: initialConv, conversations = [], q
       const body = {
         text: "",
         reply_to_id: replyTo?.id || null,
-        media_url: data.url,
+        media_url: resolveMediaUrl(data.url),
         media_type: data.media_type,
         media_name: file.name,
         media_size: file.size,
@@ -1264,37 +1314,27 @@ export default function MessageThread({ conv: initialConv, conversations = [], q
                       {m.mediaUrl && (
                         <div className="mb-2">
                           {m.mediaType === "image" && (
-                            <button
-                              type="button"
-                              onClick={() =>
-                                setActiveLightboxMedia({
-                                  mediaUrl: m.mediaUrl,
-                                  mediaType: "image",
-                                  mediaName: m.mediaName || "Photo",
-                                  time: m.time,
-                                })
-                              }
-                              className="block w-full text-left rounded-xl overflow-hidden border border-black/10 group cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-action"
-                            >
-                              <img
-                                src={m.mediaUrl}
-                                alt="attachment"
-                                className="rounded-xl max-h-72 w-full object-cover group-hover:scale-[1.02] transition-transform duration-200"
-                              />
-                            </button>
+                            <ChatImageAttachment
+                              mediaUrl={m.mediaUrl}
+                              mediaName={m.mediaName}
+                              time={m.time}
+                              isMe={isMe}
+                              onOpenLightbox={setActiveLightboxMedia}
+                            />
                           )}
                           {m.mediaType === "video" && (
                             <div className="relative rounded-xl overflow-hidden border border-black/10 group">
                               <video
-                                src={m.mediaUrl}
+                                src={resolveMediaUrl(m.mediaUrl)}
                                 controls
+                                playsInline
                                 className="rounded-xl max-h-72 w-full bg-black"
                               />
                               <button
                                 type="button"
                                 onClick={() =>
                                   setActiveLightboxMedia({
-                                    mediaUrl: m.mediaUrl,
+                                    mediaUrl: resolveMediaUrl(m.mediaUrl),
                                     mediaType: "video",
                                     mediaName: m.mediaName || "Video",
                                     time: m.time,
@@ -1312,7 +1352,7 @@ export default function MessageThread({ conv: initialConv, conversations = [], q
                           )}
                           {m.mediaType === "file" && (
                             <a
-                              href={m.mediaUrl}
+                              href={resolveMediaUrl(m.mediaUrl)}
                               download
                               target="_blank"
                               rel="noreferrer"
