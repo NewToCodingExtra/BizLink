@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { captureVideoThumbnail } from "../utils/videoThumb";
+import { resolveMediaUrl } from "../utils/media";
 
 export function useVideoPoster(videoUrl, fallback = null) {
   const [poster, setPoster] = useState(fallback);
@@ -26,13 +27,15 @@ export function useVideoPoster(videoUrl, fallback = null) {
 export default function SmartMedia({ opp, className = "", videoProps = {} }) {
   const [videoError, setVideoError] = useState(false);
   const [imgError, setImgError] = useState(false);
-  const isVideo = opp?.mediaType === "video" && opp?.videoUrl && !videoError;
-  const smart = useVideoPoster(isVideo ? opp.videoUrl : null, opp?.image);
+  const videoUrl = resolveMediaUrl(opp?.videoUrl);
+  const imageUrl = resolveMediaUrl(opp?.image);
+  const isVideo = opp?.mediaType === "video" && videoUrl && !videoError;
+  const smart = useVideoPoster(isVideo ? videoUrl : null, imageUrl);
 
   const fallbackImage = "https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?w=800&q=80&auto=format&fit=crop";
 
   if (!isVideo) {
-    const src = (!imgError && opp?.image) ? opp.image : (opp?.brandAvatar || fallbackImage);
+    const src = (!imgError && imageUrl) ? imageUrl : (opp?.brandAvatar || fallbackImage);
     return (
       <img
         src={src}
@@ -45,12 +48,12 @@ export default function SmartMedia({ opp, className = "", videoProps = {} }) {
   }
   return (
     <video
-      src={opp.videoUrl}
+      src={videoUrl}
       muted
       loop
       playsInline
       preload="metadata"
-      poster={smart || opp?.image || undefined}
+      poster={smart || imageUrl || undefined}
       className={className}
       onError={() => setVideoError(true)}
       {...videoProps}
@@ -67,7 +70,9 @@ export function FeedVideo({ opp, className = "" }) {
   const ref = useRef(null);
   const [playing, setPlaying] = useState(false);
   const [muted, setMuted] = useState(true);
-  const smart = useVideoPoster(opp?.videoUrl, opp?.image);
+  const videoUrl = resolveMediaUrl(opp?.videoUrl);
+  const imageUrl = resolveMediaUrl(opp?.image);
+  const smart = useVideoPoster(videoUrl, imageUrl);
 
   useEffect(() => {
     const v = ref.current;
@@ -93,7 +98,7 @@ export function FeedVideo({ opp, className = "" }) {
       v.removeEventListener("pause", onPause);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [opp?.videoUrl]);
+  }, [videoUrl]);
 
   useEffect(() => {
     if (ref.current) ref.current.muted = muted;
@@ -103,7 +108,7 @@ export function FeedVideo({ opp, className = "" }) {
     <div className={`relative overflow-hidden bg-black ${className}`}>
       <video
         ref={ref}
-        src={opp.videoUrl}
+        src={videoUrl}
         muted={muted}
         loop
         playsInline

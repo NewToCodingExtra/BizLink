@@ -18,6 +18,20 @@ class OpportunityResource extends JsonResource
         $savedIds = $attached['savedIds'] ?? [];
         $preferredIds = $attached['preferredIds'] ?? [];
 
+        $image = $this->image;
+        if ($image && str_contains($image, '/storage/bizlink/')) {
+            $image = substr($image, strpos($image, '/storage/bizlink/'));
+        } elseif ($image && str_contains($image, '/storage/')) {
+            $image = substr($image, strpos($image, '/storage/'));
+        }
+
+        $videoUrl = $this->video_url;
+        if ($videoUrl && str_contains($videoUrl, '/storage/bizlink/')) {
+            $videoUrl = substr($videoUrl, strpos($videoUrl, '/storage/bizlink/'));
+        } elseif ($videoUrl && str_contains($videoUrl, '/storage/')) {
+            $videoUrl = substr($videoUrl, strpos($videoUrl, '/storage/'));
+        }
+
         return [
             'id' => $this->id,
             'slug' => $this->slug ?: (string) $this->id,
@@ -47,9 +61,9 @@ class OpportunityResource extends JsonResource
             'roi' => $this->roi,
             'roiPercent' => $this->roi_percent !== null ? (float) $this->roi_percent : null,
             'description' => $this->description,
-            'image' => $this->image,
+            'image' => $image,
             'mediaType' => $this->media_type,
-            'videoUrl' => $this->video_url,
+            'videoUrl' => $videoUrl,
             'featured' => (bool) $this->featured,
             'verified' => (bool) $this->verified,
             'likes' => (int) $this->likes_count,
